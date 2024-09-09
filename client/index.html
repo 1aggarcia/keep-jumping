@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Websocket Demo</title>
+    <link href="src/style.css" rel="stylesheet" />
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <p>This is a portal to access a simple websocket game.</p>
+    <div>
+      <button id="connect-btn" style="margin-bottom: 1rem;">Connect</button>
+      <span>Connection status: <code id="connected-status">Disconnected</code></span>
+    </div>
+
+    <section>
+      <canvas id="game-box">
+      </canvas>
+    </section>
+
+    <!-- should only be shown if connection is open-->
+    <section id="connected-box" style="display: none;">
+      <a id="open-close-dev-tools">Show Dev Tools</a>
+      
+      <div id="dev-tools" style="display: none;">
+        <form onsubmit="return false" id="message-form">
+          <input type="text" name="message" placeholder="Enter a message" />
+          <button type="submit">Send</button>
+        </form>
+        <div id="error-box"></div>
+        <div id="messages-box"></div>
+      </div>
+    </section>
+  
+    <p id="vite-mode" class="secondary-text"></p>
+  </body>
+</html>

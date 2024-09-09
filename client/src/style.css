@@ -1,0 +1,70 @@
+:root {
+  --divider-color: blue;
+  --button-color: blue;
+  --button-disabled: gray;
+  --game-bg: #eeeeee;
+  --link: blue;
+}
+
+body {
+  margin: 1rem auto;
+  padding: 0 25px;
+  max-width: 850px;
+  font-size: 18px;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button {
+  border: 1px solid var(--button-color);
+  border-radius: 50px;
+  padding: 10px 15px;
+  font-size: 1rem;
+  background-color: var(--button-color);
+  color: white;
+  transition: 0.2s;
+}
+button:hover {
+  background-color: white;
+  color: var(--button-color);
+  cursor: pointer;
+}
+button:disabled {
+  border-color: var(--button-disabled);
+  background-color: white;
+  color: var(--button-disabled);
+  cursor: default;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+pre {
+  font-size: 13px;
+  padding: 2px;
+  background-color: var(--game-bg);
+}
+
+.divider {
+  width: 100%;
+  border: 1px solid var(--divider-color);
+}
+
+.secondary-text {
+  font-size: 0.7em;
+  color: #585858
+}
+
+#error-box {
+  color: red;
+}
+
+#game-box {
+  background-color: var(--game-bg);
+  border: 1px solid black;
+}
