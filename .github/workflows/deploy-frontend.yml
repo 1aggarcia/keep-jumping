@@ -52,9 +52,6 @@ jobs:
       - name: Build
         run: pnpm run build
 
-      - name: Verify build output
-        run: ls && ls dist
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
@@ -62,7 +59,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           # Upload dist folder
-          path: 'dist'
+          path: 'client/dist'
 
       - name: Deploy to GitHub Pages
         id: deployment
