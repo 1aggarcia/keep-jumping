@@ -4,7 +4,9 @@
 - [ ] Type Check on build
 - [x] CI linting
 - [x] CI testing
-- [ ] Dev branch
+- [x] Dev branch
+- [x] CI auto deploy client
+- [ ] CI auto deploy server
 
 ## Server
 - [x] Define data types for client controls
@@ -14,14 +16,15 @@
 - [x] Handle basic player movement
 - [ ] Fix build from producing `server` and `lib` folders
 - [ ] Optimize event loop by tracking moved players
+- [ ] Rewrite server in Java
 
 ## Client
 - [x] Create JS canvas for game
 - [x] Build renderer for server messages
 - [x] Build controller to send user input to server
 - [ ] Create better-looking sprites
-- [ ] Render player color
-- [ ] Make rendered text bigger
+- [x] Render player color
+- [x] Make rendered text bigger
 
 ## Other
 - [x] Setup `lib` folder for shared models

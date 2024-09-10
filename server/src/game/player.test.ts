@@ -81,7 +81,7 @@ t.test("movePlayer ignores changes to position above game boundary", t => {
     t.end();
 });
 
-t.test("playerToPlayerState removes velocity param", t => {
+t.test("playerToPlayerState maps players to state correctly", t => {
     const player: Player = {
         id: "testPlayer",
         color: "#123456",
@@ -90,9 +90,9 @@ t.test("playerToPlayerState removes velocity param", t => {
         age: randomInt(100)
     };
     t.strictSame(playerToPlayerState(player), {
-        id: "testPlayer",
         color: "#123456",
-        position: player.position,
+        x: player.position[0],
+        y: player.position[1],
         age: player.age,
     });
     t.end();

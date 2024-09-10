@@ -32,7 +32,7 @@ export function clearGame(state: AppState) {
 
 // who needs loops when you have currying
 const renderPlayer = (context: Context2D) => (player: PlayerState) => {
-    const [x, y] = player.position;
+    const { x, y } = player;
     if (x > GAME_WIDTH || y > GAME_HEIGHT) {
         throw new RangeError(`Sprite position out of bounds: (${x}, ${y})`);
     }
