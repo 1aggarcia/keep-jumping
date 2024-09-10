@@ -78,6 +78,10 @@ getPlayerVelocity(pressedControls: PlayerControl[]): [number, number] {
  * @returns player without `velocity` param
  */
 export function playerToPlayerState(player: Player): PlayerState {
-    const { velocity: _, ...playerState } = player;  // eslint-disable-line
-    return playerState;
+    return {
+        color: player.color,
+        x: player.position[0],
+        y: player.position[1],
+        age: player.age,
+    };
 }
