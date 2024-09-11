@@ -6,6 +6,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import com.example.game.players.Player;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -13,12 +14,14 @@ import ch.qos.logback.core.testUtil.RandomUtil;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 /**
- * State management for client sessions.
+ * State management for client sessions. Externally, state is read only.
  * None of the methods should throw exepctions, since that would cause the
  * server to crash.
  */
@@ -26,14 +29,20 @@ public class SessionManager extends TextWebSocketHandler {
     private static final int INSTANCE_ID = RandomUtil.getPositiveInt() % 999;
     private static final ObjectMapper objectMapper = Singletons.objectMapper;
 
+    // Manager state
     private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
+    private final Map<String, Player> players = Collections.synchronizedMap(new HashMap<>());
 
     /**
-     * Record the client session when a new client connects
+     * Record the client session when a new client connects,
+     * create a new player for the client
      */
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
         sessions.add(session);
+        Player newPlayer = Player.createNewPlayer();
+        players.put(session.getId(), newPlayer);
+
         String message = INSTANCE_ID + " - New connection: " + session.getId()
             + "\n" + INSTANCE_ID + " - Active connections: " + sessions.size();
     
@@ -42,7 +51,8 @@ public class SessionManager extends TextWebSocketHandler {
     }
 
     /**
-     * Remove the client session from memory when the client disconnects
+     * Remove the client session from memory when the client disconnects,
+     * remove the instance of the player
      */
     @Override
     public void afterConnectionClosed(
@@ -50,6 +60,9 @@ public class SessionManager extends TextWebSocketHandler {
     ) {
         if (!sessions.remove(session)) {
             System.err.println("No session was saved with id " + session.getId());
+        }
+        if (players.remove(session.getId()) == null) {
+            System.err.println("No player was saved for session " + session.getId());
         }
         String message = INSTANCE_ID + " - Client disconnected: " + session.getId()
             + "\n" + INSTANCE_ID + " - Active connections: " + sessions.size();
@@ -74,9 +87,18 @@ public class SessionManager extends TextWebSocketHandler {
         }
     }
 
-    /** Returns a list of all open sessions */
+    /**
+     * @return read only list of active web socket sessions
+     */
     public List<WebSocketSession> sessions() {
         return this.sessions.stream().toList();
+    }
+
+    /**
+     * @return read only list of players
+     */
+    public List<Player> players() {
+        return this.players.values().stream().toList();
     }
 
 
