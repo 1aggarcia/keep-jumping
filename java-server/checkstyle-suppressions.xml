@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE suppressions PUBLIC
+        "-//Puppy Crawl//DTD Suppressions 1.0//EN"
+        "http://www.puppycrawl.com/dtds/suppressions_1_0.dtd">
+
+<suppressions>
+  <suppress checks="FinalParameters" files="." />
+  <suppress checks="JavadocPackage" files="." />
+  <suppress checks="JavadocVariable" files="." />
+  <suppress checks="InvalidJavadocPosition" files="." />
+  <suppress checks="WhitespaceAround" files="." />
+  <suppress checks="MagicNumber" files="." />
+  <suppress checks="ConstantName" files="." />
+
+  <suppress checks="MissingJavadocMethod" files=".*/App.java" />
+  <suppress checks="LeftCurly" files=".*/App.java" />
+  <suppress checks="DesignForExtension" files=".*/App.java" />
+</suppressions>

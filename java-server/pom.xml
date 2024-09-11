@@ -62,6 +62,29 @@
 				</configuration>
 			</plugin>
 		</plugins>
+
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>com.puppycrawl.tools</groupId>
+					<artifactId>checkstyle</artifactId>
+					<version>10.18.1</version>
+					<configuration>
+						<configLocation>checkstyle.xml</configLocation>
+						<suppressionLocaion>checkstyle-suppression.xml</suppressionLocaion>
+					</configuration>
+					<executions>
+						<execution>
+							<id>checkstyle</id>
+							<goals>
+								<goal>check</goal>
+							</goals>
+							<phase>validate</phase>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 
 </project>
