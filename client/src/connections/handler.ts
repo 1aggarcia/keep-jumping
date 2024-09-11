@@ -56,7 +56,7 @@ function connectToServer(state: AppState) {
     };
     server.onmessage = (event) => {
         const message = event.data;
-        const prettyMessage = JSON.stringify(JSON.parse(message), undefined, 2);
+        const prettyMessage = getPrettyMessage(message);
         connectionElements.messagesBox.prepend(`<pre>${prettyMessage}</pre>`);
         handleGameUpdate(message, state);
     };
@@ -68,4 +68,15 @@ function disconnectFromServer(state: AppState) {
         throw new ReferenceError("tried to disconnect from null server");
     }
     server.close();
+}
+
+function getPrettyMessage(message: unknown) {
+    if (!(typeof message === "string")) {
+        return `${message}`
+    }
+    try {
+        return JSON.stringify(JSON.parse(message), undefined, 2);
+    } catch {
+        return message;
+    }
 }
