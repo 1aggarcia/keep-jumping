@@ -8,23 +8,21 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import com.example.game.demo.MyHandler;
+import com.example.game.sessions.SessionManager;
 
 @SpringBootApplication
 @EnableWebSocket
-public class GameApplication implements WebSocketConfigurer {
+public class App implements WebSocketConfigurer {
 
     public static void main(String[] args) {
-        SpringApplication.run(GameApplication.class, args);
+        SpringApplication.run(App.class, args);
     }
 
     @Override
     public void registerWebSocketHandlers(@NonNull WebSocketHandlerRegistry registry) {
-        registry.addHandler(myHandler(), "/").setAllowedOrigins("*");
+        registry.addHandler(sessionManager(), "/").setAllowedOrigins("*");
     }
 
     @Bean
-    public MyHandler myHandler() {
-        return new MyHandler();
-    }
+    public SessionManager sessionManager() { return new SessionManager(); }
 }

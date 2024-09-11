@@ -7,6 +7,8 @@
 - [x] Dev branch
 - [x] CI auto deploy client
 - [ ] CI auto deploy server
+- [ ] CI test Java server
+- [ ] Java linter
 
 ## Server
 - [x] Define data types for client controls
@@ -32,3 +34,4 @@
 
 # CLI
 - Build docker image: `docker -t websocket-game .`
+- Test Spring app: `./mvnw test`
