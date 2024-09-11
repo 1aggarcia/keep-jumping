@@ -19,7 +19,8 @@ public class App implements WebSocketConfigurer {
     }
 
     @Override
-    public void registerWebSocketHandlers(@NonNull WebSocketHandlerRegistry registry) {
+    public void
+    registerWebSocketHandlers(@NonNull WebSocketHandlerRegistry registry) {
         registry.addHandler(sessionManager(), "/").setAllowedOrigins("*");
     }
 

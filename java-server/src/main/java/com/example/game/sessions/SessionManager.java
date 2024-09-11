@@ -30,12 +30,15 @@ public class SessionManager extends TextWebSocketHandler {
     private static final ObjectMapper objectMapper = Singletons.objectMapper;
 
     // Manager state
-    private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
-    private final Map<String, Player> players = Collections.synchronizedMap(new HashMap<>());
+    private final Set<WebSocketSession> sessions =
+        Collections.synchronizedSet(new HashSet<>());
+
+    private final Map<String, Player> players =
+        Collections.synchronizedMap(new HashMap<>());
 
     /**
      * Record the client session when a new client connects,
-     * create a new player for the client
+     * create a new player for the client.
      */
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
@@ -45,26 +48,29 @@ public class SessionManager extends TextWebSocketHandler {
 
         String message = INSTANCE_ID + " - New connection: " + session.getId()
             + "\n" + INSTANCE_ID + " - Active connections: " + sessions.size();
-    
+
         broadcast(message);
         System.out.println(message);
     }
 
     /**
      * Remove the client session from memory when the client disconnects,
-     * remove the instance of the player
+     * remove the instance of the player.
      */
     @Override
     public void afterConnectionClosed(
         @NonNull WebSocketSession session, @NonNull CloseStatus status
     ) {
         if (!sessions.remove(session)) {
-            System.err.println("No session was saved with id " + session.getId());
+            System.err.println(
+                "No session was saved with id " + session.getId());
         }
         if (players.remove(session.getId()) == null) {
-            System.err.println("No player was saved for session " + session.getId());
+            System.err.println(
+                "No player was saved for session " + session.getId());
         }
-        String message = INSTANCE_ID + " - Client disconnected: " + session.getId()
+        String message =
+            INSTANCE_ID + " - Client disconnected: " + session.getId()
             + "\n" + INSTANCE_ID + " - Active connections: " + sessions.size();
 
         broadcast(message);
@@ -72,7 +78,7 @@ public class SessionManager extends TextWebSocketHandler {
     }
 
     /**
-     * Respond to client messages
+     * Respond to client messages.
      */
     @Override
     public void handleTextMessage(
@@ -105,7 +111,7 @@ public class SessionManager extends TextWebSocketHandler {
     // HELPERS //
 
     /**
-     * Send a message to all open sessions
+     * Send a message to all open sessions.
      * @param message
      */
     private synchronized void broadcast(String message) {
@@ -113,7 +119,7 @@ public class SessionManager extends TextWebSocketHandler {
             safeSendMessage(session, message);
         }
     }
-    
+
     /**
      * Try to send a message to a client with safety from data races
      * and exceptions. Exepctions are printed to the error stream.

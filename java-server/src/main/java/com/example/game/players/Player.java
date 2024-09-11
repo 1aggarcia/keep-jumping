@@ -4,7 +4,7 @@ import java.util.Random;
 
 import com.example.game.game.GameConstants;
 
-public record Player (
+public record Player(
     String color,
     int age,
 
@@ -20,7 +20,7 @@ public record Player (
     private static final int HEX_STRING_LEN = 6;
 
     /**
-     * Factory function to create a new player with a random color and position
+     * Factory function to create a new player with a random color and position.
      * @return new instance of Player
      */
     public static Player createNewPlayer() {
