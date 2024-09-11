@@ -48,6 +48,7 @@ pre {
   font-size: 13px;
   padding: 2px;
   background-color: var(--game-bg);
+  text-wrap: wrap;
 }
 
 .divider {
