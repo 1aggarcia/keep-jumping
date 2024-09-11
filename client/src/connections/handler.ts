@@ -72,7 +72,7 @@ function disconnectFromServer(state: AppState) {
 
 function getPrettyMessage(message: unknown) {
     if (!(typeof message === "string")) {
-        return `${message}`
+        return `${message}`;
     }
     try {
         return JSON.stringify(JSON.parse(message), undefined, 2);

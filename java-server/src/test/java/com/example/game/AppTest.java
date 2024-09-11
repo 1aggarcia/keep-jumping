@@ -1,13 +1,16 @@
 package com.example.game;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class GameApplicationTests {
+class AppTest {
 
 	@Test
-	void contextLoads() {
+	void test_junitTests_run() {
+		assertEquals(1 + 1, 2);
 	}
 
 }

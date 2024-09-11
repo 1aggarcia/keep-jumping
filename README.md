@@ -1,7 +1,6 @@
 # Websocket Game 
 
-A simple, TypeScript based Websocket game for learning purposes
-Server runs on [ws](https://github.com/websockets/ws) for Node.js, frontend on jQuery (just for the memes).
+A simple, Websocket game I'm building to learn about Websockets. The server runs on [ws](https://github.com/websockets/ws) for Node.js, frontend on jQuery (just for the memes). Currently rewriting the server in Java with [Spring](https://spring.io/) to get a refresher of the language, since I already have multiple TypeScript repos.
 
 ## Setup & Build
 
