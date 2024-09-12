@@ -45,7 +45,7 @@ public class SessionManager extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
         sessions.add(session);
-        Player newPlayer = Player.createRandomPlayer();
+        var newPlayer = Player.createRandomPlayer();
         players.put(session.getId(), newPlayer);
 
         broadcast(GameUpdate.fromPlayerState(players));

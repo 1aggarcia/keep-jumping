@@ -34,14 +34,14 @@ public class MessageHandlerTest {
 
     @Test
     void test_getResponse_playerUpdate_returnsGameState() throws Exception {
-        TextMessage message = jsonToMessage(Map.of(
+        var message = jsonToMessage(Map.of(
             "type", "playerControlUpdate",
             "pressedControls", Collections.emptyList()
         ));
 
-        SocketMessage response = messageHandler.getResponse(message, new HashMap<>());
+        var response = messageHandler.getResponse(message, new HashMap<>());
         assertTrue(response instanceof GameUpdate);
-        GameUpdate update = (GameUpdate) response;
+        var update = (GameUpdate) response;
     
         assertEquals(SocketMessageType.GAME_UPDATE, update.type());
         assertEquals(0, update.players().size());
@@ -50,7 +50,7 @@ public class MessageHandlerTest {
 
     @Test
     void test_getResponse_plainString_throwsError() throws Exception {
-        TextMessage message = new TextMessage("plain string");
+        var message = new TextMessage("plain string");
         assertThrows(Exception.class, () -> {
             messageHandler.getResponse(message, null);
         });
@@ -58,16 +58,16 @@ public class MessageHandlerTest {
 
     @Test
     void test_getResponse_unknownType_returnsError() throws Exception {
-        TextMessage message = jsonToMessage(Map.of("type", "badType")); 
-        SocketMessage response = messageHandler.getResponse(message, null);
+        var message = jsonToMessage(Map.of("type", "badType")); 
+        var response = messageHandler.getResponse(message, null);
         assertTrue(response instanceof ErrorResponse);
         assertEquals(SocketMessageType.SERVER_ERROR, response.type());
     }
 
     @Test
     void test_getResponse_nullType_returnsError() throws Exception {
-        TextMessage message = jsonToMessage(Map.of("key", "value"));
-        SocketMessage response = messageHandler.getResponse(message, null);
+        var message = jsonToMessage(Map.of("key", "value"));
+        var response = messageHandler.getResponse(message, null);
         assertTrue(response instanceof ErrorResponse);
         assertEquals(SocketMessageType.SERVER_ERROR, response.type());
     }

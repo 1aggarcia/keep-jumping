@@ -17,9 +17,9 @@ import com.example.game.sessions.MessageTypes.SocketMessageType;
 public class MessageTypesTest {
     @Test
     void test_GameUpdatefromPlayerState_multiplePlayers_makesCorrectMessage() {
-        Player player1 = Player.createRandomPlayer();
-        Player player2 = Player.createRandomPlayer();
-        Map<String, Player> players = Map.of(
+        var player1 = Player.createRandomPlayer();
+        var player2 = Player.createRandomPlayer();
+        var players = Map.of(
             "1", player1,
             "2", player2
         );
