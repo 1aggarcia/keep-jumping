@@ -12,6 +12,8 @@
   <suppress checks="WhitespaceAround" files="." />
   <suppress checks="MagicNumber" files="." />
   <suppress checks="ConstantName" files="." />
+  <suppress checks="JavadocMethod" files="." />
+  <suppress checks="VisibilityModifier" files="." />
 
   <suppress checks="MissingJavadocMethod" files=".*/App.java" />
   <suppress checks="LeftCurly" files=".*/App.java" />

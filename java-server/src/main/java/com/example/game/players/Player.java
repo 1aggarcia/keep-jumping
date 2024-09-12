@@ -23,7 +23,7 @@ public record Player(
      * Factory function to create a new player with a random color and position.
      * @return new instance of Player
      */
-    public static Player createNewPlayer() {
+    public static Player createRandomPlayer() {
         Random random = new Random();
 
         StringBuilder color = new StringBuilder("#");
@@ -35,7 +35,19 @@ public record Player(
         int xPosition = random.nextInt(GameConstants.WIDTH);
         int yPosition = random.nextInt(GameConstants.HEIGHT);
 
-        System.out.println(color.toString());
         return new Player(color.toString(), 0, xPosition, yPosition, 0, 0);
+    }
+
+    /**
+     * Convert a Player record to a PlayerState record.
+     * @return instance of PlayerState
+     */
+    public PlayerState toPlayerState() {
+        return new PlayerState(
+            this.color(),
+            this.xPosition(),
+            this.yPosition(),
+            this.age()
+        );
     }
 }
