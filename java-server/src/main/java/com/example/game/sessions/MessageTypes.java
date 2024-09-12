@@ -39,11 +39,13 @@ public class MessageTypes {
 
         /**
          * Factory function to create a game update message based on
-         * the current state of players.
+         * the current state of the game.
          * @param players list of players in the game
+         * @param serverAge age in seconds since the game started
          * @return new instance of GameUpdate
          */
-        public static GameUpdate fromPlayerState(Map<String, Player> players) {
+        public static
+        GameUpdate fromGameState(Map<String, Player> players, int serverAge) {
             List<PlayerState> playersState = players.values()
                 .stream()
                 .map(player -> player.toPlayerState())
@@ -51,7 +53,7 @@ public class MessageTypes {
 
             return new GameUpdate(
                 SocketMessageType.GAME_UPDATE,
-                0,
+                serverAge,
                 playersState
             );
         }

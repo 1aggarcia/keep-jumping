@@ -4,20 +4,34 @@ import java.util.Random;
 
 import com.example.game.game.GameConstants;
 
-public record Player(
-    String color,
-    int age,
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 
-    int xPosition,
-    int yPosition,
-
-    /** Change in X per tick */
-    int xVelocity,
-
-    /** Change in Y per tick */
-    int yVelocity
-) {
+@Data
+@Accessors(fluent = true)
+@AllArgsConstructor
+public final class Player {
     private static final int HEX_STRING_LEN = 6;
+    private static final int PLAYER_WIDTH = 20;
+    private static final int PLAYER_HEIGHT = 20;
+
+    private final String color;
+    private final int age;
+
+    // we don't want setters on position
+    @Getter
+    private int xPosition;
+
+    @Getter
+    private int yPosition;
+
+    /** Change in X per tick. */
+    private int xVelocity;
+
+    /** Change in Y per tick. */
+    private int yVelocity;
 
     /**
      * Factory function to create a new player with a random color and position.
@@ -39,6 +53,22 @@ public record Player(
     }
 
     /**
+     * Changes the players position to that of the next tick
+     * according to the player velocity.
+     */
+    public void moveToNextTick() {
+        int newX = this.xPosition + this.xVelocity;
+        int newY = this.yPosition + this.yVelocity;
+
+        if (0 <= newX && newX + PLAYER_WIDTH <= GameConstants.WIDTH) {
+            this.xPosition = newX;
+        }
+        if (0 <= newY && newY + PLAYER_HEIGHT <= GameConstants.HEIGHT) {
+            this.yPosition = newY;
+        }
+    }
+
+    /**
      * Convert a Player record to a PlayerState record.
      * @return instance of PlayerState
      */
@@ -48,6 +78,17 @@ public record Player(
             this.xPosition(),
             this.yPosition(),
             this.age()
+        );
+    }
+
+    public Player clone() {
+        return new Player(
+            this.color,
+            this.age(),
+            this.xPosition(),
+            this.yPosition(),
+            this.xVelocity(),
+            this.yVelocity()
         );
     }
 }

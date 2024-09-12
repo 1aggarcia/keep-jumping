@@ -16,7 +16,7 @@ import com.example.game.sessions.MessageTypes.SocketMessageType;
 @SpringBootTest
 public class MessageTypesTest {
     @Test
-    void test_GameUpdatefromPlayerState_multiplePlayers_makesCorrectMessage() {
+    void test_GameUpdatefromGameState_multiplePlayers_makesCorrectMessage() {
         var player1 = Player.createRandomPlayer();
         var player2 = Player.createRandomPlayer();
         var players = Map.of(
@@ -24,8 +24,9 @@ public class MessageTypesTest {
             "2", player2
         );
 
-        GameUpdate update = GameUpdate.fromPlayerState(players);
+        GameUpdate update = GameUpdate.fromGameState(players, 15);
         assertEquals(SocketMessageType.GAME_UPDATE, update.type());
+        assertEquals(15, update.serverAge());
         assertEquals(update.players().size(), 2);
 
         PlayerState playerStateA = update.players().get(0);
