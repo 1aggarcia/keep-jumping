@@ -37,7 +37,7 @@ public class MessageHandler {
             new TypeReference<Map<String, Object>>() {}
         );
 
-        String type = String.valueOf(data.get("type"));
+        var type = String.valueOf(data.get("type"));
         return switch (type) {
             case "playerControlUpdate" -> GameUpdate.fromPlayerState(players);
             default -> serverError("Unsupported message type: " + type);

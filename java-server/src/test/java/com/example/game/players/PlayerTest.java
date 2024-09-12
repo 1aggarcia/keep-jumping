@@ -13,7 +13,7 @@ import com.example.game.game.GameConstants;
 public class PlayerTest {
     @Test
     void test_createRandomPlayer_initializesToZeroWhereExpected() {
-        Player player = Player.createRandomPlayer();
+        var player = Player.createRandomPlayer();
 
         assertEquals(player.age(), 0);
         assertEquals(player.xVelocity(), 0);
@@ -25,7 +25,7 @@ public class PlayerTest {
     void test_createRandomPlayer_generatesPositionInGameBounds() {
         // run test multiple times since it involves randomness
         for (int i = 0; i < 10; i++) {
-            Player player = Player.createRandomPlayer();
+            var player = Player.createRandomPlayer();
 
             assertTrue(player.xPosition() >= 0);
             assertTrue(player.yPosition() >= 0);
@@ -49,8 +49,8 @@ public class PlayerTest {
 
     @Test
     void test_toPlayerState_mapsFieldsCorrectly() {
-        Player testPlayer = new Player("color", 1, 2, 3, 4, 5);
-        PlayerState result = testPlayer.toPlayerState();
+        var testPlayer = new Player("color", 1, 2, 3, 4, 5);
+        var result = testPlayer.toPlayerState();
 
         assertEquals(testPlayer.color(), result.color());
         assertEquals(testPlayer.age(), result.age());
