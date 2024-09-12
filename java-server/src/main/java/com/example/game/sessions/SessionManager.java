@@ -7,6 +7,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import com.example.game.players.Player;
+import com.example.game.sessions.MessageTypes.GameUpdate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -27,7 +28,8 @@ import java.util.Map;
  */
 public class SessionManager extends TextWebSocketHandler {
     private static final int INSTANCE_ID = RandomUtil.getPositiveInt() % 999;
-    private static final ObjectMapper objectMapper = Singletons.objectMapper;
+    private static final ObjectMapper mapper = Singletons.objectMapper;
+    private static final MessageHandler handler = new MessageHandler();
 
     // Manager state
     private final Set<WebSocketSession> sessions =
@@ -43,14 +45,13 @@ public class SessionManager extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
         sessions.add(session);
-        Player newPlayer = Player.createNewPlayer();
+        Player newPlayer = Player.createRandomPlayer();
         players.put(session.getId(), newPlayer);
 
-        String message = INSTANCE_ID + " - New connection: " + session.getId()
-            + "\n" + INSTANCE_ID + " - Active connections: " + sessions.size();
-
-        broadcast(message);
-        System.out.println(message);
+        broadcast(GameUpdate.fromPlayerState(players));
+        System.out.print(INSTANCE_ID);
+        System.out.print(" - New player joined");
+        System.out.printf(" (total %d)\n", sessions.size());
     }
 
     /**
@@ -69,12 +70,11 @@ public class SessionManager extends TextWebSocketHandler {
             System.err.println(
                 "No player was saved for session " + session.getId());
         }
-        String message =
-            INSTANCE_ID + " - Client disconnected: " + session.getId()
-            + "\n" + INSTANCE_ID + " - Active connections: " + sessions.size();
 
-        broadcast(message);
-        System.out.println(message);
+        broadcast(GameUpdate.fromPlayerState(players));
+        System.out.print(INSTANCE_ID);
+        System.out.print(" - Player left");
+        System.out.printf(" (total %d)\n", sessions.size());
     }
 
     /**
@@ -85,8 +85,7 @@ public class SessionManager extends TextWebSocketHandler {
         @NonNull WebSocketSession session, @NonNull TextMessage message
     ) {
         try {
-            String response = "Echo: " + message.getPayload();
-            broadcast(objectMapper.writeValueAsString(response));
+            broadcast(handler.getResponse(message, players));
         } catch (JsonProcessingException e) {
             System.err.println(e);
             safeSendMessage(session, e.toString());
@@ -109,14 +108,17 @@ public class SessionManager extends TextWebSocketHandler {
 
 
     // HELPERS //
-
     /**
      * Send a message to all open sessions.
-     * @param message
+     * @param message message of any type
      */
-    private synchronized void broadcast(String message) {
-        for (WebSocketSession session : sessions) {
-            safeSendMessage(session, message);
+    private synchronized <T> void broadcast(T message) {
+        try {
+            for (WebSocketSession session: sessions) {
+                safeSendMessage(session, mapper.writeValueAsString(message));
+            }
+        } catch (JsonProcessingException e) {
+            System.err.println(e);
         }
     }
 
