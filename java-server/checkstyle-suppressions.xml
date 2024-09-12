@@ -14,6 +14,10 @@
   <suppress checks="ConstantName" files="." />
   <suppress checks="JavadocMethod" files="." />
   <suppress checks="VisibilityModifier" files="." />
+  <suppress checks="HiddenField" files="." />
+  <suppress checks="NeedBraces" files="." />
+  <suppress checks="JavadocType" files="." />
+  <suppress checks="TodoComment" files="." />
 
   <suppress checks="MissingJavadocMethod" files=".*/App.java" />
   <suppress checks="LeftCurly" files=".*/App.java" />

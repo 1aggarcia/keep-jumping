@@ -12,7 +12,7 @@ import com.example.game.game.GameConstants;
 @SpringBootTest
 public class PlayerTest {
     @Test
-    void test_createRandomPlayer_initializesToZeroWhereExpected() {
+    void test_createRandomPlayer_initializesCorrectConstantValues() {
         var player = Player.createRandomPlayer();
 
         assertEquals(player.age(), 0);
@@ -56,5 +56,56 @@ public class PlayerTest {
         assertEquals(testPlayer.age(), result.age());
         assertEquals(testPlayer.xPosition(), result.x());
         assertEquals(testPlayer.yPosition(), result.y());
+    }
+
+    @Test
+    void test_moveToNextTick_noVelocity_doesNothing() {
+        var testPlayer = Player.createRandomPlayer();
+        var expectedX = testPlayer.xPosition();
+        var expectedY = testPlayer.yPosition();
+
+        testPlayer.moveToNextTick();
+        assertEquals(expectedX, testPlayer.xPosition());
+        assertEquals(expectedY, testPlayer.yPosition());
+    }
+
+    @Test
+    void test_moveToNextTick_nonZeroVelocity_changesPosition() {
+        var testPlayer = new Player("", 0, 10, 31, 4, 33);
+        var expectedX = testPlayer.xPosition() + testPlayer.xVelocity();
+        var expectedY = testPlayer.yPosition() + testPlayer.yVelocity();
+
+        testPlayer.moveToNextTick();
+        assertEquals(expectedX, testPlayer.xPosition());
+        assertEquals(expectedY, testPlayer.yPosition());
+    }
+
+    @Test
+    void test_moveToNextTick_minPositionAndNegativeVelocity_doesNothing() {
+        var testPlayer = new Player("", 0, 0, 0, -1, -1);
+        var expectedX = testPlayer.xPosition();
+        var expectedY = testPlayer.yPosition();
+
+        testPlayer.moveToNextTick();
+        assertEquals(expectedX, testPlayer.xPosition());
+        assertEquals(expectedY, testPlayer.yPosition());
+    }
+
+    @Test
+    void test_moveToNextTick_maxPositionAndPositiveVelocity_doesNothing() {
+        var testPlayer = new Player(
+            "",
+            0,
+            GameConstants.WIDTH,
+            GameConstants.HEIGHT,
+            1,
+            1
+        );
+        var expectedX = testPlayer.xPosition();
+        var expectedY = testPlayer.yPosition();
+
+        testPlayer.moveToNextTick();
+        assertEquals(expectedX, testPlayer.xPosition());
+        assertEquals(expectedY, testPlayer.yPosition());
     }
 }
