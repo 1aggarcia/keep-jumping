@@ -1,17 +1,15 @@
 package com.example.game.sessions;
 
+import java.util.HashSet;
 import java.util.Map;
 
 import org.springframework.web.socket.TextMessage;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.game.game.GameConstants;
 import com.example.game.players.Player;
-import com.example.game.sessions.MessageTypes.GameUpdate;
-import com.example.game.sessions.MessageTypes.ErrorResponse;
-import com.example.game.sessions.MessageTypes.SocketMessage;
-import com.example.game.sessions.MessageTypes.SocketMessageType;
+import com.example.game.players.PlayerControl;
+import com.example.game.sessions.MessageTypes.PlayerControlUpdate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 /**
@@ -20,8 +18,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
  */
 public class MessageHandler {
     private static final ObjectMapper objectMapper = Singletons.objectMapper;
+    private static final int PLAYER_SPEED = 10;
     private static final int TICKS_PER_SECOND =
         1000 / GameConstants.TICK_DELAY_MS;
+
+    public record PlayerVelocity(
+        int xVelocity,
+        int yVelocity
+    ) {}
 
     /** Response produced by advancing the game tick. */
     public record TickResponse(
@@ -29,30 +33,41 @@ public class MessageHandler {
         int nextTickCount
     ) {}
 
-    // TODO: rewrite this method to return game update events
-    // currently unused
     /**
-     * Given a request from a client and map of players, produces the correct
-     * response.
-     * @param message the message from the client
-     * @param players current state of all players
-     * @return the response to be broadcast to all clients
+     * Computes the player velocity given a client message, treating it
+     * as a PlayerControlUpdate object encoded as JSON.
+     * @param message The message from the client. Must be a
+     *  PlayerControlUpdate formatted as JSON.
+     * @return The player velocity according to the keys pressed in the
+     *  incoming message. Behavior is undefined if two conflicting keys
+     *  are pressed in the incoming message, e.g. "Right" and "Left".
      * @throws JsonProcessingException
      */
-    public SocketMessage getResponse(
-        TextMessage message,
-        Map<String, Player> players
-    ) throws JsonProcessingException {
-        Map<String, Object> data = objectMapper.readValue(
+    public PlayerVelocity
+    computeVelocity(TextMessage message) throws JsonProcessingException {
+        PlayerControlUpdate data = objectMapper.readValue(
             message.getPayload(),
-            new TypeReference<Map<String, Object>>() {}
+            PlayerControlUpdate.class
         );
 
-        var type = String.valueOf(data.get("type"));
-        return switch (type) {
-            case "playerControlUpdate" -> GameUpdate.fromGameState(players, 0);
-            default -> serverError("Unsupported message type: " + type);
-        };
+        int xVelocity = 0;
+        int yVelocity = 0;
+        var pressedControls = new HashSet<>(data.pressedControls());
+
+        // Prioritizes right over left - arbitrary decision
+        if (pressedControls.contains(PlayerControl.RIGHT)) {
+            xVelocity = PLAYER_SPEED;
+        } else if (pressedControls.contains(PlayerControl.LEFT)) {
+            xVelocity = -PLAYER_SPEED;
+        }
+
+        // Prioritizes down over up - also arbitrary
+        if (pressedControls.contains(PlayerControl.DOWN)) {
+            yVelocity = PLAYER_SPEED;
+        } else if (pressedControls.contains(PlayerControl.UP)) {
+            yVelocity = -PLAYER_SPEED;
+        }
+        return new PlayerVelocity(xVelocity, yVelocity);
     }
 
     /**
@@ -77,14 +92,5 @@ public class MessageHandler {
         }
 
         return new TickResponse(isUpdateNeeded, nextTickCount);
-    }
-
-    /**
-     * Shorthand for ServerError constructor.
-     * @param message
-     */
-    private ErrorResponse
-    serverError(String message) throws JsonProcessingException {
-        return new ErrorResponse(SocketMessageType.SERVER_ERROR, message);
     }
 }
