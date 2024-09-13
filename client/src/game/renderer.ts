@@ -12,11 +12,11 @@ const RED_HEX = "#ff0000";
 
 export function renderGame(context: Context2D, game: GameUpdate) {
     context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    game.players.forEach(renderPlayer(context));
     context.fillStyle = BLACK_HEX;
     context.font = "15px Arial";
     context.textAlign = "left";
     context.fillText(`Time: ${game.serverAge}`, 10, 20, GAME_WIDTH);
-    game.players.forEach(renderPlayer(context));
 }
 
 export function renderGameOver(context: Context2D, reason: string) {

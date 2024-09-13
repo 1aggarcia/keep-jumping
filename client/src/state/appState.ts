@@ -5,4 +5,6 @@ export type AppState = {
     connectedStatus: "CLOSED" | "CONNECTING" | "OPEN" | "ERROR";
     pressedControls: Set<PlayerControl>;
     context: Context2D | null;
+    messagesIn: number;
+    messagesOut: number;
 };

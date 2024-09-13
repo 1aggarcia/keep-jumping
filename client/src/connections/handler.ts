@@ -22,6 +22,15 @@ export function handleConnectBtnClick(state: AppState) {
     }
 }
 
+export function sendToServer(state: AppState, message: string) {
+    if (state.server == null) {
+        throw new ReferenceError(`Message sent to null server: ${message}`);
+    }
+    state.server.send(message);
+    state.messagesOut++;
+    renderMessageStats(state);
+}
+
 function connectToServer(state: AppState) {
     state.connectedStatus = "CONNECTING";
     connectionElements.connectedStatus.text(state.connectedStatus);
@@ -55,9 +64,11 @@ function connectToServer(state: AppState) {
         clearGame(state);
     };
     server.onmessage = (event) => {
+        state.messagesIn++;
         const message = event.data;
         const prettyMessage = getPrettyMessage(message);
         connectionElements.messagesBox.prepend(`<pre>${prettyMessage}</pre>`);
+        renderMessageStats(state);
         handleGameUpdate(message, state);
     };
 }
@@ -79,4 +90,10 @@ function getPrettyMessage(message: unknown) {
     } catch {
         return message;
     }
+}
+
+function renderMessageStats(state: AppState) {
+    const inText = `Received: ${state.messagesIn}`;
+    const outText = `Sent: ${state.messagesOut}`;
+    connectionElements.messagesStats.text(inText + " | " + outText);
 }
