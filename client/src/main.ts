@@ -8,6 +8,8 @@ const appState: AppState = {
     connectedStatus: "CLOSED",
     pressedControls: new Set(),
     context: null,
+    messagesIn: 0,
+    messagesOut: 0,
 };
 
 setUpConnections(appState);

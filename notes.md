@@ -17,7 +17,7 @@
 - [x] Handle client events in game state
 - [x] Handle basic player movement
 - [ ] Fix build from producing `server` and `lib` folders
-- [ ] Optimize event loop by tracking moved players
+- [x] Optimize event loop by tracking moved players (Java server)
 - [ ] Rewrite server in Java
 
 ## Client
@@ -27,6 +27,7 @@
 - [ ] Create better-looking sprites
 - [x] Render player color
 - [x] Make rendered text bigger
+- [x] Render message in/out states
 
 ## Other
 - [x] Setup `lib` folder for shared models

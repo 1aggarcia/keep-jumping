@@ -1,6 +1,7 @@
 import { PlayerControl, PlayerControlUpdate, SocketMessage } from "@lib/types";
 import { AppState } from "../state/appState";
 import { renderGame, renderGameOver } from "./renderer";
+import { sendToServer } from "../connections/handler";
 
 export function handleGameUpdate(message: string, state: AppState) {
     if (state.context === null) return;
@@ -30,7 +31,7 @@ export function handleKeyDown(event: KeyboardEvent, state: AppState) {
         type: "playerControlUpdate",
         pressedControls: Array.from(state.pressedControls),
     };
-    state.server?.send(JSON.stringify(update));
+    sendToServer(state, JSON.stringify(update));
 }
 
 export function handleKeyUp(event: KeyboardEvent, state: AppState) {
@@ -42,7 +43,7 @@ export function handleKeyUp(event: KeyboardEvent, state: AppState) {
         type: "playerControlUpdate",
         pressedControls: Array.from(state.pressedControls),
     };
-    state.server?.send(JSON.stringify(update));
+    sendToServer(state, JSON.stringify(update));
 }
 
 function keyCodeToPlayerControl(code: string): PlayerControl | null {
