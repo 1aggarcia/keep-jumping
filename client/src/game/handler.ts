@@ -26,6 +26,9 @@ export function handleKeyDown(event: KeyboardEvent, state: AppState) {
     const control = keyCodeToPlayerControl(event.code);
     if (control === null) return;
 
+    // if no changes made, data should not be sent to the server
+    if (state.pressedControls.has(control)) return;
+
     state.pressedControls.add(control);
     const update: PlayerControlUpdate = {
         type: "playerControlUpdate",
