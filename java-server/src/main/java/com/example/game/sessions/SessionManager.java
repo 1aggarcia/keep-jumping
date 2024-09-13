@@ -92,7 +92,18 @@ public class SessionManager extends TextWebSocketHandler {
     public void handleTextMessage(
         @NonNull WebSocketSession session, @NonNull TextMessage message
     ) {
-        // TODO: send message to handler, process returned events
+        try {
+            var player = players.get(session.getId());
+            if (player == null) {
+                System.err.println("Player not found, id: " + session.getId());
+                return;
+            }
+            var velocity = handler.computeVelocity(message);
+            player.xVelocity(velocity.xVelocity());
+            player.yVelocity(velocity.yVelocity());
+        } catch (JsonProcessingException e) {
+            System.err.println(e);
+        }
     }
 
     /**

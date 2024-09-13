@@ -66,7 +66,7 @@ public class MessageTypes {
 
     public static record PlayerControlUpdate(
         SocketMessageType type,
-        PlayerControl[] pressedControls
+        List<PlayerControl> pressedControls
     ) implements SocketMessage {}
 
     public static record ErrorResponse(
