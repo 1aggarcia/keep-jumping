@@ -1,6 +1,7 @@
 package com.example.game.players;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -19,6 +20,7 @@ public class PlayerTest {
         assertEquals(player.xVelocity(), 0);
         assertEquals(player.yVelocity(), 0);
         assertNotNull(player.color());
+        assertTrue(player.hasChanged());
     }
 
     @Test
@@ -49,7 +51,7 @@ public class PlayerTest {
 
     @Test
     void test_toPlayerState_mapsFieldsCorrectly() {
-        var testPlayer = new Player("color", 1, 2, 3, 4, 5);
+        var testPlayer = new Player("color", 1, 2, 3, 4, 5, true);
         var result = testPlayer.toPlayerState();
 
         assertEquals(testPlayer.color(), result.color());
@@ -61,34 +63,38 @@ public class PlayerTest {
     @Test
     void test_moveToNextTick_noVelocity_doesNothing() {
         var testPlayer = Player.createRandomPlayer();
+        testPlayer.hasChanged(false);
         var expectedX = testPlayer.xPosition();
         var expectedY = testPlayer.yPosition();
 
         testPlayer.moveToNextTick();
         assertEquals(expectedX, testPlayer.xPosition());
         assertEquals(expectedY, testPlayer.yPosition());
+        assertFalse(testPlayer.hasChanged());
     }
 
     @Test
     void test_moveToNextTick_nonZeroVelocity_changesPosition() {
-        var testPlayer = new Player("", 0, 10, 31, 4, 33);
+        var testPlayer = new Player("", 0, 10, 31, 4, 33, false);
         var expectedX = testPlayer.xPosition() + testPlayer.xVelocity();
         var expectedY = testPlayer.yPosition() + testPlayer.yVelocity();
 
         testPlayer.moveToNextTick();
         assertEquals(expectedX, testPlayer.xPosition());
         assertEquals(expectedY, testPlayer.yPosition());
+        assertTrue(testPlayer.hasChanged());
     }
 
     @Test
     void test_moveToNextTick_minPositionAndNegativeVelocity_doesNothing() {
-        var testPlayer = new Player("", 0, 0, 0, -1, -1);
+        var testPlayer = new Player("", 0, 0, 0, -1, -1, false);
         var expectedX = testPlayer.xPosition();
         var expectedY = testPlayer.yPosition();
 
         testPlayer.moveToNextTick();
         assertEquals(expectedX, testPlayer.xPosition());
         assertEquals(expectedY, testPlayer.yPosition());
+        assertFalse(testPlayer.hasChanged());
     }
 
     @Test
@@ -99,7 +105,8 @@ public class PlayerTest {
             GameConstants.WIDTH,
             GameConstants.HEIGHT,
             1,
-            1
+            1,
+           false 
         );
         var expectedX = testPlayer.xPosition();
         var expectedY = testPlayer.yPosition();
@@ -107,5 +114,6 @@ public class PlayerTest {
         testPlayer.moveToNextTick();
         assertEquals(expectedX, testPlayer.xPosition());
         assertEquals(expectedY, testPlayer.yPosition());
+        assertFalse(testPlayer.hasChanged());
     }
 }

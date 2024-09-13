@@ -34,6 +34,12 @@ public final class Player {
     private int yVelocity;
 
     /**
+     * true if the player state has changes since the last tick,
+     * false otherwise.
+     */
+    private boolean hasChanged;
+
+    /**
      * Factory function to create a new player with a random color and position.
      * @return new instance of Player
      */
@@ -49,7 +55,15 @@ public final class Player {
         int xPosition = random.nextInt(GameConstants.WIDTH);
         int yPosition = random.nextInt(GameConstants.HEIGHT);
 
-        return new Player(color.toString(), 0, xPosition, yPosition, 0, 0);
+        return new Player(
+            color.toString(),
+            0,
+            xPosition,
+            yPosition,
+            0,
+            0,
+            true
+        );
     }
 
     /**
@@ -58,13 +72,21 @@ public final class Player {
      */
     public void moveToNextTick() {
         int newX = this.xPosition + this.xVelocity;
-        int newY = this.yPosition + this.yVelocity;
+        boolean isXInBounds =
+            0 <= newX && newX + PLAYER_WIDTH <= GameConstants.WIDTH;
 
-        if (0 <= newX && newX + PLAYER_WIDTH <= GameConstants.WIDTH) {
+        if (isXInBounds && newX != this.xPosition) {
             this.xPosition = newX;
+            this.hasChanged = true;
         }
-        if (0 <= newY && newY + PLAYER_HEIGHT <= GameConstants.HEIGHT) {
+
+        int newY = this.yPosition + this.yVelocity;
+        boolean isYInBounds =
+            0 <= newY && newY + PLAYER_HEIGHT <= GameConstants.HEIGHT;
+
+        if (isYInBounds && newY != this.yPosition) {
             this.yPosition = newY;
+            this.hasChanged = true;
         }
     }
 
@@ -83,12 +105,13 @@ public final class Player {
 
     public Player clone() {
         return new Player(
-            this.color,
+            this.color(),
             this.age(),
             this.xPosition(),
             this.yPosition(),
             this.xVelocity(),
-            this.yVelocity()
+            this.yVelocity(),
+            this.hasChanged()
         );
     }
 }
