@@ -114,21 +114,30 @@ public class MessageHandlerTest {
     }
 
     @Test
+    void test_advanceToNextTick_newPlayer_requiresUpdate() {
+        var players = Map.of("", Player.createRandomPlayer());
+        var response = messageHandler.advanceToNextTick(players, 0);
+        assertTrue(response.isUpdateNeeded());
+    }
+
+    @Test
+    void test_advanceToNextTick_newPlayerOnSecondTick_doesNotRequireUpdate() {
+        var players = Map.of("", Player.createRandomPlayer());
+        messageHandler.advanceToNextTick(players, 0);
+        var secondResponse = messageHandler.advanceToNextTick(players, 0);
+        assertFalse(secondResponse.isUpdateNeeded()); 
+    }
+
+    @Test
     void test_advanceToNextTick_motionlessPlayers_doesNotRequireUpdate() {
-        var players = Map.of(
-            "1", Player.createRandomPlayer(),
-            "2", Player.createRandomPlayer()
-        );
+        var players = createTestPlayers();
         var response = messageHandler.advanceToNextTick(players, 0);
         assertFalse(response.isUpdateNeeded());
     }
 
     @Test
     void test_advanceToNextTick_motionlessPlayers_doesNotMutatePlayers() {
-        var players = Map.of(
-            "1", Player.createRandomPlayer(),
-            "2", Player.createRandomPlayer()
-        );
+        var players = createTestPlayers();
         var expected1 = players.get("1").clone();
         var expected2 = players.get("2").clone();
 
@@ -140,10 +149,9 @@ public class MessageHandlerTest {
 
     @Test
     void test_advanceToNextTick_oneMovingPlayer_requiresUpdate() {
-        var players = Map.of(
-            "1", Player.createRandomPlayer(),
-            "2", new Player("", 0, 0, 0, 1, 0)
-        );
+        var players = createTestPlayers();
+        players.put("2", new Player("", 0, 0, 0, 1, 0, false));
+    
         var response = messageHandler.advanceToNextTick(players, 0);
         assertTrue(response.isUpdateNeeded());
     }
@@ -152,10 +160,11 @@ public class MessageHandlerTest {
     void test_advanceToNextTick_oneMovingPlayer_mutatesCorrectPlayer() {
         var players = Map.of(
             "1", Player.createRandomPlayer(),
-            "2", new Player("", 0, 0, 0, 1, 0)
+            "2", new Player("", 0, 0, 0, 1, 0, true)
         );
         var expected1 = players.get("1").clone();
-        var expected2 = new Player("", 0, 1, 0, 1, 0);
+        expected1.hasChanged(false);
+        var expected2 = new Player("", 0, 1, 0, 1, 0, false);
 
         var response = messageHandler.advanceToNextTick(players, 0);
         assertTrue(response.isUpdateNeeded());
@@ -174,5 +183,19 @@ public class MessageHandlerTest {
             fail(e);
             return null;  // to make the compiler happy
         }
+    }
+
+    private Map<String, Player> createTestPlayers() {
+        var player1 = Player.createRandomPlayer();
+        var player2 = Player.createRandomPlayer();
+        player1.hasChanged(false);
+        player2.hasChanged(false);
+
+        // Map.of creates an immutable map, so to make
+        //it mutable is has to be copied
+        return new HashMap<>(Map.of(
+            "1", player1,
+            "2", player2
+        ));
     }
 }

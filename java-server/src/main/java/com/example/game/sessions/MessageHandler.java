@@ -84,11 +84,11 @@ public class MessageHandler {
         }
 
         for (Player player : players.values()) {
-            if (player.xVelocity() == 0 && player.yVelocity() == 0) {
-                continue;
-            }
             player.moveToNextTick();
-            isUpdateNeeded = true;
+            if (player.hasChanged()) {
+                isUpdateNeeded = true;
+                player.hasChanged(false);
+            }
         }
 
         return new TickResponse(isUpdateNeeded, nextTickCount);
