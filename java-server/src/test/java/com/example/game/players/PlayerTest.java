@@ -26,13 +26,23 @@ public class PlayerTest {
     @Test
     void test_createRandomPlayer_generatesPositionInGameBounds() {
         // run test multiple times since it involves randomness
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 100; i++) {
             var player = Player.createRandomPlayer();
 
             assertTrue(player.xPosition() >= 0);
             assertTrue(player.yPosition() >= 0);
-            assertTrue(player.xPosition() <= GameConstants.WIDTH);
-            assertTrue(player.yPosition() <= GameConstants.HEIGHT);
+            assertTrue(player.xPosition() <= GameConstants.WIDTH - Player.PLAYER_WIDTH);
+            assertTrue(player.yPosition() <= GameConstants.HEIGHT - Player.PLAYER_HEIGHT);
+        }
+    }
+
+    @Test
+    void test_createRandomPlayer_generatesPositionAtAFactorOfPlayerSize() {
+        // run test multiple times since it involves randomness
+        for (int i = 0; i < 100; i++) {
+            var player = Player.createRandomPlayer();
+            assertEquals(0, player.xPosition() % Player.PLAYER_WIDTH);
+            assertEquals(0, player.yPosition() % Player.PLAYER_HEIGHT);
         }
     }
 
