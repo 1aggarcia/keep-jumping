@@ -33,6 +33,8 @@ export function sendToServer(state: AppState, message: string) {
 
 function connectToServer(state: AppState) {
     state.connectedStatus = "CONNECTING";
+    state.messagesIn = 0;
+    state.messagesOut = 0;
     connectionElements.connectedStatus.text(state.connectedStatus);
     connectionElements.connectBtn.prop("disabled", true);
 
