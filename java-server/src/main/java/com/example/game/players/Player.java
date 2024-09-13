@@ -13,9 +13,9 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 @AllArgsConstructor
 public final class Player {
+    public static final int PLAYER_WIDTH = 20;
+    public static final int PLAYER_HEIGHT = 20;
     private static final int HEX_STRING_LEN = 6;
-    private static final int PLAYER_WIDTH = 20;
-    private static final int PLAYER_HEIGHT = 20;
 
     private final String color;
     private final int age;
@@ -41,7 +41,8 @@ public final class Player {
 
     /**
      * Factory function to create a new player with a random color and position.
-     * @return new instance of Player
+     * @return new instance of Player, with position in game bounds and as a
+     * factor of the player size
      */
     public static Player createRandomPlayer() {
         Random random = new Random();
@@ -52,8 +53,12 @@ public final class Player {
             color.append(hex);
         }
 
-        int xPosition = random.nextInt(GameConstants.WIDTH);
-        int yPosition = random.nextInt(GameConstants.HEIGHT);
+        // this division & multiplication generates
+        // random ints as a factor of player size
+        int xPosition = random
+            .nextInt(GameConstants.WIDTH / PLAYER_WIDTH) * PLAYER_WIDTH;
+        int yPosition = random
+            .nextInt(GameConstants.HEIGHT / PLAYER_HEIGHT) * PLAYER_HEIGHT;
 
         return new Player(
             color.toString(),
