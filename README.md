@@ -1,19 +1,23 @@
 # Websocket Game 
 
-A simple, Websocket game I'm building to learn about Websockets. The server runs on [ws](https://github.com/websockets/ws) for Node.js, frontend on jQuery (just for the memes). Currently rewriting the server in Java with [Spring](https://spring.io/) to get a refresher of the language, since I already have multiple TypeScript repos.
+A simple, Websocket game I'm building to learn about Websockets. The server runs with [Spring](https://spring.io/) for Java, frontend on jQuery (just for the memes). Previously the server was written in TypeScript, I rewrote it in Java to get a refresher of the language.
 
 ## Setup & Build
 
-Requires [Node v20](https://nodejs.org/en) (verify installation with `node -v`)
+Requires [Node v20](https://nodejs.org/en) (verify installation with `node -v`) and the [Java Developement Kit](https://www.oracle.com/java/technologies/downloads/) of at least version 17.
 
 Developed with [pnpm](https://pnpm.io/) but should work fine with npm, which comes with Node.
 
 ### Server:
-`cd server`
 
-- Run: `npm run dev`
-- Build: `npm run build`
-- Test: `npx tap run`
+You should be able to run the server in your IDE, but this is possible from the command line:
+
+`cd java-server`
+
+- Run: `./mvnw clean install && java -jar target/game-0.0.1-SNAPSHOT.jar`
+- Build: `./mvnw package`
+- Test: `./mvnw test`
+- Lint `./mvnw checkstyle:check`
 
 ### Frontend
 `cd client`
