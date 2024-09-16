@@ -18,7 +18,8 @@
 - [x] Handle basic player movement
 - [ ] Fix build from producing `server` and `lib` folders
 - [x] Optimize event loop by tracking moved players (Java server)
-- [ ] Rewrite server in Java
+- [x] Rewrite server in Java
+- [ ] Fix concurrent printing issues
 
 ## Client
 - [x] Create JS canvas for game
@@ -34,6 +35,7 @@
 - [ ] Find a way to share constants
 
 # CLI
-- Build docker image: `docker -t websocket-game .`
+- Build docker image: `docker build -t websocket-game .`
 - Test Maven app: `./mvnw test`
 - Lint Maven app: `./mvnw checkstyle:check`
+- Build Maven app: `./mvnw package` (output jar in `target/`)

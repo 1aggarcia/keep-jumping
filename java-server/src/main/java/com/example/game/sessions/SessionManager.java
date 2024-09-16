@@ -29,6 +29,7 @@ import java.util.Map;
  */
 public class SessionManager extends TextWebSocketHandler {
     private static final int INSTANCE_ID = RandomUtil.getPositiveInt() % 999;
+    private static final int IDLE_TIMEOUT_SECONDS = 5 * 60;  // 5 minutes
 
     private static final ObjectMapper mapper = Singletons.objectMapper;
     private static final MessageHandler handler = new MessageHandler();
@@ -36,14 +37,15 @@ public class SessionManager extends TextWebSocketHandler {
     // Server state
     private final Set<WebSocketSession> sessions =
         Collections.synchronizedSet(new HashSet<>());
+    private Thread idleTimeout = new Thread();
 
     // Game state
     private final Map<String, Player> players =
         Collections.synchronizedMap(new HashMap<>());
 
     // Game loop state
-    private Thread gameLoop;
-
+    private Thread gameLoop = new Thread();
+    
     /**
      * Record the client session when a new client connects,
      * create a new player for the client.
@@ -53,7 +55,7 @@ public class SessionManager extends TextWebSocketHandler {
         sessions.add(session);
         var newPlayer = Player.createRandomPlayer();
         players.put(session.getId(), newPlayer);
-        if (gameLoop == null || !gameLoop.isAlive()) {
+        if (!gameLoop.isAlive()) {
             gameLoop = new Thread(() -> runGameLoop(players));
             gameLoop.start();
         }
@@ -166,6 +168,9 @@ public class SessionManager extends TextWebSocketHandler {
         int tickCount = 0;
 
         System.out.println("Starting game loop");
+        if (idleTimeout.isAlive()) {
+            idleTimeout.interrupt();
+        }
         while (players.size() > 0) {
             var response = handler.advanceToNextTick(players, tickCount);
             tickCount = response.nextTickCount();
@@ -183,5 +188,29 @@ public class SessionManager extends TextWebSocketHandler {
             }
         }
         System.out.println("Closing game loop");
+        idleTimeout = new Thread(() -> {
+            scheduleServerShutdown(IDLE_TIMEOUT_SECONDS);
+        });
+        idleTimeout.start();
+    }
+
+    /**
+     * Thread function to shut down the server after the given number of
+     * have passed. The shutdown can be cancelled by calling the 'interrupt'
+     * method on the thread.
+     * @param seconds amount of time to wait before calling the action
+     */
+    private void scheduleServerShutdown(int seconds) {
+        try {
+            Thread.sleep(seconds * 1000);
+            System.out.println(
+                "Idle timeout reached: (" + seconds + "s)."
+                + " Shutting down server..."
+            );
+            System.exit(0);
+        } catch (InterruptedException e) {
+            // cancel the shutdown
+            return;
+        }
     }
 }
