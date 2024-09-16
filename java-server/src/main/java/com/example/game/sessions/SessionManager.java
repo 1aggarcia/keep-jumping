@@ -45,7 +45,7 @@ public class SessionManager extends TextWebSocketHandler {
 
     // Game loop state
     private Thread gameLoop = new Thread();
-    
+
     /**
      * Record the client session when a new client connects,
      * create a new player for the client.
