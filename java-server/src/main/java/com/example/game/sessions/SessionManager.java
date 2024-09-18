@@ -26,7 +26,7 @@ import java.util.Map;
  */
 public class SessionManager extends TextWebSocketHandler {
     private static final int INSTANCE_ID = RandomUtil.getPositiveInt() % 999;
-    private static final int IDLE_TIMEOUT_SECONDS = 5;  // 5 minutes
+    private static final int IDLE_TIMEOUT_SECONDS = 5 * 60;  // 5 minutes
 
     private static final MessageHandler handler = new MessageHandler();
 
