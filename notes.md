@@ -9,6 +9,7 @@
 - [ ] CI auto deploy server
 - [x] CI test Java server
 - [x] Java linter
+- [ ] Reduce redundant checks on pull request
 
 ## Server
 - [x] Define data types for client controls
@@ -29,6 +30,7 @@
 - [x] Render player color
 - [x] Make rendered text bigger
 - [x] Render message in/out states
+- [ ] Add dark mode
 
 ## Other
 - [x] Setup `lib` folder for shared models
