@@ -59,9 +59,14 @@ public class ConnectionHandler extends TextWebSocketHandler {
             gameLoop.start(sessions, players);
         }
 
-        System.out.print(INSTANCE_ID);
-        System.out.print(" - New player joined");
-        System.out.printf(" (total %d)\n", sessions.size());
+        // Entire string needs to be printed at once since the console is
+        // shared with other threads
+        var consoleMessage = new StringBuilder()
+            .append(INSTANCE_ID)
+            .append(" - New player joined")
+            .append(" (total " + sessions.size() + ")")
+            .toString();
+        System.out.println(consoleMessage);
     }
 
     /**
@@ -81,9 +86,14 @@ public class ConnectionHandler extends TextWebSocketHandler {
                 "No player was saved for session " + session.getId());
         }
 
-        System.out.print(INSTANCE_ID);
-        System.out.print(" - Player left");
-        System.out.printf(" (total %d)\n", sessions.size());
+        // Entire string needs to be printed at once since the console is
+        // shared with other threads
+        var consoleMessage = new StringBuilder()
+            .append(INSTANCE_ID)
+            .append(" - Player left")
+            .append(" (total " + sessions.size() + ")")
+            .toString();
+        System.out.println(consoleMessage);
     }
 
     /**

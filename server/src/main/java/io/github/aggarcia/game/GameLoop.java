@@ -16,9 +16,25 @@ import io.github.aggarcia.players.Player;
  * Interface to hide the thread management logic of running the game loop.
  */
 public class GameLoop {
-    private Thread loopThread = new Thread();
-    private Thread idleThread = new Thread();
+     /**
+     * Amount of time to wait between each tick.
+     */
     private int tickDelayMs = GameConstants.TICK_DELAY_MS;
+
+    /**
+     * Thread for the game loop.
+     */
+    private Thread loopThread = new Thread();
+
+    /**
+     * Thread for the idle action to perform after the loop stops.
+     */
+    private Thread idleThread = new Thread();
+
+    /**
+     * Action to perform after the game loop has been closed.
+     */
+    private Runnable idleTimeoutAction = () -> {};
 
 
     // PUBLIC API //
@@ -47,14 +63,14 @@ public class GameLoop {
             throw new IllegalStateException(
                 "Cannot set idle action while loop is running");
         }
-        this.idleThread = new Thread(() -> {
+        this.idleTimeoutAction = () -> {
             try {
                 Thread.sleep(delayMs);
                 action.run();
             } catch (InterruptedException e) {
-                System.err.println(e);
+                System.out.println("Game loop idle action interrupted");
             }
-        });
+        };
         return this;
     }
 
@@ -86,12 +102,12 @@ public class GameLoop {
     }
 
     /**
-     * Interrupt the game loop, stopping execution.
+     * Interrupt the game loop, wait for its thread to stop execution.
      */
-    public void interrupt() {
+    public void forceQuit() throws InterruptedException {
         this.loopThread.interrupt();
+        this.loopThread.join();
     }
-
 
     // PRIVATE UTILITIES //
 
@@ -133,6 +149,7 @@ public class GameLoop {
             }
         }
         System.out.println("Closing game loop");
+        idleThread = new Thread(idleTimeoutAction);
         idleThread.start();
     }
 

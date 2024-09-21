@@ -19,7 +19,7 @@ import java.util.Collections;
 
 @SpringBootTest
 public class GameLoopTest {
-    private final List<WebSocketSession> emptySesisons = Collections.emptyList();
+    private final List<WebSocketSession> emptySessisons = Collections.emptyList();
 
     @Test
     void test_isRunning_afterConstruction_returnsFalse() {
@@ -27,18 +27,19 @@ public class GameLoopTest {
     }
 
     @Test
-    void test_isRunning_loopStartedWithOnePlayer_returnsTrue() {
+    void test_isRunning_loopStartedWithOnePlayer_returnsTrue()
+    throws Exception {
         var gameLoop = new GameLoop().withTickDelay(0);
-        gameLoop.start(emptySesisons, getTestPlayers());
+        gameLoop.start(emptySessisons, getTestPlayers());
         assertTrue(gameLoop.isRunning());
-        gameLoop.interrupt();
+        gameLoop.forceQuit();
     }
 
     @Test
     void test_isRunning_afterPlayersCleared_returnsFalse() throws Exception  {
         var gameLoop = new GameLoop().withTickDelay(0);
         var players = getTestPlayers();
-        gameLoop.start(emptySesisons, players);
+        gameLoop.start(emptySessisons, players);
 
         players.clear();
         // gives the loop thread time to notice the change and stop execution
@@ -47,31 +48,28 @@ public class GameLoopTest {
     }
 
     @Test
-    void test_interrupt_activeLoop_stopsLoop() throws Exception {
+    void test_forceQuit_activeLoop_stopsLoop() throws Exception {
         var gameLoop = new GameLoop().withTickDelay(0);
-        gameLoop.start(emptySesisons, getTestPlayers());
+        gameLoop.start(emptySessisons, getTestPlayers());
 
-        // should be syncronous, but if this test starts failing
-        // it may be best to add 'Thread.sleep'
-        gameLoop.interrupt();
+        gameLoop.forceQuit();
         assertFalse(gameLoop.isRunning());
     }
 
     @Test
-    void test_onIdleTimeout_activeLoop_throwsException() {
+    void test_onIdleTimeout_activeLoop_throwsException() throws Exception {
         var gameLoop = new GameLoop().withTickDelay(0);
-        gameLoop.start(emptySesisons, getTestPlayers());
+        gameLoop.start(emptySessisons, getTestPlayers());
 
         assertThrows(Exception.class, () -> {
             gameLoop.onIdleTimeout(() -> {}, 0);
         });
-        gameLoop.interrupt();
+        gameLoop.forceQuit();
     }
 
     @Test
-    void test_onIdleTimeout_inactiveLoop_runsActionAfterLoopFinishes() throws Exception {
-        // debugging this one sucks
-
+    void test_onIdleTimeout_inactiveLoop_runsActionAfterLoopFinishes()
+    throws Exception {
         var gameLoop = new GameLoop().withTickDelay(0);
         var sharedList = new ArrayList<>();
 
@@ -82,10 +80,11 @@ public class GameLoopTest {
             }
         }, 0);
 
-        gameLoop.start(emptySesisons, getTestPlayers());
-        gameLoop.interrupt();
+        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.forceQuit();
         synchronized (sharedList) {
-            sharedList.wait();
+            // give up after 10ms so the test doesn't freeze
+            sharedList.wait(10);
             assertEquals(1, sharedList.size());
         }
     }
@@ -97,36 +96,50 @@ public class GameLoopTest {
 
         gameLoop.onIdleTimeout(() -> {
             sharedList.add("test item");
-        }, 10);
+        }, 50);
 
-        gameLoop.start(emptySesisons, getTestPlayers());
-        gameLoop.interrupt();
+        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.forceQuit();
         assertEquals(0, sharedList.size());
     }
 
     @Test
     void test_start_whileTimeoutActionWaiting_cancelsAction() throws Exception {
-        // this one sucks to debug too
-
         var gameLoop = new GameLoop().withTickDelay(0);
         var sharedList = new ArrayList<>();
 
         gameLoop.onIdleTimeout(() -> {
             sharedList.add("test item");
-            System.out.println("test item added");
         }, 50);
 
-        gameLoop.start(emptySesisons, getTestPlayers());
-        // sleeping forces the game thread to start
-        // (since this thread isn't doing anything)
-        Thread.sleep(10);
-        gameLoop.interrupt();
-        Thread.sleep(10);  // forces the game thread to stop
-        gameLoop.start(emptySesisons, getTestPlayers());
+        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.forceQuit();
+        gameLoop.start(emptySessisons, getTestPlayers());
 
         // gives enough time for the timeout action to execute, but it shouldn't
         Thread.sleep(100);
         assertEquals(0, sharedList.size());
+    }
+
+    @Test
+    void test_start_whileTimeoutActionWaiting_performsActionAfterLoopCloses()
+    throws Exception {
+        var gameLoop = new GameLoop().withTickDelay(0);
+        var sharedList = new ArrayList<>();
+
+        gameLoop.onIdleTimeout(() -> {
+            sharedList.add("test item");
+        }, 50);
+
+        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.forceQuit();
+
+        assertEquals(0, sharedList.size());
+        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.forceQuit();
+
+        Thread.sleep(100);
+        assertEquals(1, sharedList.size());
     }
 
     private Map<String, Player> getTestPlayers() {
