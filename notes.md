@@ -9,6 +9,7 @@
 - [ ] CI auto deploy server
 - [x] CI test Java server
 - [x] Java linter
+- [ ] Reduce redundant checks on pull request
 
 ## Server
 - [x] Define data types for client controls
@@ -16,19 +17,23 @@
 - [x] Build event loop for game
 - [x] Handle client events in game state
 - [x] Handle basic player movement
-- [ ] Fix build from producing `server` and `lib` folders
 - [x] Optimize event loop by tracking moved players (Java server)
 - [x] Rewrite server in Java
 - [ ] Fix concurrent printing issues
+- [x] Fix idle thread bug: throws IllegalThreadStateException when loop is closed multiple times
+- [ ] Add support for moving platforms
+- [ ] Add gravity
 
 ## Client
 - [x] Create JS canvas for game
 - [x] Build renderer for server messages
 - [x] Build controller to send user input to server
-- [ ] Create better-looking sprites
+- [ ] Add names to sprites
 - [x] Render player color
 - [x] Make rendered text bigger
 - [x] Render message in/out states
+- [ ] Add dark mode
+- [ ] Add rendering for platforms
 
 ## Other
 - [x] Setup `lib` folder for shared models

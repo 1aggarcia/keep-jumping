@@ -1,0 +1,29 @@
+name: Server Build and Unit Tests
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  test:
+    defaults:
+      run:
+        working-directory: server
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run Unit Tests
+        run: ./mvnw test
+
+      - name: Run Linter
+        run: ./mvnw checkstyle:check
