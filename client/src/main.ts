@@ -1,4 +1,4 @@
-import { setUpConnections } from "./connections/setup";
+import { setUpConnections } from "./networking/setup";
 import { setupGame } from "./game/setup";
 import { setUpMessaging } from "./messaging/setup";
 import { AppState } from "./state/appState";
