@@ -1,4 +1,4 @@
-name: Test Maven Project 
+name: Server Build and Unit Tests
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
   test:
     defaults:
       run:
-        working-directory: java-server
+        working-directory: server
 
     runs-on: ubuntu-latest
 

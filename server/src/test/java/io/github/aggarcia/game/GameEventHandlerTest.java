@@ -9,8 +9,6 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.aggarcia.game.GameConstants;
-import io.github.aggarcia.game.GameEventHandler;
 import io.github.aggarcia.players.Player;
 
 public class GameEventHandlerTest {

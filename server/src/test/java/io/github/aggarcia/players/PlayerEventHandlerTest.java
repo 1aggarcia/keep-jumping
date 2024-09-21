@@ -13,9 +13,6 @@ import org.springframework.web.socket.TextMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.github.aggarcia.players.PlayerControl;
-import io.github.aggarcia.players.PlayerControlUpdate;
-import io.github.aggarcia.players.PlayerEventHandler;
 import io.github.aggarcia.shared.SocketMessage;
 
 public class PlayerEventHandlerTest {

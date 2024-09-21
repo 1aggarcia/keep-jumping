@@ -9,8 +9,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
-import io.github.aggarcia.networking.ConnectionHandler;
-
 // naming convention: test_<unit>_<state>_<expected behavior>
 @SpringBootTest
 public class ConnectionHandlerTest {

@@ -17,10 +17,10 @@
 - [x] Build event loop for game
 - [x] Handle client events in game state
 - [x] Handle basic player movement
-- [ ] Fix build from producing `server` and `lib` folders
 - [x] Optimize event loop by tracking moved players (Java server)
 - [x] Rewrite server in Java
 - [ ] Fix concurrent printing issues
+- [ ] Fix idle thread bug: throws IllegalThreadStateException when loop is closed multiple times
 
 ## Client
 - [x] Create JS canvas for game

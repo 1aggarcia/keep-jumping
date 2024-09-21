@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import io.github.aggarcia.game.GameConstants;
-import io.github.aggarcia.players.Player;
 
 @SpringBootTest
 public class PlayerTest {

@@ -1,4 +1,4 @@
-name: Test Build
+name: Frontend Build
 
 on:
   push:
@@ -29,8 +29,3 @@ jobs:
           cd lib
           pnpm install
           pnpm run lint
-      - name: Server Build
-        run: |
-          cd legacy-ts-server
-          pnpm install
-          pnpm run build
