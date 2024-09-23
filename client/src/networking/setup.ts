@@ -13,6 +13,6 @@ export function setUpNetworking(state: AppState) {
     renderConnectionStatus(state);
 
     connectionElements.viteMode.text(
-        `Mode: ${import.meta.env.MODE} | Last Updated + ${LAST_UPDATED}`
+        `Mode: ${import.meta.env.MODE} | v${VERSION}`
     );
 }
