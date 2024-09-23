@@ -11,7 +11,8 @@ import { Context2D, GameUpdate, PlayerState } from "@lib/types";
 const BLACK_HEX = "#000000";
 const RED_HEX = "#ff0000";
 
-export function renderGame(context: Context2D, buttons: Button[], game: GameUpdate) {
+export function
+renderGame(context: Context2D, buttons: Button[], game: GameUpdate) {
     context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     game.players.forEach(renderPlayer(context));
     context.fillStyle = BLACK_HEX;

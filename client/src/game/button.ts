@@ -19,7 +19,7 @@ export class Button {
     private y = 0;
     private width = BUTTON_WIDTH;
     private height = BUTTON_HEIGHT;
-    
+
     // button state
     private clickHandler = () => {};
     public isHovering = false;
@@ -48,7 +48,9 @@ export class Button {
     }
 
     render(context: Context2D) {
-        context.roundRect(this.x, this.y, this.width, this.height, BORDER_RADIUS);
+        context.roundRect(
+            this.x, this.y, this.width, this.height, BORDER_RADIUS
+        );
         if (this.isHovering) {
             context.fillStyle = TEXT_COLOR;
             context.strokeStyle = FILL_COLOR;
@@ -75,7 +77,7 @@ export class Button {
             && pointX <= this.x + this.width
             && this.y <= pointY
             && pointY <= this.y + this.height
-        )
+        );
     }
 }
 
@@ -133,7 +135,7 @@ export function renderButtons(context: Context2D, buttons: Button[]) {
 
 /**
  * @param event JQuery mouse event
- * @param button 
+ * @param button
  * @returns `true` if the cursor position in the mouse event is inside the
  *  button based on the button properties, `false` otherwise
  */
@@ -144,10 +146,13 @@ function isCursorInsideButton(
     const canvas = event.target;
     const rect = canvas.getBoundingClientRect();
 
+    const horizontalScale = canvas.width / rect.width;
+    const verticalScale = canvas.width / rect.width;
+
     // needs to account for both offset based on the DOM element position,
     // and the scaling difference between the DOM and canvas
-    const relativeCursorX = (event.clientX - rect.left) * (canvas.width / rect.width);
-    const relativeCursorY = (event.clientY - rect.top) * (canvas.height / rect.height);
+    const relativeCursorX = (event.clientX - rect.left) * horizontalScale;
+    const relativeCursorY = (event.clientY - rect.top) * verticalScale;
 
     return button.isPointTouchingButton(relativeCursorX, relativeCursorY);
 }
