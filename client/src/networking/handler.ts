@@ -1,26 +1,9 @@
 import { getServerEndpoint } from "./config";
 import { AppState } from "../state/appState";
 import { connectionElements } from "./elements";
-import { clearGame } from "../game/renderer";
+import { clearCanvas, renderConnectionStatus } from "../game/renderer";
 import { handleGameUpdate } from "../game/handler";
-
-export function handleConnectBtnClick(state: AppState) {
-    console.log("Dispatcing connect btn click: ", state);
-    switch (state.connectedStatus) {
-        case "CLOSED":
-            connectToServer(state);
-            break;
-        case "OPEN":
-            disconnectFromServer(state);
-            break;
-        default:
-            console.warn(
-                "connectBtnClick handler called with bad state:"
-                + state.connectedStatus
-            );
-            return;
-    }
-}
+import { Button, subscribeButtonsToCursor } from "../canvas/button";
 
 export function sendToServer(state: AppState, message: string) {
     if (state.server == null) {
@@ -31,39 +14,34 @@ export function sendToServer(state: AppState, message: string) {
     renderMessageStats(state);
 }
 
-function connectToServer(state: AppState) {
-    state.connectedStatus = "CONNECTING";
+export function connectToServer(state: AppState) {
+    clearCanvas(state.context);
     state.messagesIn = 0;
     state.messagesOut = 0;
-    connectionElements.connectedStatus.text(state.connectedStatus);
-    connectionElements.connectBtn.prop("disabled", true);
+    state.connectedStatus = "CONNECTING";
+    renderConnectionStatus(state);
+    subscribeButtonsToCursor(state, []);  // to remove any buttons on the screen
 
     const server = new WebSocket(getServerEndpoint());
     state.server = server;
 
     server.onopen = () => {
+        clearCanvas(state.context);
         state.connectedStatus = "OPEN";
-        connectionElements.connectedStatus.text(state.connectedStatus);
+        renderConnectionStatus(state);
         connectionElements.errorBox.empty();
         connectionElements.connectedBox.show();
-        connectionElements.connectBtn
-            .text("Disconnect")
-            .prop("disabled", false);
+
+        const disconnectButton = new Button("Disconnect")
+            .positionRight()
+            .onClick(() => disconnectFromServer(state));
+        subscribeButtonsToCursor(state, [disconnectButton]);
     };
+    server.onclose = () => onServerClose(state);
     server.onerror = () => {
+        onServerClose(state);
         state.connectedStatus = "ERROR";
-        connectionElements.connectedStatus.text(state.connectedStatus);
         connectionElements.errorBox.append("<p>Connection error</p>");
-        connectionElements.connectBtn.prop("disabled", false);
-        connectionElements.connectedBox.hide();
-    };
-    server.onclose = () => {
-        state.connectedStatus = "CLOSED";
-        connectionElements.connectedStatus.text(state.connectedStatus);
-        connectionElements.connectBtn.text("Connect");
-        connectionElements.messagesBox.empty();
-        connectionElements.connectedBox.hide();
-        clearGame(state);
     };
     server.onmessage = (event) => {
         state.messagesIn++;
@@ -73,6 +51,19 @@ function connectToServer(state: AppState) {
         renderMessageStats(state);
         handleGameUpdate(message, state);
     };
+}
+
+function onServerClose(state: AppState) {
+    clearCanvas(state.context);
+    state.connectedStatus = "CLOSED";
+    renderConnectionStatus(state);
+    connectionElements.messagesBox.empty();
+    connectionElements.connectedBox.hide();
+
+    const connectButton = new Button("Connect")
+        .positionRight()
+        .onClick(() => connectToServer(state));
+    subscribeButtonsToCursor(state, [connectButton]);
 }
 
 function disconnectFromServer(state: AppState) {

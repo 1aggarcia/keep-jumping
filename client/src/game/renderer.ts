@@ -1,3 +1,5 @@
+import { renderButtons } from "../canvas/button";
+import { renderLabel } from "../canvas/label";
 import { AppState } from "../state/appState";
 import {
     GAME_HEIGHT,
@@ -7,18 +9,33 @@ import {
 } from "./constants";
 import { Context2D, GameUpdate, PlayerState } from "@lib/types";
 
-const BLACK_HEX = "#000000";
 const RED_HEX = "#ff0000";
 
-export function renderGame(context: Context2D, game: GameUpdate) {
-    context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+/**
+ * Does NOT mutate the app state.
+ *
+ * Renders the game to the canvas based on the current app state
+ * and game update passed in.
+ * @param state app state including the context to draw to
+ * @param game game state received from the server
+ */
+export function renderGame(state: AppState, game: GameUpdate) {
+    const { context, buttons } = state;
+
+    clearCanvas(context);
     game.players.forEach(renderPlayer(context));
-    context.fillStyle = BLACK_HEX;
-    context.font = "15px Arial";
-    context.textAlign = "left";
-    context.fillText(`Time: ${game.serverAge}`, 10, 20, GAME_WIDTH);
+    renderLabel(context, {
+        text: `Time: ${game.serverAge}`,
+        x: 10,
+        y: 20,
+        font: "15px Arial",
+    });
+    renderButtons(context, buttons);
+    renderConnectionStatus(state);
 }
 
+// TODO: change server to send game over update, then change this to use the
+// `renderLabel` helper
 export function renderGameOver(context: Context2D, reason: string) {
     context.fillStyle = RED_HEX;
     context.font = "bold 30px Arial";
@@ -26,9 +43,20 @@ export function renderGameOver(context: Context2D, reason: string) {
     context.fillText(`GAME OVER: ${reason}`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
 }
 
-export function clearGame(state: AppState) {
-    state?.context?.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+export function clearCanvas(context: Context2D) {
+    context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 }
+
+export function renderConnectionStatus(state: AppState) {
+    renderLabel(state.context, {
+        text: "Connection Status: " + state.connectedStatus,
+        x: GAME_WIDTH / 2,
+        y: 10,
+        textAlign: "center",
+        font: "12px Arial"
+    });
+}
+
 
 // who needs loops when you have currying
 const renderPlayer = (context: Context2D) => (player: PlayerState) => {

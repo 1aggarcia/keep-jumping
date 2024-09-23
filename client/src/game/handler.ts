@@ -1,17 +1,18 @@
 import { PlayerControl, PlayerControlUpdate, SocketMessage } from "@lib/types";
 import { AppState } from "../state/appState";
 import { renderGame, renderGameOver } from "./renderer";
-import { sendToServer } from "../connections/handler";
+import { sendToServer } from "../networking/handler";
+import { GAME_HEIGHT, GAME_WIDTH } from "./constants";
+
+const GAME_ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
 
 export function handleGameUpdate(message: string, state: AppState) {
-    if (state.context === null) return;
-
     const json: SocketMessage = JSON.parse(message);
     if (json.type === "gameUpdate") {
-        renderGame(state.context, json);
+        renderGame(state, json);
     }
     if (json.type === "gameJoinUpdate") {
-        renderGame(state.context, {
+        renderGame(state, {
             type: "gameUpdate",
             serverAge: json.serverAge,
             players: json.players
@@ -48,6 +49,29 @@ export function handleKeyUp(event: KeyboardEvent, state: AppState) {
     };
     sendToServer(state, JSON.stringify(update));
 }
+
+/**
+ * Scales the canvas passed in to the size of the screen, while keeping the
+ * aspect ratio of the game
+ * @param canvas should have the `width` and `height` attributes set to the
+ *  game size
+ */
+export function fitCanvasToWindow(canvas: JQuery<HTMLCanvasElement>) {
+    const screenAspectRatio = window.innerWidth / window.innerHeight;
+    const isGameShorterThanScreen = GAME_ASPECT_RATIO > screenAspectRatio;
+
+    let scaleFactor = 1;
+    if (isGameShorterThanScreen) {
+        scaleFactor = window.innerWidth / GAME_WIDTH;
+    } else {
+        scaleFactor = window.innerHeight / GAME_HEIGHT;
+    }
+
+    canvas
+        .css("width", GAME_WIDTH * scaleFactor)
+        .css("height", GAME_HEIGHT * scaleFactor);
+}
+
 
 function keyCodeToPlayerControl(code: string): PlayerControl | null {
     switch(code) {

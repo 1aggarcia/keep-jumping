@@ -1,4 +1,4 @@
-import { sendToServer } from "../connections/handler";
+import { sendToServer } from "../networking/handler";
 import { AppState } from "../state/appState";
 import { messagingElements } from "./elements";
 
