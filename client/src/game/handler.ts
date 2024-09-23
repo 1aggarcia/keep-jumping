@@ -7,14 +7,12 @@ import { GAME_HEIGHT, GAME_WIDTH } from "./constants";
 const GAME_ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
 
 export function handleGameUpdate(message: string, state: AppState) {
-    if (state.context === null) return;
-
     const json: SocketMessage = JSON.parse(message);
     if (json.type === "gameUpdate") {
-        renderGame(state.context, json);
+        renderGame(state.context, state.buttons, json);
     }
     if (json.type === "gameJoinUpdate") {
-        renderGame(state.context, {
+        renderGame(state.context, state.buttons, {
             type: "gameUpdate",
             serverAge: json.serverAge,
             players: json.players

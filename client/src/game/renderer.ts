@@ -1,3 +1,4 @@
+import { Button, renderButtons } from "./button";
 import { AppState } from "../state/appState";
 import {
     GAME_HEIGHT,
@@ -10,13 +11,14 @@ import { Context2D, GameUpdate, PlayerState } from "@lib/types";
 const BLACK_HEX = "#000000";
 const RED_HEX = "#ff0000";
 
-export function renderGame(context: Context2D, game: GameUpdate) {
+export function renderGame(context: Context2D, buttons: Button[], game: GameUpdate) {
     context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     game.players.forEach(renderPlayer(context));
     context.fillStyle = BLACK_HEX;
     context.font = "15px Arial";
     context.textAlign = "left";
     context.fillText(`Time: ${game.serverAge}`, 10, 20, GAME_WIDTH);
+    renderButtons(context, buttons);
 }
 
 export function renderGameOver(context: Context2D, reason: string) {
@@ -27,7 +29,7 @@ export function renderGameOver(context: Context2D, reason: string) {
 }
 
 export function clearGame(state: AppState) {
-    state?.context?.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+    state.context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 }
 
 // who needs loops when you have currying

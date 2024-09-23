@@ -3,13 +3,16 @@ import { GAME_HEIGHT, GAME_WIDTH } from "./constants";
 import { gameElements } from "./elements";
 import { fitCanvasToWindow, handleKeyDown, handleKeyUp } from "./handler";
 
-export function setupGame(state: AppState) {
-    const gameContext = gameElements.canvas[0].getContext("2d");
+const gameContext = gameElements.canvas[0].getContext("2d");
+
+export function getGameContext() {
     if (gameContext === null) {
         throw new ReferenceError("Canvas context is null");
     }
-    state.context = gameContext;
+    return gameContext;
+}
 
+export function setupGame(state: AppState) {
     // setting size with CSS distorts the canvas,
     // it must be done with the DOM attributes
     gameElements.canvas

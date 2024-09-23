@@ -10,6 +10,7 @@
 - [x] CI test Java server
 - [x] Java linter
 - [ ] Reduce redundant checks on pull request
+- [ ] Introduce unit tests for the frontend
 
 ## Server
 - [x] Define data types for client controls
@@ -34,6 +35,7 @@
 - [x] Render message in/out states
 - [ ] Add dark mode
 - [ ] Add rendering for platforms
+- [ ] Move all graphics inside the canvas
 
 ## Other
 - [x] Setup `lib` folder for shared models
