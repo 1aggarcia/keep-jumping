@@ -20,10 +20,11 @@
 - [x] Handle basic player movement
 - [x] Optimize event loop by tracking moved players (Java server)
 - [x] Rewrite server in Java
-- [ ] Fix concurrent printing issues
+- [x] Fix concurrent printing issues
 - [x] Fix idle thread bug: throws IllegalThreadStateException when loop is closed multiple times
 - [ ] Add support for moving platforms
 - [ ] Add gravity
+- [ ] Re-add support for game over
 
 ## Client
 - [x] Create JS canvas for game
@@ -35,7 +36,7 @@
 - [x] Render message in/out states
 - [ ] Add dark mode
 - [ ] Add rendering for platforms
-- [ ] Move all graphics inside the canvas
+- [*] Move all graphics inside the canvas
 
 ## Other
 - [x] Setup `lib` folder for shared models

@@ -1,8 +1,7 @@
 import { Context2D } from "@lib/types";
-import { gameElements } from "./elements";
+import { gameElements } from "../game/elements";
 import { AppState } from "../state/appState";
-import { clearGame } from "./renderer";
-import { GAME_HEIGHT, GAME_WIDTH } from "./constants";
+import { GAME_HEIGHT, GAME_WIDTH } from "../game/constants";
 
 const BUTTON_WIDTH = 90;
 const BUTTON_HEIGHT = 35;
@@ -91,7 +90,6 @@ export class Button {
  */
 export function subscribeButtonsToCursor(state: AppState, buttons: Button[]) {
     state.buttons = buttons;
-    clearGame(state);
     renderButtons(state.context, buttons);
 
     // the cursor might be hovering over a button and be a pointer

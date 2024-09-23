@@ -1,9 +1,9 @@
 import { getServerEndpoint } from "./config";
 import { AppState } from "../state/appState";
 import { connectionElements } from "./elements";
-import { clearGame } from "../game/renderer";
+import { clearCanvas, renderConnectionStatus } from "../game/renderer";
 import { handleGameUpdate } from "../game/handler";
-import { Button, subscribeButtonsToCursor } from "../game/button";
+import { Button, subscribeButtonsToCursor } from "../canvas/button";
 
 export function sendToServer(state: AppState, message: string) {
     if (state.server == null) {
@@ -15,18 +15,20 @@ export function sendToServer(state: AppState, message: string) {
 }
 
 export function connectToServer(state: AppState) {
-    state.connectedStatus = "CONNECTING";
+    clearCanvas(state.context);
     state.messagesIn = 0;
     state.messagesOut = 0;
-    connectionElements.connectedStatus.text(state.connectedStatus);
+    state.connectedStatus = "CONNECTING";
+    renderConnectionStatus(state);
     subscribeButtonsToCursor(state, []);  // to remove any buttons on the screen
 
     const server = new WebSocket(getServerEndpoint());
     state.server = server;
 
     server.onopen = () => {
+        clearCanvas(state.context);
         state.connectedStatus = "OPEN";
-        connectionElements.connectedStatus.text(state.connectedStatus);
+        renderConnectionStatus(state);
         connectionElements.errorBox.empty();
         connectionElements.connectedBox.show();
 
@@ -52,11 +54,11 @@ export function connectToServer(state: AppState) {
 }
 
 function onServerClose(state: AppState) {
+    clearCanvas(state.context);
     state.connectedStatus = "CLOSED";
-    connectionElements.connectedStatus.text(state.connectedStatus);
+    renderConnectionStatus(state);
     connectionElements.messagesBox.empty();
     connectionElements.connectedBox.hide();
-    clearGame(state);
 
     const connectButton = new Button("Connect")
         .positionRight()
