@@ -8,7 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public final class PlayerEventHandler {
-    private static final int PLAYER_SPEED = 10;
+    private static final int PLAYER_SPEED = 20;
     public record PlayerVelocity(
         int xVelocity,
         int yVelocity

@@ -29,7 +29,8 @@ export function renderGame(state: AppState, game: GameUpdate) {
         text: `Time: ${game.serverAge}`,
         x: 10,
         y: 20,
-        font: "15px Arial",
+        font: "30px Arial",
+
     });
     renderButtons(context, buttons);
     renderMetadata(state);
@@ -52,17 +53,17 @@ export function renderMetadata(state: AppState) {
     renderLabel(state.context, {
         text: `Mode: ${import.meta.env.MODE} | v${VERSION}`,
         x: GAME_WIDTH / 2,
-        y: GAME_HEIGHT - 10,
+        y: GAME_HEIGHT - 15,
         textAlign: "center",
-        font: "10px Arial",
+        font: "20px Arial",
         color: GREY_HEX,
     });
     renderLabel(state.context, {
         text: "Connection Status: " + state.connectedStatus,
         x: GAME_WIDTH / 2,
-        y: 10,
+        y: 20,
         textAlign: "center",
-        font: "12px Arial"
+        font: "25px Arial"
     });
 }
 
