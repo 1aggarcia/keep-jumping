@@ -2,7 +2,6 @@
   --divider-color: blue;
   --button-color: blue;
   --button-disabled: gray;
-  --game-bg: #eeeeee;
   --link: blue;
 }
 
@@ -66,9 +65,4 @@ pre {
 
 #error-box {
   color: red;
-}
-
-#game-box {
-  background-color: var(--game-bg);
-  border: 1px solid black;
 }

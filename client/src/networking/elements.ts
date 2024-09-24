@@ -5,5 +5,4 @@ export const connectionElements = {
     errorBox: $("#error-box"),
     messagesStats: $("#messages-stats"),
     messagesBox: $("#messages-box"),
-    viteMode: $("#vite-mode"),
 };

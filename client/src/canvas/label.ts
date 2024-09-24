@@ -8,11 +8,12 @@ export type LabelOptions = {
     y: number;
     textAlign?: CanvasTextAlign;
     font?: string;
+    color?: string;
 }
 
 export function renderLabel(context: Context2D, options: LabelOptions) {
     context.font = options.font ?? "15px Arial";
     context.textAlign = options.textAlign ?? "left";
-    context.fillStyle = BLACK_HEX;
+    context.fillStyle = options.color ?? BLACK_HEX;
     context.fillText(options.text, options.x, options.y);
 }

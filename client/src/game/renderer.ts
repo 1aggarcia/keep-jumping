@@ -10,6 +10,7 @@ import {
 import { Context2D, GameUpdate, PlayerState } from "@lib/types";
 
 const RED_HEX = "#ff0000";
+const GREY_HEX = "#585858";
 
 /**
  * Does NOT mutate the app state.
@@ -31,7 +32,7 @@ export function renderGame(state: AppState, game: GameUpdate) {
         font: "15px Arial",
     });
     renderButtons(context, buttons);
-    renderConnectionStatus(state);
+    renderMetadata(state);
 }
 
 // TODO: change server to send game over update, then change this to use the
@@ -47,7 +48,15 @@ export function clearCanvas(context: Context2D) {
     context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 }
 
-export function renderConnectionStatus(state: AppState) {
+export function renderMetadata(state: AppState) {
+    renderLabel(state.context, {
+        text: `Mode: ${import.meta.env.MODE} | v${VERSION}`,
+        x: GAME_WIDTH / 2,
+        y: GAME_HEIGHT - 10,
+        textAlign: "center",
+        font: "10px Arial",
+        color: GREY_HEX,
+    });
     renderLabel(state.context, {
         text: "Connection Status: " + state.connectedStatus,
         x: GAME_WIDTH / 2,
