@@ -2,8 +2,8 @@
   --divider-color: blue;
   --button-color: blue;
   --button-disabled: gray;
-  --game-bg: #eeeeee;
   --link: blue;
+  --input-border: #545454;
 }
 
 body {
@@ -19,8 +19,8 @@ body {
 
 button {
   border: 1px solid var(--button-color);
-  border-radius: 50px;
-  padding: 10px 15px;
+  border-radius: 5px;
+  padding: 5px 15px;
   font-size: 1rem;
   background-color: var(--button-color);
   color: white;
@@ -36,6 +36,13 @@ button:disabled {
   background-color: white;
   color: var(--button-disabled);
   cursor: default;
+}
+
+input[type=text] {
+  border: 1px solid var(--input-border);
+  border-radius: 5px;
+  padding: 5px;
+  font-size: 1rem;
 }
 
 a {
@@ -66,9 +73,4 @@ pre {
 
 #error-box {
   color: red;
-}
-
-#game-box {
-  background-color: var(--game-bg);
-  border: 1px solid black;
 }

@@ -12,8 +12,8 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 @AllArgsConstructor
 public final class Player {
-    public static final int PLAYER_WIDTH = 20;
-    public static final int PLAYER_HEIGHT = 20;
+    public static final int PLAYER_WIDTH = 40;
+    public static final int PLAYER_HEIGHT = 40;
     private static final int HEX_STRING_LEN = 6;
 
     private final String color;

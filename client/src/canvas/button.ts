@@ -3,10 +3,10 @@ import { gameElements } from "../game/elements";
 import { AppState } from "../state/appState";
 import { GAME_HEIGHT, GAME_WIDTH } from "../game/constants";
 
-const BUTTON_WIDTH = 90;
-const BUTTON_HEIGHT = 35;
+const BUTTON_WIDTH = 170;
+const BUTTON_HEIGHT = 50;
 
-const BORDER_RADIUS = 16;
+const BORDER_RADIUS = 5;
 
 const TEXT_COLOR = "white";
 const FILL_COLOR = "blue";
@@ -63,7 +63,7 @@ export class Button {
         context.fillStyle = this.isHovering ? FILL_COLOR : TEXT_COLOR;
         context.textAlign = "center";
         context.textBaseline = "middle";
-        context.font = "15px Arial";
+        context.font = "25px Arial";
 
         const textXPosition = this.x + (this.width / 2);
         const textYPosition = this.y + (this.height/ 2);

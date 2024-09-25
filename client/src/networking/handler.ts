@@ -1,7 +1,7 @@
 import { getServerEndpoint } from "./config";
 import { AppState } from "../state/appState";
 import { connectionElements } from "./elements";
-import { clearCanvas, renderConnectionStatus } from "../game/renderer";
+import { clearCanvas, renderMetadata } from "../game/renderer";
 import { handleGameUpdate } from "../game/handler";
 import { Button, subscribeButtonsToCursor } from "../canvas/button";
 
@@ -19,7 +19,7 @@ export function connectToServer(state: AppState) {
     state.messagesIn = 0;
     state.messagesOut = 0;
     state.connectedStatus = "CONNECTING";
-    renderConnectionStatus(state);
+    renderMetadata(state);
     subscribeButtonsToCursor(state, []);  // to remove any buttons on the screen
 
     const server = new WebSocket(getServerEndpoint());
@@ -28,7 +28,7 @@ export function connectToServer(state: AppState) {
     server.onopen = () => {
         clearCanvas(state.context);
         state.connectedStatus = "OPEN";
-        renderConnectionStatus(state);
+        renderMetadata(state);
         connectionElements.errorBox.empty();
         connectionElements.connectedBox.show();
 
@@ -56,7 +56,7 @@ export function connectToServer(state: AppState) {
 function onServerClose(state: AppState) {
     clearCanvas(state.context);
     state.connectedStatus = "CLOSED";
-    renderConnectionStatus(state);
+    renderMetadata(state);
     connectionElements.messagesBox.empty();
     connectionElements.connectedBox.hide();
 

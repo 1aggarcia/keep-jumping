@@ -10,6 +10,7 @@ import {
 import { Context2D, GameUpdate, PlayerState } from "@lib/types";
 
 const RED_HEX = "#ff0000";
+const GREY_HEX = "#585858";
 
 /**
  * Does NOT mutate the app state.
@@ -28,10 +29,11 @@ export function renderGame(state: AppState, game: GameUpdate) {
         text: `Time: ${game.serverAge}`,
         x: 10,
         y: 20,
-        font: "15px Arial",
+        font: "30px Arial",
+
     });
     renderButtons(context, buttons);
-    renderConnectionStatus(state);
+    renderMetadata(state);
 }
 
 // TODO: change server to send game over update, then change this to use the
@@ -47,13 +49,21 @@ export function clearCanvas(context: Context2D) {
     context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 }
 
-export function renderConnectionStatus(state: AppState) {
+export function renderMetadata(state: AppState) {
+    renderLabel(state.context, {
+        text: `Mode: ${import.meta.env.MODE} | v${VERSION}`,
+        x: GAME_WIDTH / 2,
+        y: GAME_HEIGHT - 15,
+        textAlign: "center",
+        font: "20px Arial",
+        color: GREY_HEX,
+    });
     renderLabel(state.context, {
         text: "Connection Status: " + state.connectedStatus,
         x: GAME_WIDTH / 2,
-        y: 10,
+        y: 20,
         textAlign: "center",
-        font: "12px Arial"
+        font: "25px Arial"
     });
 }
 
