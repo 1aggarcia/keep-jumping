@@ -4,7 +4,7 @@ name: Fly Deploy Server
 on:
   push:
     branches:
-      - main, dev  # temporarily enabling dev for debugging
+      - [main, dev]  # temporarily enabling dev for debugging
 jobs:
   deploy:
     defaults:
