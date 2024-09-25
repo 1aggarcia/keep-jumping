@@ -1,4 +1,4 @@
-name: Server Build and Unit Tests
+name: Test Server
 
 on:
   push:
