@@ -6,7 +6,7 @@
 - [x] CI testing
 - [x] Dev branch
 - [x] CI auto deploy client
-- [ ] CI auto deploy server
+- [x] CI auto deploy server
 - [x] CI test Java server
 - [x] Java linter
 - [ ] Reduce redundant checks on pull request
