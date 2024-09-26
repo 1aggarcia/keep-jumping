@@ -23,7 +23,7 @@
 - [x] Fix concurrent printing issues
 - [x] Fix idle thread bug: throws IllegalThreadStateException when loop is closed multiple times
 - [ ] Add support for moving platforms
-- [ ] Add gravity
+- [x] Add gravity
 - [ ] Re-add support for game over
 
 ## Client
