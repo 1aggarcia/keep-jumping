@@ -5,7 +5,7 @@ import java.util.Random;
 import io.github.aggarcia.game.GameConstants;
 
 /**
- * Read only model of a platform
+ * Read only model of a platform.
  */
 public record GamePlatform(
     int width,
@@ -28,7 +28,6 @@ public record GamePlatform(
     }
 
     /**
-     * 
      * @return a new platform moved downwards a constant amount
      */
     public GamePlatform toNextTick() {

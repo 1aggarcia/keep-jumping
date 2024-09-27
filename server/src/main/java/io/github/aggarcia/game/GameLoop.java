@@ -132,7 +132,7 @@ public class GameLoop {
 
             tickCount = response.nextTickCount();
             platforms = response.nextPlatformsState();
-            maybeAddPlatform(platforms, tickCount); 
+            maybeAddPlatform(platforms, tickCount);
             if (tickCount == 0) {
                 serverAge++;
             }
@@ -160,13 +160,13 @@ public class GameLoop {
 
     /**
      * Decides randomly to add or not to add
-     * a new platform to the passed in list
+     * a new platform to the passed in list.
      */
     private void maybeAddPlatform(List<GamePlatform> platforms, int tickCount) {
         // so that platforms are not too close to each other
         if (tickCount % 8 != 0) return;
         if (RandomUtil.getPositiveInt() % 3 != 0) return;
-    
+
         platforms.add(GamePlatform.createRandomPlatform());
     }
 

@@ -37,9 +37,9 @@ public final class GameEventHandler {
         // TODO: consider removing `isUpdateNeeded`
         // given that platforms always move, `isUpdateNeeded` is always true
 
-        // if (nextTickCount == 0) {
-        //     isUpdateNeeded = true;  // update needed to refresh the server age
-        // }
+        //if (nextTickCount == 0) {
+        //    isUpdateNeeded = true;  // update needed to refresh the server age
+        //}
 
         for (GamePlatform platform : platforms) {
             var nextPlatform = platform.toNextTick();
