@@ -6,20 +6,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.socket.WebSocketSession;
 
 import io.github.aggarcia.players.Player;
 
 import java.util.Map;
-import java.util.List;
 import java.util.HashMap;
 import java.util.ArrayList;
-import java.util.Collections;
 
 @SpringBootTest
 public class GameLoopTest {
-    private final List<WebSocketSession> emptySessisons = Collections.emptyList();
+    @Mock
+    private WebSocketSession mockSession;
 
     @Test
     void test_isRunning_afterConstruction_returnsFalse() {
@@ -30,7 +30,7 @@ public class GameLoopTest {
     void test_isRunning_loopStartedWithOnePlayer_returnsTrue()
     throws Exception {
         var gameLoop = new GameLoop().withTickDelay(0);
-        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.start(getTestPlayers());
         assertTrue(gameLoop.isRunning());
         gameLoop.forceQuit();
     }
@@ -39,7 +39,7 @@ public class GameLoopTest {
     void test_isRunning_afterPlayersCleared_returnsFalse() throws Exception  {
         var gameLoop = new GameLoop().withTickDelay(0);
         var players = getTestPlayers();
-        gameLoop.start(emptySessisons, players);
+        gameLoop.start(players);
 
         players.clear();
         // gives the loop thread time to notice the change and stop execution
@@ -50,7 +50,7 @@ public class GameLoopTest {
     @Test
     void test_forceQuit_activeLoop_stopsLoop() throws Exception {
         var gameLoop = new GameLoop().withTickDelay(0);
-        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.start(getTestPlayers());
 
         gameLoop.forceQuit();
         assertFalse(gameLoop.isRunning());
@@ -59,7 +59,7 @@ public class GameLoopTest {
     @Test
     void test_onIdleTimeout_activeLoop_throwsException() throws Exception {
         var gameLoop = new GameLoop().withTickDelay(0);
-        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.start(getTestPlayers());
 
         assertThrows(Exception.class, () -> {
             gameLoop.onIdleTimeout(() -> {}, 0);
@@ -80,7 +80,7 @@ public class GameLoopTest {
             }
         }, 0);
 
-        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.start(getTestPlayers());
         gameLoop.forceQuit();
         synchronized (sharedList) {
             // give up after 10ms so the test doesn't freeze
@@ -98,7 +98,7 @@ public class GameLoopTest {
             sharedList.add("test item");
         }, 50);
 
-        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.start(getTestPlayers());
         gameLoop.forceQuit();
         assertEquals(0, sharedList.size());
     }
@@ -112,9 +112,9 @@ public class GameLoopTest {
             sharedList.add("test item");
         }, 50);
 
-        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.start(getTestPlayers());
         gameLoop.forceQuit();
-        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.start(getTestPlayers());
 
         // gives enough time for the timeout action to execute, but it shouldn't
         Thread.sleep(100);
@@ -131,18 +131,20 @@ public class GameLoopTest {
             sharedList.add("test item");
         }, 50);
 
-        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.start(getTestPlayers());
         gameLoop.forceQuit();
 
         assertEquals(0, sharedList.size());
-        gameLoop.start(emptySessisons, getTestPlayers());
+        gameLoop.start(getTestPlayers());
         gameLoop.forceQuit();
 
         Thread.sleep(100);
         assertEquals(1, sharedList.size());
     }
 
-    private Map<String, Player> getTestPlayers() {
-        return new HashMap<>(Map.of("", Player.createRandomPlayer()));
+    private Map<WebSocketSession, Player> getTestPlayers() {
+        return new HashMap<>(
+            Map.of(mockSession, Player.createRandomPlayer())
+        );
     }
 }

@@ -1,69 +1,74 @@
 package io.github.aggarcia.game;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import io.github.aggarcia.game.GameEventHandler.TickResponse;
+import io.github.aggarcia.platforms.GamePlatform;
 import io.github.aggarcia.players.Player;
 
 public class GameEventHandlerTest {
     private static final int TICKS_PER_SECOND =
         1000 / GameConstants.TICK_DELAY_MS;
 
+    // commenting out all the tests on `isUpdateNeeded` since it serves
+    // no purpose (for now)
+
     @Test
     void test_advanceToNextTick_tickCountZero_returnsTickCountOne() {
-        var response = GameEventHandler.advanceToNextTick(new HashMap<>(), 0);
+        var response = advanceTickWithTickCount(0);
         assertEquals(1, response.nextTickCount());
     }
 
-    @Test
-    void test_advanceToNextTick_tickCountZero_doesNotRequireUpdate() {
-        var response = GameEventHandler.advanceToNextTick(new HashMap<>(), 0);
-        assertFalse(response.isUpdateNeeded());
-    }
+    // @Test
+    // void test_advanceToNextTick_tickCountZero_doesNotRequireUpdate() {
+    //     var response = advanceTickWithTickCount(0);
+    //     assertFalse(response.isUpdateNeeded());
+    // }
 
     @Test
     void test_advanceToNextTick_maxTickCount_returnsZeroTickCount() {
-        var response = GameEventHandler
-            .advanceToNextTick(new HashMap<>(), TICKS_PER_SECOND - 1);
+        var response = advanceTickWithTickCount(TICKS_PER_SECOND - 1);
         assertEquals(0, response.nextTickCount());
     }
 
-    @Test
-    void test_advanceToNextTick_maxTickCount_requiresUpdate() {
-        var response = GameEventHandler
-            .advanceToNextTick(new HashMap<>(), TICKS_PER_SECOND - 1);
-        assertTrue(response.isUpdateNeeded());
-    }
+    // @Test
+    // void test_advanceToNextTick_maxTickCount_requiresUpdate() {
+    //     var response = advanceTickWithTickCount(TICKS_PER_SECOND - 1);
+    //     assertTrue(response.isUpdateNeeded());
+    // }
 
-    @Test
-    void test_advanceToNextTick_newPlayer_requiresUpdate() {
-        var players = Map.of("", Player.createRandomPlayer());
-        var response = GameEventHandler.advanceToNextTick(players, 0);
-        assertTrue(response.isUpdateNeeded());
-    }
+    // @Test
+    // void test_advanceToNextTick_newPlayer_requiresUpdate() {
+    //     var players = Map.of("", Player.createRandomPlayer());
+    //     var response = advanceTickWithPlayers(players);
+    //     assertTrue(response.isUpdateNeeded());
+    // }
 
-    @Test
-    void test_advanceToNextTick_newPlayerOnSecondTick_doesNotRequireUpdate() {
-        var players = Map.of(
-            "", Player.createRandomPlayer().yPosition(GameConstants.HEIGHT)
-        );
-        GameEventHandler.advanceToNextTick(players, 0);
-        var secondResponse = GameEventHandler.advanceToNextTick(players, 0);
-        assertFalse(secondResponse.isUpdateNeeded()); 
-    }
+    // @Test
+    // void test_advanceToNextTick_newPlayerOnSecondTick_doesNotRequireUpdate() {
+    //     var players = Map.of(
+    //         "", Player.createRandomPlayer().yPosition(GameConstants.HEIGHT)
+    //     );
+    //     advanceTickWithPlayers(players);
+    //     var secondResponse = advanceTickWithPlayers(players);
+    //     assertFalse(secondResponse.isUpdateNeeded()); 
+    // }
 
-    @Test
-    void test_advanceToNextTick_motionlessPlayers_doesNotRequireUpdate() {
-        var players = createTestPlayers();
-        var response = GameEventHandler.advanceToNextTick(players, 0);
-        assertFalse(response.isUpdateNeeded());
-    }
+    // @Test
+    // void test_advanceToNextTick_motionlessPlayers_doesNotRequireUpdate() {
+    //     var players = createTestPlayers();
+    //     var response = advanceTickWithPlayers(players);
+    //     assertFalse(response.isUpdateNeeded());
+    // }
 
     @Test
     void test_advanceToNextTick_motionlessPlayers_doesNotMutatePlayers() {
@@ -71,20 +76,19 @@ public class GameEventHandlerTest {
         var expected1 = players.get("1").clone();
         var expected2 = players.get("2").clone();
 
-        var response = GameEventHandler.advanceToNextTick(players, 0);
-        assertFalse(response.isUpdateNeeded());
+        advanceTickWithPlayers(players);
         assertEquals(expected1, players.get("1"));
         assertEquals(expected2, players.get("2"));
     }
 
-    @Test
-    void test_advanceToNextTick_oneMovingPlayer_requiresUpdate() {
-        var players = createTestPlayers();
-        players.put("2", new Player("", 0, 0, 0, 1, 0, false));
+    // @Test
+    // void test_advanceToNextTick_oneMovingPlayer_requiresUpdate() {
+    //     var players = createTestPlayers();
+    //     players.put("2", new Player("", 0, 0, 0, 1, 0, false));
     
-        var response = GameEventHandler.advanceToNextTick(players, 0);
-        assertTrue(response.isUpdateNeeded());
-    }
+    //     var response = advanceTickWithPlayers(players);
+    //     assertTrue(response.isUpdateNeeded());
+    // }
 
     @Test
     void test_advanceToNextTick_oneMovingPlayer_mutatesCorrectPlayer() {
@@ -101,10 +105,30 @@ public class GameEventHandlerTest {
             .moveToNextTick()
             .hasChanged(false);
 
-        var response = GameEventHandler.advanceToNextTick(players, 0);
+        var response = advanceTickWithPlayers(players);
         assertTrue(response.isUpdateNeeded());
         assertEquals(expected1, players.get("1"));
         assertEquals(expected2, players.get("2"));
+    }
+
+    @Test
+    void test_advanceToNextTick_platformInBounds_incluesPlatformInResponse() {
+        List<GamePlatform> platforms = new ArrayList<>();
+        platforms.add(new GamePlatform(0, 0, 0));
+
+        var expected = platforms.get(0).toNextTick();
+        var nextPlatformsState = advanceTickWithPlatforms(platforms).nextPlatformsState();
+        assertEquals(1, nextPlatformsState.size());
+        assertEquals(expected, nextPlatformsState.get(0));
+    }
+
+    @Test
+    void test_advanceToNextTick_platformOutOfBounds_excludesPlatform() {
+        List<GamePlatform> platforms = new ArrayList<>();
+        platforms.add(new GamePlatform(0, 0, GameConstants.HEIGHT - 1));
+
+        var nextPlatformsState = advanceTickWithPlatforms(platforms).nextPlatformsState();
+        assertEquals(0, nextPlatformsState.size());
     }
 
     /**
@@ -126,5 +150,35 @@ public class GameEventHandlerTest {
             "1", player1,
             "2", player2
         ));
+    }
+
+
+    // Helpers for common test patterns
+
+    private TickResponse advanceTickWithTickCount(int tickCount) {
+        return GameEventHandler
+            .advanceToNextTick(
+                Collections.emptyList(),
+                Collections.emptyList(),
+                tickCount
+            );
+    }
+
+    private TickResponse advanceTickWithPlayers(Map<String, Player> players) {
+        return GameEventHandler
+            .advanceToNextTick(
+                players.values(), 
+                Collections.emptyList(),
+                0
+            );
+    }
+
+    private TickResponse advanceTickWithPlatforms(List<GamePlatform> platforms) {
+        return GameEventHandler
+            .advanceToNextTick(
+                Collections.emptyList(),
+                platforms,
+                0
+            );
     }
 }

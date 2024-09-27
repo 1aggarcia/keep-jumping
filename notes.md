@@ -22,8 +22,10 @@
 - [x] Rewrite server in Java
 - [x] Fix concurrent printing issues
 - [x] Fix idle thread bug: throws IllegalThreadStateException when loop is closed multiple times
-- [ ] Add support for moving platforms
+- [x] Add support for moving platforms
 - [x] Add gravity
+- [ ] Add collisions for platforms
+- [ ] Include more intelligent platform generation, based on location of nearby platforms
 - [ ] Re-add support for game over
 
 ## Client
@@ -35,12 +37,14 @@
 - [x] Make rendered text bigger
 - [x] Render message in/out states
 - [ ] Add dark mode
-- [ ] Add rendering for platforms
+- [x] Add rendering for platforms
 - [*] Move all graphics inside the canvas
+- [ ] Deprecate "GameJoinUpdate" message
 
 ## Other
 - [x] Setup `lib` folder for shared models
 - [ ] Find a way to share constants
+- [ ] Reduce data sent over the network
 
 # CLI
 - Build docker image: `docker build -t websocket-game .`
