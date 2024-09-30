@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public class ConnectionHandler extends TextWebSocketHandler {
     private static final int INSTANCE_ID = RandomUtil.getPositiveInt() % 999;
-    private static final int IDLE_TIMEOUT_SECONDS = 5 * 60;  // 5 minutes
+    private static final int IDLE_TIMEOUT_SECONDS = 15 * 60;  // 15 minutes
 
     // Game state
     private final Map<WebSocketSession, Player> sessions =
