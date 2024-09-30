@@ -1,8 +1,9 @@
 package io.github.aggarcia.game;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
+import io.github.aggarcia.platforms.GamePlatform;
 import io.github.aggarcia.players.Player;
 import io.github.aggarcia.players.PlayerState;
 import io.github.aggarcia.shared.SocketMessage;
@@ -11,7 +12,8 @@ public record GameUpdate(
     /** Should always be GAME_UPDATE */
     SocketMessage type,
     int serverAge,
-    List<PlayerState> players
+    List<PlayerState> players,
+    List<GamePlatform> platforms
 ) {
     /**
      * Factory function to create a game update message based on
@@ -21,8 +23,12 @@ public record GameUpdate(
      * @return new instance of GameUpdate
      */
     public static
-    GameUpdate fromGameState(Map<String, Player> players, int serverAge) {
-        List<PlayerState> playersState = players.values()
+    GameUpdate fromGameState(
+        Collection<Player> players,
+        Collection<GamePlatform> platforms,
+        int serverAge
+    ) {
+        List<PlayerState> playersState = players
             .stream()
             .map(player -> player.toPlayerState())
             .toList();
@@ -30,7 +36,8 @@ public record GameUpdate(
         return new GameUpdate(
             SocketMessage.GAME_UPDATE,
             serverAge,
-            playersState
+            playersState,
+            platforms.stream().toList()
         );
     }
 }

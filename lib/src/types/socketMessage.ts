@@ -5,7 +5,7 @@
  * "Player" updates from client to server
  */
 
-import { PlayerControl, PlayerState } from ".";
+import { GamePlatform, PlayerControl, PlayerState } from ".";
 
 export type SocketMessage =
     | GameUpdate
@@ -19,6 +19,7 @@ export type GameUpdate = {
     type: "gameUpdate";
     serverAge: number;
     players: PlayerState[];
+    platforms: GamePlatform[];
 };
 
 export type GameJoinUpdate = {
@@ -26,6 +27,7 @@ export type GameJoinUpdate = {
     playerId: string;
     serverAge: number;
     players: PlayerState[];
+    platforms: GamePlatform[];
 };
 
 export type GameOverUpdate = {

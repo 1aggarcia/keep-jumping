@@ -71,39 +71,117 @@ public class PlayerTest {
     }
 
     @Test
-    void test_moveToNextTick_noVelocity_doesNothing() {
+    void test_moveToNextTick_noXVelocity_doesNotChangeXPhysics() {
         var testPlayer = Player.createRandomPlayer();
-        testPlayer.hasChanged(false);
         var expectedX = testPlayer.xPosition();
-        var expectedY = testPlayer.yPosition();
 
         testPlayer.moveToNextTick();
         assertEquals(expectedX, testPlayer.xPosition());
-        assertEquals(expectedY, testPlayer.yPosition());
+        assertEquals(0, testPlayer.xVelocity());
+    }
+
+    @Test
+    void test_moveToNextTick_touchingGround_doesNotChangeYPhysics() {
+        var testPlayer = Player.createRandomPlayer()
+            .hasChanged(false)
+            .yPosition(Player.MAX_PLAYER_Y);
+
+        testPlayer.moveToNextTick();
         assertFalse(testPlayer.hasChanged());
+        assertEquals(Player.MAX_PLAYER_Y, testPlayer.yPosition());
+        assertEquals(0, testPlayer.yVelocity());
     }
 
     @Test
-    void test_moveToNextTick_nonZeroVelocity_changesPosition() {
-        var testPlayer = new Player("", 0, 10, 31, 4, 33, false);
-        var expectedX = testPlayer.xPosition() + testPlayer.xVelocity();
-        var expectedY = testPlayer.yPosition() + testPlayer.yVelocity();
+    void test_moveToNextTick_notTouchingGround_appliesGravityToYPhysics() {
+        var testPlayer = Player.createRandomPlayer()
+            .hasChanged(false)
+            .yPosition(0)
+            .yVelocity(15);
+        int expectedY = testPlayer.yVelocity() + Player.GRAVITY;
 
         testPlayer.moveToNextTick();
-        assertEquals(expectedX, testPlayer.xPosition());
-        assertEquals(expectedY, testPlayer.yPosition());
         assertTrue(testPlayer.hasChanged());
+        assertEquals(expectedY, testPlayer.yPosition());
+        assertEquals(expectedY, testPlayer.yVelocity());
     }
 
     @Test
-    void test_moveToNextTick_minPositionAndNegativeVelocity_doesNothing() {
-        var testPlayer = new Player("", 0, 0, 0, -1, -1, false);
+    void test_moveToNextTick_collisionWithBottom_stopsPlayerOnBottom() {
+        var testPlayer = Player.createRandomPlayer()
+            .hasChanged(false)
+            .yPosition(Player.MAX_PLAYER_Y - 1)
+            .yVelocity(150);
+
+        testPlayer.moveToNextTick();
+        assertTrue(testPlayer.hasChanged());
+        assertEquals(0, testPlayer.yVelocity());
+        assertEquals(Player.MAX_PLAYER_Y, testPlayer.yPosition());
+    }
+    
+    @Test
+    void test_moveToNextTick_collisionWithTop_stopsPlayerOnTop() {
+        var testPlayer = Player.createRandomPlayer()
+            .hasChanged(false)
+            .yPosition(1);
+        // send the player past the top
+        testPlayer.yVelocity(-150);
+
+        testPlayer.moveToNextTick();
+        assertTrue(testPlayer.hasChanged());
+        assertEquals(0, testPlayer.yVelocity());
+        assertEquals(0, testPlayer.yPosition());
+    }
+
+    @Test
+    void test_moveToNextTick_collisionWithLeft_stopsPlayerOnLeft() {
+        var testPlayer = Player.createRandomPlayer()
+            .hasChanged(false)
+            .xPosition(1)
+            .xVelocity(-150);
+
+        testPlayer.moveToNextTick();
+        assertTrue(testPlayer.hasChanged());
+        assertEquals(0, testPlayer.xVelocity());
+        assertEquals(0, testPlayer.xPosition());
+    }
+
+    @Test
+    void test_moveToNextTick_collisionWithRight_stopsPlayerOnRight() {
+        var testPlayer = Player.createRandomPlayer()
+            .hasChanged(false)
+            .xPosition(Player.MAX_PLAYER_X - 1)
+            .xVelocity(150);
+
+        testPlayer.moveToNextTick();
+        assertTrue(testPlayer.hasChanged());
+        assertEquals(0, testPlayer.xVelocity());
+        assertEquals(Player.MAX_PLAYER_X, testPlayer.xPosition());
+    }
+
+    @Test
+    void test_moveToNextTick_nonZeroXVelocity_changesXPosition() {
+        var testPlayer = new Player("", 0, 10, 31, 4, 0, false);
+        var expectedX = testPlayer.xPosition() + testPlayer.xVelocity();
+
+        testPlayer.moveToNextTick();
+        assertTrue(testPlayer.hasChanged());
+        assertEquals(expectedX, testPlayer.xPosition());
+    }
+
+    @Test
+    void test_moveToNextTick_minXPositionAndNegativeXVelocity_doesNothing() {
+        var testPlayer = Player.createRandomPlayer()
+            .hasChanged(false)
+            .xPosition(0)
+            .xVelocity(-1)
+            // so that gravity doesnt cause problems
+            .yPosition(Player.MAX_PLAYER_Y);
+
         var expectedX = testPlayer.xPosition();
-        var expectedY = testPlayer.yPosition();
 
         testPlayer.moveToNextTick();
         assertEquals(expectedX, testPlayer.xPosition());
-        assertEquals(expectedY, testPlayer.yPosition());
         assertFalse(testPlayer.hasChanged());
     }
 
@@ -112,8 +190,8 @@ public class PlayerTest {
         var testPlayer = new Player(
             "",
             0,
-            GameConstants.WIDTH,
-            GameConstants.HEIGHT,
+            Player.MAX_PLAYER_X,
+            Player.MAX_PLAYER_Y,
             1,
             1,
            false 

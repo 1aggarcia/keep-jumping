@@ -7,10 +7,13 @@ import {
     PLAYER_HEIGHT,
     PLAYER_WIDTH
 } from "./constants";
-import { Context2D, GameUpdate, PlayerState } from "@lib/types";
+import { Context2D, GameUpdate, GamePlatform, PlayerState } from "@lib/types";
 
 const RED_HEX = "#ff0000";
 const GREY_HEX = "#585858";
+
+const PLATFORM_HEIGHT = 30;
+const PLATFORM_COLOR = "green";
 
 /**
  * Does NOT mutate the app state.
@@ -24,7 +27,8 @@ export function renderGame(state: AppState, game: GameUpdate) {
     const { context, buttons } = state;
 
     clearCanvas(context);
-    game.players.forEach(renderPlayer(context));
+    game.platforms.forEach(platform => renderPlatform(context, platform));
+    game.players.forEach(player => renderPlayer(context, player));
     renderLabel(context, {
         text: `Time: ${game.serverAge}`,
         x: 10,
@@ -67,12 +71,22 @@ export function renderMetadata(state: AppState) {
     });
 }
 
+function renderPlatform(context: Context2D, platform: GamePlatform) {
+    const { x, y, width } = platform;
+    if (x > GAME_WIDTH || y > GAME_HEIGHT) {
+        console.error(`Sprite position out of bounds: (${x}, ${y})`);
+        return;
+    }
+    context.fillStyle = PLATFORM_COLOR;
+    context.fillRect(x, y, width, PLATFORM_HEIGHT);
+}
 
-// who needs loops when you have currying
-const renderPlayer = (context: Context2D) => (player: PlayerState) => {
+
+function renderPlayer(context: Context2D, player: PlayerState) {
     const { x, y } = player;
     if (x > GAME_WIDTH || y > GAME_HEIGHT) {
-        throw new RangeError(`Sprite position out of bounds: (${x}, ${y})`);
+        console.error(`Sprite position out of bounds: (${x}, ${y})`);
+        return;
     }
     context.fillStyle = player.color;
     context.fillRect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT);

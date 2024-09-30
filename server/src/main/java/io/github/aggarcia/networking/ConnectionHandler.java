@@ -15,8 +15,6 @@ import io.github.aggarcia.players.PlayerEventHandler;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -27,14 +25,10 @@ import java.util.Map;
  */
 public class ConnectionHandler extends TextWebSocketHandler {
     private static final int INSTANCE_ID = RandomUtil.getPositiveInt() % 999;
-    private static final int IDLE_TIMEOUT_SECONDS = 5 * 60;  // 5 minutes
-
-    // Server state
-    private final Set<WebSocketSession> sessions =
-        Collections.synchronizedSet(new HashSet<>());
+    private static final int IDLE_TIMEOUT_SECONDS = 15 * 60;  // 15 minutes
 
     // Game state
-    private final Map<String, Player> players =
+    private final Map<WebSocketSession, Player> sessions =
         Collections.synchronizedMap(new HashMap<>());
 
     // Game loop state
@@ -52,11 +46,10 @@ public class ConnectionHandler extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
-        sessions.add(session);
         var newPlayer = Player.createRandomPlayer();
-        players.put(session.getId(), newPlayer);
+        sessions.put(session, newPlayer);
         if (!gameLoop.isRunning()) {
-            gameLoop.start(sessions, players);
+            gameLoop.start(sessions);
         }
 
         // Entire string needs to be printed at once since the console is
@@ -77,11 +70,7 @@ public class ConnectionHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(
         @NonNull WebSocketSession session, @NonNull CloseStatus status
     ) {
-        if (!sessions.remove(session)) {
-            System.err.println(
-                "No session was saved with id " + session.getId());
-        }
-        if (players.remove(session.getId()) == null) {
+        if (sessions.remove(session) == null) {
             System.err.println(
                 "No player was saved for session " + session.getId());
         }
@@ -104,7 +93,7 @@ public class ConnectionHandler extends TextWebSocketHandler {
         @NonNull WebSocketSession session, @NonNull TextMessage message
     ) {
         try {
-            var player = players.get(session.getId());
+            var player = sessions.get(session);
             if (player == null) {
                 System.err.println("Player not found, id: " + session.getId());
                 return;
@@ -121,13 +110,13 @@ public class ConnectionHandler extends TextWebSocketHandler {
      * @return read only list of active web socket sessions
      */
     public List<WebSocketSession> sessions() {
-        return this.sessions.stream().toList();
+        return this.sessions.keySet().stream().toList();
     }
 
     /**
      * @return read only list of players
      */
     public List<Player> players() {
-        return this.players.values().stream().toList();
+        return this.sessions.values().stream().toList();
     }
 }

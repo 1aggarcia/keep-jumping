@@ -13,9 +13,8 @@ export function handleGameUpdate(message: string, state: AppState) {
     }
     if (json.type === "gameJoinUpdate") {
         renderGame(state, {
+            ...json,
             type: "gameUpdate",
-            serverAge: json.serverAge,
-            players: json.players
         });
     }
     if (json.type === "gameOverUpdate") {

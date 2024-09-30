@@ -2,7 +2,9 @@ package io.github.aggarcia.game;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -10,6 +12,8 @@ import org.springframework.web.socket.WebSocketSession;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import ch.qos.logback.core.testUtil.RandomUtil;
+import io.github.aggarcia.platforms.GamePlatform;
 import io.github.aggarcia.players.Player;
 
 /**
@@ -85,18 +89,14 @@ public class GameLoop {
     /**
      * Begin the game loop with a reference to the players and open sessions.
      * @param sessions - all open client sessions
-     * @param players - all players
      * @return true if a new loop was started, false if a loop was already
      * running and no new loop was created
      */
-    public boolean start(
-        Collection<WebSocketSession> sessions,
-        Map<String, Player> players
-    ) {
+    public boolean start(Map<WebSocketSession, Player> sessions) {
         if (this.isRunning()) {
             return false;
         }
-        this.loopThread = new Thread(() -> runGameLoop(sessions, players));
+        this.loopThread = new Thread(() -> runGameLoop(sessions));
         this.loopThread.start();
         return true;
     }
@@ -114,30 +114,35 @@ public class GameLoop {
     /**
      * Internal thread function for the game loop.
      * @param sessions - collection of all sessions to broadcast to
-     * @param players - reference to player state
      */
-    private void runGameLoop(
-        Collection<WebSocketSession> sessions,
-        Map<String, Player> players
-    ) {
+    private void runGameLoop(Map<WebSocketSession, Player> sessions) {
+        final var players = sessions.values();
+
         int serverAge = 0;  // in seconds
         int tickCount = 0;
+        List<GamePlatform> platforms = new ArrayList<>();
 
         System.out.println("Starting game loop");
         if (idleThread.isAlive()) {
             idleThread.interrupt();
         }
-        while (players.size() > 0) {
-            var response =
-                GameEventHandler.advanceToNextTick(players, tickCount);
+        while (sessions.size() > 0) {
+            var response = GameEventHandler
+                .advanceToNextTick(players, platforms, tickCount);
 
             tickCount = response.nextTickCount();
+            platforms = response.nextPlatformsState();
+            maybeAddPlatform(platforms, tickCount);
             if (tickCount == 0) {
                 serverAge++;
             }
             if (response.isUpdateNeeded()) try {
-                var update = GameUpdate.fromGameState(players, serverAge);
-                broadcast(sessions, update);
+                var update = GameUpdate.fromGameState(
+                    players,
+                    platforms,
+                    serverAge
+                );
+                broadcast(sessions.keySet(), update);
             } catch (JsonProcessingException e) {
                 System.err.println(e);
             }
@@ -151,6 +156,18 @@ public class GameLoop {
         System.out.println("Closing game loop");
         idleThread = new Thread(idleTimeoutAction);
         idleThread.start();
+    }
+
+    /**
+     * Decides randomly to add or not to add
+     * a new platform to the passed in list.
+     */
+    private void maybeAddPlatform(List<GamePlatform> platforms, int tickCount) {
+        // so that platforms are not too close to each other
+        if (tickCount % 8 != 0) return;
+        if (RandomUtil.getPositiveInt() % 3 != 0) return;
+
+        platforms.add(GamePlatform.createRandomPlatform());
     }
 
     /**

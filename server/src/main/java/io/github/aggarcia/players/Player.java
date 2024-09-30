@@ -12,8 +12,15 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 @AllArgsConstructor
 public final class Player {
-    public static final int PLAYER_WIDTH = 40;
+    protected static final int PLAYER_WIDTH = 40;
     public static final int PLAYER_HEIGHT = 40;
+    protected static final int GRAVITY = 2;
+
+    public static final int
+        MAX_PLAYER_X = GameConstants.WIDTH - PLAYER_WIDTH;
+    public static final int
+        MAX_PLAYER_Y = GameConstants.HEIGHT - PLAYER_HEIGHT;
+
     private static final int HEX_STRING_LEN = 6;
 
     private final String color;
@@ -71,27 +78,41 @@ public final class Player {
     }
 
     /**
-     * Changes the players position to that of the next tick
-     * according to the player velocity.
+     * Changes the players position to that of the next tick according to the
+     * player velocity. Applies gravity to the Y axis, if the player is not
+     * touching the ground.
+     * @return reference to the same object
      */
-    public void moveToNextTick() {
+    public Player moveToNextTick() {
         int newX = this.xPosition + this.xVelocity;
-        boolean isXInBounds =
-            0 <= newX && newX + PLAYER_WIDTH <= GameConstants.WIDTH;
+        if (newX > MAX_PLAYER_X) {
+            newX = MAX_PLAYER_X;
+            this.xVelocity = 0;
+        } else if (newX < 0) {
+            newX = 0;
+            this.xVelocity = 0;
+        }
 
-        if (isXInBounds && newX != this.xPosition) {
+        if (newX != this.xPosition) {
             this.xPosition = newX;
             this.hasChanged = true;
         }
 
+        this.yVelocity += GRAVITY;
         int newY = this.yPosition + this.yVelocity;
-        boolean isYInBounds =
-            0 <= newY && newY + PLAYER_HEIGHT <= GameConstants.HEIGHT;
+        if (newY > MAX_PLAYER_Y) {
+            newY = MAX_PLAYER_Y;
+            this.yVelocity = 0;
+        } else if (newY < 0) {
+            newY = 0;
+            this.yVelocity = 0;
+        }
 
-        if (isYInBounds && newY != this.yPosition) {
+        if (newY != this.yPosition) {
             this.yPosition = newY;
             this.hasChanged = true;
         }
+        return this;
     }
 
     /**

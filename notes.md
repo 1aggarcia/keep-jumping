@@ -1,6 +1,8 @@
 # TODO
 
 ## Devops
+- [ ] Reduce redundant checks on pull request
+- [ ] Introduce unit tests for the frontend
 - [ ] Type Check on build
 - [x] CI linting
 - [x] CI testing
@@ -9,10 +11,13 @@
 - [x] CI auto deploy server
 - [x] CI test Java server
 - [x] Java linter
-- [ ] Reduce redundant checks on pull request
-- [ ] Introduce unit tests for the frontend
 
 ## Server
+- [ ] Add processing for player scores
+- [ ] Add persistent storage for user scores
+- [ ] Add collisions for platforms
+- [ ] Include more intelligent platform generation, based on location of nearby platforms
+- [ ] Re-add support for game over
 - [x] Define data types for client controls
 - [x] Set up game state
 - [x] Build event loop for game
@@ -22,25 +27,27 @@
 - [x] Rewrite server in Java
 - [x] Fix concurrent printing issues
 - [x] Fix idle thread bug: throws IllegalThreadStateException when loop is closed multiple times
-- [ ] Add support for moving platforms
-- [ ] Add gravity
-- [ ] Re-add support for game over
+- [x] Add support for moving platforms
+- [x] Add gravity
 
 ## Client
+- [ ] Add scores to sprites
+- [ ] Add names to sprites
+- [ ] Add dark mode
+- [ ] Deprecate "GameJoinUpdate" message
 - [x] Create JS canvas for game
 - [x] Build renderer for server messages
 - [x] Build controller to send user input to server
-- [ ] Add names to sprites
 - [x] Render player color
 - [x] Make rendered text bigger
 - [x] Render message in/out states
-- [ ] Add dark mode
-- [ ] Add rendering for platforms
+- [x] Add rendering for platforms
 - [*] Move all graphics inside the canvas
 
 ## Other
-- [x] Setup `lib` folder for shared models
 - [ ] Find a way to share constants
+- [ ] Reduce data sent over the network
+- [x] Setup `lib` folder for shared models
 
 # CLI
 - Build docker image: `docker build -t websocket-game .`
