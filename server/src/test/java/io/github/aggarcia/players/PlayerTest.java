@@ -16,7 +16,7 @@ public class PlayerTest {
     void test_createRandomPlayer_initializesCorrectConstantValues() {
         var player = Player.createRandomPlayer();
 
-        assertEquals(player.age(), 0);
+        assertEquals(player.score(), 0);
         assertEquals(player.xVelocity(), 0);
         assertEquals(player.yVelocity(), 0);
         assertNotNull(player.color());
@@ -65,7 +65,7 @@ public class PlayerTest {
         var result = testPlayer.toPlayerState();
 
         assertEquals(testPlayer.color(), result.color());
-        assertEquals(testPlayer.age(), result.age());
+        assertEquals(testPlayer.score(), result.score());
         assertEquals(testPlayer.xPosition(), result.x());
         assertEquals(testPlayer.yPosition(), result.y());
     }
@@ -161,7 +161,10 @@ public class PlayerTest {
 
     @Test
     void test_moveToNextTick_nonZeroXVelocity_changesXPosition() {
-        var testPlayer = new Player("", 0, 10, 31, 4, 0, false);
+        var testPlayer = Player.builder()
+            .xPosition(0) 
+            .xVelocity(31)
+            .build();
         var expectedX = testPlayer.xPosition() + testPlayer.xVelocity();
 
         testPlayer.moveToNextTick();
@@ -187,15 +190,13 @@ public class PlayerTest {
 
     @Test
     void test_moveToNextTick_maxPositionAndPositiveVelocity_doesNothing() {
-        var testPlayer = new Player(
-            "",
-            0,
-            Player.MAX_PLAYER_X,
-            Player.MAX_PLAYER_Y,
-            1,
-            1,
-           false 
-        );
+        var testPlayer = Player.builder()
+            .xPosition(Player.MAX_PLAYER_X)
+            .yPosition(Player.MAX_PLAYER_Y)
+            .xPosition(1)
+            .yVelocity(1)
+            .build();
+
         var expectedX = testPlayer.xPosition();
         var expectedY = testPlayer.yPosition();
 
@@ -203,5 +204,15 @@ public class PlayerTest {
         assertEquals(expectedX, testPlayer.xPosition());
         assertEquals(expectedY, testPlayer.yPosition());
         assertFalse(testPlayer.hasChanged());
+    }
+
+    @Test
+    void test_addToScore_zeroScore_updatesScore() {
+        var testPlayer = Player.createRandomPlayer();
+
+        testPlayer.addToScore(35);
+        assertEquals(35, testPlayer.score());
+        testPlayer.addToScore(9234);
+        assertEquals(35 + 9234, testPlayer.score());
     }
 }

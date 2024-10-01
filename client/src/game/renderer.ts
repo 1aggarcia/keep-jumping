@@ -88,6 +88,14 @@ function renderPlayer(context: Context2D, player: PlayerState) {
         console.error(`Sprite position out of bounds: (${x}, ${y})`);
         return;
     }
+    renderLabel(context, {
+        text: `Score: ${player.score}`,
+        x: player.x + (PLAYER_WIDTH / 2),
+        y: player.y - 15,
+        color: player.color,
+        textAlign: "center",
+        font: "bold 22px Arial",
+    });
     context.fillStyle = player.color;
     context.fillRect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT);
 };

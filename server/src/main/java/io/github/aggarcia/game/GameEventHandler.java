@@ -8,8 +8,9 @@ import io.github.aggarcia.platforms.GamePlatform;
 import io.github.aggarcia.players.Player;
 
 public final class GameEventHandler {
-    private static final int TICKS_PER_SECOND =
-        1000 / GameConstants.TICK_DELAY_MS;
+    protected static final int SCORE_PER_SECOND = 5;
+    protected static final int
+        TICKS_PER_SECOND = 1000 / GameConstants.TICK_DELAY_MS;
 
     /** Response produced by advancing the game tick. */
     public record TickResponse(
@@ -53,6 +54,9 @@ public final class GameEventHandler {
             if (player.hasChanged()) {
                 // isUpdateNeeded = true;
                 player.hasChanged(false);
+            }
+            if (nextTickCount == 0) {
+                player.addToScore(SCORE_PER_SECOND);
             }
         }
 

@@ -3,14 +3,14 @@ package io.github.aggarcia.players;
 import java.util.Random;
 
 import io.github.aggarcia.game.GameConstants;
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
 @Data
+@Builder
 @Accessors(fluent = true)
-@AllArgsConstructor
 public final class Player {
     protected static final int PLAYER_WIDTH = 40;
     public static final int PLAYER_HEIGHT = 40;
@@ -24,7 +24,6 @@ public final class Player {
     private static final int HEX_STRING_LEN = 6;
 
     private final String color;
-    private final int age;
 
     // we don't want setters on position
     @Getter
@@ -38,6 +37,8 @@ public final class Player {
 
     /** Change in Y per tick. */
     private int yVelocity;
+
+    private int score;
 
     /**
      * true if the player state has changes since the last tick,
@@ -66,21 +67,22 @@ public final class Player {
         int yPosition = random
             .nextInt(GameConstants.HEIGHT / PLAYER_HEIGHT) * PLAYER_HEIGHT;
 
-        return new Player(
-            color.toString(),
-            0,
-            xPosition,
-            yPosition,
-            0,
-            0,
-            true
-        );
+        return Player.builder()
+            .color(color.toString())
+            .xPosition(xPosition)
+            .yPosition(yPosition)
+            .xVelocity(0)
+            .yVelocity(0)
+            .score(0)
+            .hasChanged(true)
+            .build();
     }
 
     /**
      * Changes the players position to that of the next tick according to the
      * player velocity. Applies gravity to the Y axis, if the player is not
      * touching the ground.
+     *
      * @return reference to the same object
      */
     public Player moveToNextTick() {
@@ -115,6 +117,16 @@ public final class Player {
         return this;
     }
 
+
+    /**
+     * @param points number of points to add
+     * @return reference to the same object
+     */
+    public Player addToScore(int points) {
+        this.score += points;
+        return this;
+    }
+
     /**
      * Convert a Player record to a PlayerState record.
      * @return instance of PlayerState
@@ -124,19 +136,18 @@ public final class Player {
             this.color(),
             this.xPosition(),
             this.yPosition(),
-            this.age()
+            this.score()
         );
     }
 
     public Player clone() {
-        return new Player(
-            this.color(),
-            this.age(),
-            this.xPosition(),
-            this.yPosition(),
-            this.xVelocity(),
-            this.yVelocity(),
-            this.hasChanged()
-        );
+        return Player.builder()
+            .color(this.color())
+            .xPosition(this.xPosition())
+            .yPosition(this.yPosition())
+            .yVelocity(this.yVelocity())
+            .score(this.score)
+            .hasChanged(this.hasChanged())
+            .build();
     }
 }

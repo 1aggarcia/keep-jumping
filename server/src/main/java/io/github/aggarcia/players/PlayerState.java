@@ -11,5 +11,5 @@ public record PlayerState(
     int y,
 
     /** Number of seconds since the player has joined */
-    int age
+    int score
 ) {}

@@ -15,7 +15,7 @@ export type PlayerState = {
     y: number;
 
     /** Number of seconds since the player has joined */
-    age: number;
+    score: number;
 }
 
 export type GamePlatform = {
