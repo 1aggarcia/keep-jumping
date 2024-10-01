@@ -1,4 +1,4 @@
-import { Context2D } from "@lib/types";
+import { Context2D } from "./types";
 
 const BLACK_HEX = "#000000";
 

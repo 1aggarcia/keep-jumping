@@ -8,6 +8,10 @@ on:
 
 jobs:
   build:
+    defaults:
+        run:
+          working-directory: client 
+
     runs-on: ubuntu-latest
 
     steps:
@@ -15,17 +19,9 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: 20
-
       - uses: pnpm/action-setup@v4.0.0
         with:
           version: 8
-      - name: Client Build
-        run: |
-          cd client
-          pnpm install
-          pnpm run build
-      - name: Library Build
-        run: |
-          cd lib
-          pnpm install
-          pnpm run lint
+
+      - run: pnpm install
+      - run: pnpm run build

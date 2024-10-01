@@ -1,3 +1,6 @@
+import { Context2D } from "../canvas/types";
+import { GameUpdate } from "./types/messages";
+import { GamePlatform, PlayerState } from "./types/models";
 import { renderButtons } from "../canvas/button";
 import { renderLabel } from "../canvas/label";
 import { AppState } from "../state/appState";
@@ -7,7 +10,6 @@ import {
     PLAYER_HEIGHT,
     PLAYER_WIDTH
 } from "./constants";
-import { Context2D, GameUpdate, GamePlatform, PlayerState } from "@lib/types";
 
 const RED_HEX = "#ff0000";
 const GREY_HEX = "#585858";

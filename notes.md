@@ -3,7 +3,7 @@
 ## Devops
 - [ ] Reduce redundant checks on pull request
 - [ ] Introduce unit tests for the frontend
-- [ ] Type Check on build
+- [x] Type Check on build
 - [x] CI linting
 - [x] CI testing
 - [x] Dev branch
@@ -13,7 +13,7 @@
 - [x] Java linter
 
 ## Server
-- [ ] Add processing for player scores
+- [x] Add processing for player scores
 - [ ] Add persistent storage for user scores
 - [ ] Add collisions for platforms
 - [ ] Include more intelligent platform generation, based on location of nearby platforms
@@ -31,7 +31,7 @@
 - [x] Add gravity
 
 ## Client
-- [ ] Add scores to sprites
+- [x] Add scores to sprites
 - [ ] Add names to sprites
 - [ ] Add dark mode
 - [ ] Deprecate "GameJoinUpdate" message

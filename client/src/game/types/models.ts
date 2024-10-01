@@ -1,9 +1,3 @@
-export * from "./socketMessage";
-
-export type Context2D = CanvasRenderingContext2D;
-
-export type PlayerControl = "Up" | "Down" | "Left" | "Right";
-
 export type PlayerState = {
     /** CSS compatible string */
     color: string;
@@ -23,3 +17,5 @@ export type GamePlatform = {
     y: number;
     width: number;
 }
+
+export type PlayerControl = "Up" | "Down" | "Left" | "Right";

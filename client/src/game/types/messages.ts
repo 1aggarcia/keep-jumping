@@ -1,11 +1,4 @@
-/**
- * Type definitions for socket messages
- *
- * "Game" updates are sent from server to client,
- * "Player" updates from client to server
- */
-
-import { GamePlatform, PlayerControl, PlayerState } from ".";
+import { GamePlatform, PlayerControl, PlayerState } from "./models";
 
 export type SocketMessage =
     | GameUpdate
@@ -37,7 +30,7 @@ export type GameOverUpdate = {
 
 export type PlayerControlUpdate = {
     type: "playerControlUpdate";
-    pressedControls: PlayerControl[];
+    pressedControls: PlayerControl[];  // player control
 };
 
 export type ServerError = {

@@ -1,8 +1,9 @@
-import { PlayerControl, PlayerControlUpdate, SocketMessage } from "@lib/types";
+import { PlayerControlUpdate, SocketMessage } from "./types/messages";
 import { AppState } from "../state/appState";
 import { renderGame, renderGameOver } from "./renderer";
 import { sendToServer } from "../networking/handler";
 import { GAME_HEIGHT, GAME_WIDTH } from "./constants";
+import { PlayerControl } from "./types/models";
 
 const GAME_ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
 
