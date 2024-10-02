@@ -6,10 +6,11 @@ export default defineConfig({
     define: {
         VERSION: (() => {
             const now = new Date();
-            const paddedMonth = `${now.getUTCMonth()}`.padStart(2, "0");
+            const paddedMonth = `${now.getUTCMonth() + 1}`.padStart(2, "0");
             const paddedDay = `${now.getUTCDate()}`.padStart(2, "0");
-        
-            return `${now.getUTCFullYear()}` + "." + paddedMonth + paddedDay;
+
+            // without the quotes, vite treats this as a number
+            return `"${now.getUTCFullYear()}.${paddedMonth}${paddedDay}"`;
         })(),
     }
 });
