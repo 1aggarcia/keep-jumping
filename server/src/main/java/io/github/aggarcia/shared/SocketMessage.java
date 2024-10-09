@@ -6,6 +6,7 @@ public enum SocketMessage {
     GAME_UPDATE("gameUpdate"),
     GAME_OVER_UPDATE("gameOverUpdate"),
     PLAYER_CONTROL_UPDATE("playerControlUpdate"),
+    PLAYER_JOIN_UPDATE("playerJoinUpdate"),
     SERVER_ERROR("serverError");
 
     @JsonValue

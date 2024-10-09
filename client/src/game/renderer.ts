@@ -56,16 +56,18 @@ export function clearCanvas(context: Context2D) {
 }
 
 export function renderMetadata(state: AppState) {
+    // this wacky syntax is to mimic a switch expression in JS
+    const connectionLabel = (() => {
+        switch (state.connectedStatus) {
+        case "OPEN":
+            return "Connection Open";
+        case "CONNECTING":
+            return "Connecting... (this might take a few seconds)";
+        default:
+            return "Connection Status: " + state.connectedStatus;
+    }})();
     renderLabel(state.context, {
-        text: `Mode: ${import.meta.env.MODE} | v${VERSION}`,
-        x: GAME_WIDTH / 2,
-        y: GAME_HEIGHT - 15,
-        textAlign: "center",
-        font: "20px Arial",
-        color: GREY_HEX,
-    });
-    renderLabel(state.context, {
-        text: "Connection Status: " + state.connectedStatus,
+        text: connectionLabel,
         x: GAME_WIDTH / 2,
         y: 20,
         textAlign: "center",
@@ -91,7 +93,7 @@ function renderPlayer(context: Context2D, player: PlayerState) {
         return;
     }
     renderLabel(context, {
-        text: `Score: ${player.score}`,
+        text: `${player.name}: ${player.score}`,
         x: player.x + (PLAYER_WIDTH / 2),
         y: player.y - 15,
         color: player.color,

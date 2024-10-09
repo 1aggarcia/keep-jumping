@@ -1,6 +1,8 @@
 package io.github.aggarcia.players;
 
 public record PlayerState(
+    String name,
+
     /** CSS compatible string */
     String color,
 

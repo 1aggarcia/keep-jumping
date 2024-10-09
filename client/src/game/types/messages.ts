@@ -5,6 +5,7 @@ export type SocketMessage =
     | GameJoinUpdate
     | GameOverUpdate
     | PlayerControlUpdate
+    | PlayerJoinUpdate
     | ServerError
 ;
 
@@ -30,8 +31,13 @@ export type GameOverUpdate = {
 
 export type PlayerControlUpdate = {
     type: "playerControlUpdate";
-    pressedControls: PlayerControl[];  // player control
+    pressedControls: PlayerControl[];
 };
+
+export type PlayerJoinUpdate = {
+    type: "playerJoinUpdate";
+    name: string;
+}
 
 export type ServerError = {
     type: "serverError";

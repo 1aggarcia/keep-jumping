@@ -11,6 +11,14 @@
     <canvas id="game-box">
     </canvas>
 
+    <section id="game-overlay">
+      <form onsubmit="return false" id="join-form">
+        <input type="text" name="name" placeholder="Enter username" />
+        <button type="submit">Connect</button>
+      </form>
+      <p id="vite-mode" class="secondary-text"></p>
+    </section>
+
     <!-- should only be shown if connection is open-->
     <section id="connected-box" style="display: none;">
       <a id="open-close-dev-tools">Show Dev Tools</a>

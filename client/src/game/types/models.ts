@@ -1,4 +1,6 @@
 export type PlayerState = {
+    name: string;
+
     /** CSS compatible string */
     color: string;
 

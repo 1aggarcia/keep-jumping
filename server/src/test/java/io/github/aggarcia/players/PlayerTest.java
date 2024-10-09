@@ -16,9 +16,10 @@ public class PlayerTest {
     void test_createRandomPlayer_initializesCorrectConstantValues() {
         var player = Player.createRandomPlayer();
 
-        assertEquals(player.score(), 0);
-        assertEquals(player.xVelocity(), 0);
-        assertEquals(player.yVelocity(), 0);
+        assertEquals(0, player.score());
+        assertEquals(0, player.xVelocity());
+        assertEquals(0, player.yVelocity());
+        assertEquals("~", player.name());
         assertNotNull(player.color());
         assertTrue(player.hasChanged());
     }
@@ -61,7 +62,7 @@ public class PlayerTest {
 
     @Test
     void test_toPlayerState_mapsFieldsCorrectly() {
-        var testPlayer = new Player("color", 1, 2, 3, 4, 5, true);
+        var testPlayer = new Player("", "color", 1, 2, 3, 4, 5, true);
         var result = testPlayer.toPlayerState();
 
         assertEquals(testPlayer.color(), result.color());

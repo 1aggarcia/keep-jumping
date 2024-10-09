@@ -24,6 +24,7 @@ public final class Player {
     private static final int HEX_STRING_LEN = 6;
 
     private final String color;
+    private String name;
 
     // we don't want setters on position
     @Getter
@@ -69,6 +70,7 @@ public final class Player {
 
         return Player.builder()
             .color(color.toString())
+            .name("~")
             .xPosition(xPosition)
             .yPosition(yPosition)
             .xVelocity(0)
@@ -133,6 +135,7 @@ public final class Player {
      */
     public PlayerState toPlayerState() {
         return new PlayerState(
+            this.name(),
             this.color(),
             this.xPosition(),
             this.yPosition(),
@@ -143,6 +146,7 @@ public final class Player {
     public Player clone() {
         return Player.builder()
             .color(this.color())
+            .name(this.name())
             .xPosition(this.xPosition())
             .yPosition(this.yPosition())
             .yVelocity(this.yVelocity())
