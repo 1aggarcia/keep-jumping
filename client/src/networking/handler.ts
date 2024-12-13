@@ -6,8 +6,10 @@ import { handleGameUpdate } from "../game/handler";
 import { Button, subscribeButtonsToCursor } from "../canvas/button";
 import { PlayerJoinUpdate } from "../game/types/messages";
 
+const MAX_HISTORY_LEN = 25;
+
 export function sendToServer(state: AppState, message: string) {
-    if (state.server == null) {
+    if (state.server === null) {
         throw new ReferenceError(`Message sent to null server: ${message}`);
     }
     state.server.send(message);
@@ -54,6 +56,10 @@ export function connectToServer(state: AppState, username: string) {
         state.messagesIn++;
         const message = event.data;
         const prettyMessage = getPrettyMessage(message);
+        // garbage collect old messages
+        if (state.messagesIn > MAX_HISTORY_LEN) {
+            networkElements.messagesBox.find("pre:last").remove();
+        }
         networkElements.messagesBox.prepend(`<pre>${prettyMessage}</pre>`);
         renderMessageStats(state);
         handleGameUpdate(message, state);

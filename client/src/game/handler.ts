@@ -26,6 +26,7 @@ export function handleGameUpdate(message: string, state: AppState) {
 export function handleKeyDown(event: KeyboardEvent, state: AppState) {
     const control = keyCodeToPlayerControl(event.code);
     if (control === null) return;
+    if (state.server === null) return;
 
     // if no changes made, data should not be sent to the server
     if (state.pressedControls.has(control)) return;
@@ -41,6 +42,7 @@ export function handleKeyDown(event: KeyboardEvent, state: AppState) {
 export function handleKeyUp(event: KeyboardEvent, state: AppState) {
     const control = keyCodeToPlayerControl(event.code);
     if (control === null) return;
+    if (state.server === null) return;
 
     state.pressedControls.delete(control);
     const update: PlayerControlUpdate = {
