@@ -12,7 +12,6 @@ import {
 } from "./constants";
 
 const RED_HEX = "#ff0000";
-const GREY_HEX = "#585858";
 
 const PLATFORM_HEIGHT = 30;
 const PLATFORM_COLOR = "green";

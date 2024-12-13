@@ -173,6 +173,29 @@ public class GameEventHandlerTest {
         assertEquals(0, players.get("2").score());
     }
 
+    @Test
+    void test_advanceToNextTick_playerOnPlatform_playerFallsWithPlatform() {
+        var testPlayer = Player.builder()
+            .xPosition(50)
+            .yPosition(50)
+            .xVelocity(50)
+            .yVelocity(10)
+            .build();
+        var testPlatform = new GamePlatform(200, 0, 50 + Player.PLAYER_HEIGHT);
+
+        // modifies player
+        GameEventHandler.advanceToNextTick(
+            List.of(testPlayer),
+            List.of(testPlatform),
+            0
+        );
+
+        assertEquals(100, testPlayer.xPosition());
+        assertEquals(50, testPlayer.xVelocity());
+        assertEquals(50 + GamePlatform.PLATFORM_GRAVITY, testPlayer.yPosition());
+        assertEquals(GamePlatform.PLATFORM_GRAVITY, testPlayer.yVelocity());
+    }
+
     /**
      * @return map of two players with keys "1", "2".
      *  Players are on the ground and are motionless

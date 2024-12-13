@@ -41,7 +41,6 @@ public final class GameEventHandler {
         //if (nextTickCount == 0) {
         //    isUpdateNeeded = true;  // update needed to refresh the server age
         //}
-
         for (GamePlatform platform : platforms) {
             var nextPlatform = platform.toNextTick();
             // to "delete" platforms that fall below the ground
@@ -50,7 +49,7 @@ public final class GameEventHandler {
             }
         }
         for (Player player : players) {
-            player.moveToNextTick();
+            player.moveToNextTick(nextPlatformsState);
             if (player.hasChanged()) {
                 // isUpdateNeeded = true;
                 player.hasChanged(false);

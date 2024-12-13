@@ -12,7 +12,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.aggarcia.players.messages.PlayerControlUpdate;
 
 public final class PlayerEventHandler {
-    private static final int PLAYER_SPEED = 20;
+    private static final int PLAYER_MOVE_SPEED = 20;
+    private static final int PLAYER_JUMP_SPEED = 40;
 
     public record PlayerVelocity(
         int xVelocity,
@@ -62,22 +63,20 @@ public final class PlayerEventHandler {
             PlayerControlUpdate.class
         );
 
+        // TODO: use previous player velocity, not 0
         int xVelocity = 0;
         int yVelocity = 0;
         var pressedControls = new HashSet<>(data.pressedControls());
 
         // Prioritizes right over left - arbitrary decision
         if (pressedControls.contains(PlayerControl.RIGHT)) {
-            xVelocity = PLAYER_SPEED;
+            xVelocity = PLAYER_MOVE_SPEED;
         } else if (pressedControls.contains(PlayerControl.LEFT)) {
-            xVelocity = -PLAYER_SPEED;
+            xVelocity = -PLAYER_MOVE_SPEED;
         }
 
-        // Prioritizes down over up - also arbitrary
-        if (pressedControls.contains(PlayerControl.DOWN)) {
-            yVelocity = PLAYER_SPEED;
-        } else if (pressedControls.contains(PlayerControl.UP)) {
-            yVelocity = -PLAYER_SPEED;
+        if (pressedControls.contains(PlayerControl.UP)) {
+            yVelocity = -PLAYER_JUMP_SPEED;
         }
         return new PlayerVelocity(xVelocity, yVelocity);
     }

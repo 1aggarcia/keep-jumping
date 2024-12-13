@@ -1,8 +1,11 @@
 package io.github.aggarcia.players;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Random;
 
 import io.github.aggarcia.game.GameConstants;
+import io.github.aggarcia.platforms.GamePlatform;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
@@ -12,9 +15,9 @@ import lombok.experimental.Accessors;
 @Builder
 @Accessors(fluent = true)
 public final class Player {
-    protected static final int PLAYER_WIDTH = 40;
+    public static final int PLAYER_WIDTH = 40;
     public static final int PLAYER_HEIGHT = 40;
-    protected static final int GRAVITY = 2;
+    public static final int GRAVITY = 2;
 
     public static final int
         MAX_PLAYER_X = GameConstants.WIDTH - PLAYER_WIDTH;
@@ -81,13 +84,31 @@ public final class Player {
     }
 
     /**
+     * @see Player#moveToNextTick(Collection)
+     */
+    public Player moveToNextTick() {
+        return this.moveToNextTick(Collections.emptyList());
+    }
+
+    /**
      * Changes the players position to that of the next tick according to the
      * player velocity. Applies gravity to the Y axis, if the player is not
      * touching the ground.
      *
+     * @param platforms collidable blocks that the player should not touch
      * @return reference to the same object
      */
-    public Player moveToNextTick() {
+    public Player moveToNextTick(Collection<GamePlatform> platforms) {
+        /*
+         * newX = oldX + xVelocity
+         * newY = oldY + yVelocity
+         * 
+         * if (isColliding(platform)) {
+         *      newX = boundary exceeded - player size
+         *      newY = boundary exceeded - player size
+         * }
+         */
+        // bounds checking with the floor
         int newX = this.xPosition + this.xVelocity;
         if (newX > MAX_PLAYER_X) {
             newX = MAX_PLAYER_X;
@@ -116,7 +137,46 @@ public final class Player {
             this.yPosition = newY;
             this.hasChanged = true;
         }
+
+        // collision correction with platforms
+        for (var platform : platforms) {
+            if (isTouchingPlatform(platform) && this.yVelocity > 0) {
+                this.yPosition = platform.y() - PLAYER_HEIGHT;
+                this.yVelocity = GamePlatform.PLATFORM_GRAVITY;
+            }
+        }
         return this;
+    }
+
+    /**
+     * Determine if the player is touching a platform
+     * @param platform
+     * @return true if the player rectangle makes contact with the platform,
+     *  false otherwise
+     */
+    private boolean isTouchingPlatform(GamePlatform platform) {
+        int minY = this.yPosition;
+        int maxY = this.yPosition + PLAYER_HEIGHT;
+
+        // check that both bounds of the rectangle are on the same side of the platform
+        if (minY >= platform.y() || platform.y() >= maxY) {
+            return false;
+        }
+        int minX = this.xPosition;
+        int maxX = this.xPosition + PLAYER_WIDTH;
+        if (minX < platform.x() && platform.x() < maxX) {
+            return true;
+        }
+        int platformMax = platform.x() + platform.width();
+        if (minX < platformMax && platformMax < maxX) {
+            return true;
+        }
+
+        boolean isPlayerBehind = maxX < platform.x();
+        boolean isPlayerAhead = platformMax < minX;
+
+        // player must either be behind or ahead
+        return !isPlayerBehind && !isPlayerAhead;
     }
 
 

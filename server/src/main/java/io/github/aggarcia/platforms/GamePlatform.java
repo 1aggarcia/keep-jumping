@@ -11,10 +11,11 @@ public record GamePlatform(
     int width,
     int x,
     int y
-) {
+    ) {
+    // public for Player access
+    public static final int PLATFORM_GRAVITY = 5;
     protected static final int MIN_WIDTH = 300;
     protected static final int MAX_WIDTH = 600;
-    protected static final int PLATFORM_GRAVITY = 5;
 
     /**
      * @return a new platform with a random width and X position,
