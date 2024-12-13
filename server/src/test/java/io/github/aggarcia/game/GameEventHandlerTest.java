@@ -16,9 +16,6 @@ import io.github.aggarcia.platforms.GamePlatform;
 import io.github.aggarcia.players.Player;
 
 public class GameEventHandlerTest {
-    private static final int TICKS_PER_SECOND =
-        1000 / GameConstants.TICK_DELAY_MS;
-
     // commenting out all the tests on `isUpdateNeeded` since it serves
     // no purpose (for now)
 
@@ -36,7 +33,9 @@ public class GameEventHandlerTest {
 
     @Test
     void test_advanceToNextTick_maxTickCount_returnsZeroTickCount() {
-        var response = advanceTickWithTickCount(TICKS_PER_SECOND - 1);
+        var response = advanceTickWithTickCount(
+            GameEventHandler.TICKS_PER_SECOND - 1
+        );
         assertEquals(0, response.nextTickCount());
     }
 
@@ -92,10 +91,19 @@ public class GameEventHandlerTest {
 
     @Test
     void test_advanceToNextTick_oneMovingPlayer_mutatesCorrectPlayer() {
+        // player 1 should not move
+        var player1 = Player.createRandomPlayer().yPosition(Player.MAX_PLAYER_Y);
+        var player2 = Player.builder()
+            .xPosition(0)
+            .yPosition(0)
+            .xPosition(0)
+            .yVelocity(1)
+            .hasChanged(true)
+            .build();
+
         var players = Map.of(
-            // player 1 should not move
-            "1", Player.createRandomPlayer().yPosition(Player.MAX_PLAYER_Y),
-            "2", new Player("", 0, 0, 0, 1, 0, true)
+            "1", player1,
+            "2", player2
         );
         var expected1 = players.get("1")
             .clone()
@@ -129,6 +137,63 @@ public class GameEventHandlerTest {
 
         var nextPlatformsState = advanceTickWithPlatforms(platforms).nextPlatformsState();
         assertEquals(0, nextPlatformsState.size());
+    }
+
+    @Test
+    void test_advanceToNextTick_nextTickIsZero_updatesPlayerScore() {
+        var players = createTestPlayers();
+        assertEquals(0, players.get("1").score());
+        assertEquals(0, players.get("2").score());
+
+        var result = GameEventHandler.advanceToNextTick(
+            players.values(),
+            Collections.emptyList(),
+            -1
+        );
+        assertEquals(0, result.nextTickCount());
+        assertEquals(
+            GameEventHandler.SCORE_PER_SECOND, players.get("1").score());
+        assertEquals(
+            GameEventHandler.SCORE_PER_SECOND, players.get("2").score());
+    }
+
+    @Test
+    void test_advanceToNextTick_nextTickIsNotZero_doesNotChangePlayerScore() {
+        var players = createTestPlayers();
+        assertEquals(0, players.get("1").score());
+        assertEquals(0, players.get("2").score());
+
+        var result = GameEventHandler.advanceToNextTick(
+            players.values(),
+            Collections.emptyList(),
+            0
+        );
+        assertEquals(1, result.nextTickCount());
+        assertEquals(0, players.get("1").score());
+        assertEquals(0, players.get("2").score());
+    }
+
+    @Test
+    void test_advanceToNextTick_playerOnPlatform_playerFallsWithPlatform() {
+        var testPlayer = Player.builder()
+            .xPosition(50)
+            .yPosition(50)
+            .xVelocity(50)
+            .yVelocity(10)
+            .build();
+        var testPlatform = new GamePlatform(200, 0, 50 + Player.PLAYER_HEIGHT);
+
+        // modifies player
+        GameEventHandler.advanceToNextTick(
+            List.of(testPlayer),
+            List.of(testPlatform),
+            0
+        );
+
+        assertEquals(100, testPlayer.xPosition());
+        assertEquals(50, testPlayer.xVelocity());
+        assertEquals(50 + GamePlatform.PLATFORM_GRAVITY, testPlayer.yPosition());
+        assertEquals(GamePlatform.PLATFORM_GRAVITY, testPlayer.yVelocity());
     }
 
     /**

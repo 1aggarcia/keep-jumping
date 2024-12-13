@@ -1,3 +1,6 @@
+import { Context2D } from "../canvas/types";
+import { GameUpdate } from "./types/messages";
+import { GamePlatform, PlayerState } from "./types/models";
 import { renderButtons } from "../canvas/button";
 import { renderLabel } from "../canvas/label";
 import { AppState } from "../state/appState";
@@ -7,10 +10,8 @@ import {
     PLAYER_HEIGHT,
     PLAYER_WIDTH
 } from "./constants";
-import { Context2D, GameUpdate, GamePlatform, PlayerState } from "@lib/types";
 
 const RED_HEX = "#ff0000";
-const GREY_HEX = "#585858";
 
 const PLATFORM_HEIGHT = 30;
 const PLATFORM_COLOR = "green";
@@ -54,16 +55,18 @@ export function clearCanvas(context: Context2D) {
 }
 
 export function renderMetadata(state: AppState) {
+    // this wacky syntax is to mimic a switch expression in JS
+    const connectionLabel = (() => {
+        switch (state.connectedStatus) {
+        case "OPEN":
+            return "Connection Open";
+        case "CONNECTING":
+            return "Connecting... (this might take a few seconds)";
+        default:
+            return "Connection Status: " + state.connectedStatus;
+    }})();
     renderLabel(state.context, {
-        text: `Mode: ${import.meta.env.MODE} | v${VERSION}`,
-        x: GAME_WIDTH / 2,
-        y: GAME_HEIGHT - 15,
-        textAlign: "center",
-        font: "20px Arial",
-        color: GREY_HEX,
-    });
-    renderLabel(state.context, {
-        text: "Connection Status: " + state.connectedStatus,
+        text: connectionLabel,
         x: GAME_WIDTH / 2,
         y: 20,
         textAlign: "center",
@@ -88,6 +91,14 @@ function renderPlayer(context: Context2D, player: PlayerState) {
         console.error(`Sprite position out of bounds: (${x}, ${y})`);
         return;
     }
+    renderLabel(context, {
+        text: `${player.name}: ${player.score}`,
+        x: player.x + (PLAYER_WIDTH / 2),
+        y: player.y - 15,
+        color: player.color,
+        textAlign: "center",
+        font: "bold 22px Arial",
+    });
     context.fillStyle = player.color;
     context.fillRect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT);
 };

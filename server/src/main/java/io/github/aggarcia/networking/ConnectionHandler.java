@@ -12,6 +12,7 @@ import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.game.GameLoop;
 import io.github.aggarcia.players.Player;
 import io.github.aggarcia.players.PlayerEventHandler;
+import io.github.aggarcia.players.PlayerEventHandler.PlayerVelocity;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -98,9 +99,15 @@ public class ConnectionHandler extends TextWebSocketHandler {
                 System.err.println("Player not found, id: " + session.getId());
                 return;
             }
-            var velocity = PlayerEventHandler.computeVelocity(message);
-            player.xVelocity(velocity.xVelocity());
-            player.yVelocity(velocity.yVelocity());
+            Object result = PlayerEventHandler.processMessage(message);
+            if (result instanceof String name) {
+                player.name(name);
+            } else if (result instanceof PlayerVelocity velocity) {
+                player.xVelocity(velocity.xVelocity());
+                player.yVelocity(velocity.yVelocity());
+            } else {
+                System.err.println("Unknown response type: " + result);
+            }
         } catch (JsonProcessingException e) {
             System.err.println(e);
         }

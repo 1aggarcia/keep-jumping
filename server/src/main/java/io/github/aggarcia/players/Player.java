@@ -1,20 +1,23 @@
 package io.github.aggarcia.players;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Random;
 
 import io.github.aggarcia.game.GameConstants;
-import lombok.AllArgsConstructor;
+import io.github.aggarcia.platforms.GamePlatform;
+import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
 @Data
+@Builder
 @Accessors(fluent = true)
-@AllArgsConstructor
 public final class Player {
-    protected static final int PLAYER_WIDTH = 40;
+    public static final int PLAYER_WIDTH = 40;
     public static final int PLAYER_HEIGHT = 40;
-    protected static final int GRAVITY = 2;
+    public static final int GRAVITY = 2;
 
     public static final int
         MAX_PLAYER_X = GameConstants.WIDTH - PLAYER_WIDTH;
@@ -24,7 +27,7 @@ public final class Player {
     private static final int HEX_STRING_LEN = 6;
 
     private final String color;
-    private final int age;
+    private String name;
 
     // we don't want setters on position
     @Getter
@@ -38,6 +41,8 @@ public final class Player {
 
     /** Change in Y per tick. */
     private int yVelocity;
+
+    private int score;
 
     /**
      * true if the player state has changes since the last tick,
@@ -66,24 +71,44 @@ public final class Player {
         int yPosition = random
             .nextInt(GameConstants.HEIGHT / PLAYER_HEIGHT) * PLAYER_HEIGHT;
 
-        return new Player(
-            color.toString(),
-            0,
-            xPosition,
-            yPosition,
-            0,
-            0,
-            true
-        );
+        return Player.builder()
+            .color(color.toString())
+            .name("~")
+            .xPosition(xPosition)
+            .yPosition(yPosition)
+            .xVelocity(0)
+            .yVelocity(0)
+            .score(0)
+            .hasChanged(true)
+            .build();
+    }
+
+    /**
+     * @see Player#moveToNextTick(Collection)
+     */
+    public Player moveToNextTick() {
+        return this.moveToNextTick(Collections.emptyList());
     }
 
     /**
      * Changes the players position to that of the next tick according to the
      * player velocity. Applies gravity to the Y axis, if the player is not
      * touching the ground.
+     *
+     * @param platforms collidable blocks that the player should not touch
      * @return reference to the same object
      */
-    public Player moveToNextTick() {
+    public Player moveToNextTick(Collection<GamePlatform> platforms) {
+        /*
+         * newX = oldX + xVelocity
+         * newY = oldY + yVelocity
+         *
+         * if (isColliding(platform)) {
+         *      newX = boundary exceeded - player size
+         *      newY = boundary exceeded - player size
+         * }
+         */
+        // bounds checking with the floor
         int newX = this.xPosition + this.xVelocity;
         if (newX > MAX_PLAYER_X) {
             newX = MAX_PLAYER_X;
@@ -112,6 +137,55 @@ public final class Player {
             this.yPosition = newY;
             this.hasChanged = true;
         }
+
+        // collision correction with platforms
+        for (var platform : platforms) {
+            if (isTouchingPlatform(platform) && this.yVelocity > 0) {
+                this.yPosition = platform.y() - PLAYER_HEIGHT;
+                this.yVelocity = GamePlatform.PLATFORM_GRAVITY;
+            }
+        }
+        return this;
+    }
+
+    /**
+     * Determine if the player is touching a platform.
+     * @param platform
+     * @return true if the player rectangle makes contact with the platform,
+     *  false otherwise
+     */
+    private boolean isTouchingPlatform(GamePlatform platform) {
+        int minY = this.yPosition;
+        int maxY = this.yPosition + PLAYER_HEIGHT;
+
+        // are both sides of the player on the same side of the platform?
+        if (minY >= platform.y() || platform.y() >= maxY) {
+            return false;
+        }
+        int minX = this.xPosition;
+        int maxX = this.xPosition + PLAYER_WIDTH;
+        if (minX < platform.x() && platform.x() < maxX) {
+            return true;
+        }
+        int platformMax = platform.x() + platform.width();
+        if (minX < platformMax && platformMax < maxX) {
+            return true;
+        }
+
+        boolean isPlayerBehind = maxX < platform.x();
+        boolean isPlayerAhead = platformMax < minX;
+
+        // player must either be behind or ahead
+        return !isPlayerBehind && !isPlayerAhead;
+    }
+
+
+    /**
+     * @param points number of points to add
+     * @return reference to the same object
+     */
+    public Player addToScore(int points) {
+        this.score += points;
         return this;
     }
 
@@ -121,22 +195,23 @@ public final class Player {
      */
     public PlayerState toPlayerState() {
         return new PlayerState(
+            this.name(),
             this.color(),
             this.xPosition(),
             this.yPosition(),
-            this.age()
+            this.score()
         );
     }
 
     public Player clone() {
-        return new Player(
-            this.color(),
-            this.age(),
-            this.xPosition(),
-            this.yPosition(),
-            this.xVelocity(),
-            this.yVelocity(),
-            this.hasChanged()
-        );
+        return Player.builder()
+            .color(this.color())
+            .name(this.name())
+            .xPosition(this.xPosition())
+            .yPosition(this.yPosition())
+            .yVelocity(this.yVelocity())
+            .score(this.score)
+            .hasChanged(this.hasChanged())
+            .build();
     }
 }

@@ -6,7 +6,7 @@ export function handleOpenCloseToggle() {
   const isVisible = messagingElements.devTools.is(":visible");
   messagingElements.openCloseDevTools.text(
     isVisible ? "Show Dev Tools" : "Hide Dev Tools");
-  messagingElements.devTools.slideToggle();
+  messagingElements.devTools.toggle();
 }
 
 export function handleMessageFormSubmit(

@@ -5,20 +5,45 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import io.github.aggarcia.game.GameConstants;
+import io.github.aggarcia.platforms.GamePlatform;
 
 @SpringBootTest
 public class PlayerTest {
+    // for testing platform collisions, reused across a few tests
+    static final Player testCollisionPlayer = Player.builder()
+        .xPosition(200)
+        .yPosition(200)
+        .xVelocity(0)
+        .yVelocity(0)
+        .build();
+
+    static final GamePlatform testCollisionPlatform =
+        new GamePlatform(100, 150, 200 + Player.PLAYER_HEIGHT);
+
+    // collides only on the X axis
+    static final GamePlatform testCollisionPlatformX =
+        new GamePlatform(100, 150, 0);
+
+    // collides only on the Y axis
+    static final GamePlatform testCollisionPlatformY =
+        new GamePlatform(100, 0, 200 + Player.PLAYER_HEIGHT);
+
     @Test
     void test_createRandomPlayer_initializesCorrectConstantValues() {
         var player = Player.createRandomPlayer();
 
-        assertEquals(player.age(), 0);
-        assertEquals(player.xVelocity(), 0);
-        assertEquals(player.yVelocity(), 0);
+        assertEquals(0, player.score());
+        assertEquals(0, player.xVelocity());
+        assertEquals(0, player.yVelocity());
+        assertEquals("~", player.name());
         assertNotNull(player.color());
         assertTrue(player.hasChanged());
     }
@@ -61,11 +86,11 @@ public class PlayerTest {
 
     @Test
     void test_toPlayerState_mapsFieldsCorrectly() {
-        var testPlayer = new Player("color", 1, 2, 3, 4, 5, true);
+        var testPlayer = new Player("", "color", 1, 2, 3, 4, 5, true);
         var result = testPlayer.toPlayerState();
 
         assertEquals(testPlayer.color(), result.color());
-        assertEquals(testPlayer.age(), result.age());
+        assertEquals(testPlayer.score(), result.score());
         assertEquals(testPlayer.xPosition(), result.x());
         assertEquals(testPlayer.yPosition(), result.y());
     }
@@ -161,7 +186,10 @@ public class PlayerTest {
 
     @Test
     void test_moveToNextTick_nonZeroXVelocity_changesXPosition() {
-        var testPlayer = new Player("", 0, 10, 31, 4, 0, false);
+        Player testPlayer = Player.builder()
+            .xPosition(0) 
+            .xVelocity(31)
+            .build();
         var expectedX = testPlayer.xPosition() + testPlayer.xVelocity();
 
         testPlayer.moveToNextTick();
@@ -187,15 +215,13 @@ public class PlayerTest {
 
     @Test
     void test_moveToNextTick_maxPositionAndPositiveVelocity_doesNothing() {
-        var testPlayer = new Player(
-            "",
-            0,
-            Player.MAX_PLAYER_X,
-            Player.MAX_PLAYER_Y,
-            1,
-            1,
-           false 
-        );
+        Player testPlayer = Player.builder()
+            .xPosition(Player.MAX_PLAYER_X)
+            .yPosition(Player.MAX_PLAYER_Y)
+            .xPosition(1)
+            .yVelocity(1)
+            .build();
+
         var expectedX = testPlayer.xPosition();
         var expectedY = testPlayer.yPosition();
 
@@ -203,5 +229,87 @@ public class PlayerTest {
         assertEquals(expectedX, testPlayer.xPosition());
         assertEquals(expectedY, testPlayer.yPosition());
         assertFalse(testPlayer.hasChanged());
+    }
+
+    @Test
+    void test_moveToNextTick_onTopOfPlatform_doesNothing() {
+        Player testPlayer = testCollisionPlayer.clone();
+        testPlayer.moveToNextTick(List.of(testCollisionPlatform));
+
+        assertEquals(200, testPlayer.xPosition());
+        assertEquals(200, testPlayer.yPosition());
+        assertEquals(0, testPlayer.xVelocity());
+        assertEquals(GamePlatform.PLATFORM_GRAVITY, testPlayer.yVelocity());
+        assertTrue(testPlayer.hasChanged());
+    }
+
+    @Test
+    void test_moveToNextTick_platformCollidesOnlyX_appliesGravity() {
+        Player testPlayer = testCollisionPlayer.clone(); 
+
+        // crosses the player on the X axis but not the Y axis
+        testPlayer.moveToNextTick(List.of(testCollisionPlatformX));
+
+        assertEquals(200, testPlayer.xPosition());
+        assertEquals(200 + Player.GRAVITY, testPlayer.yPosition());
+        assertEquals(0, testPlayer.xVelocity());
+        assertEquals(Player.GRAVITY, testPlayer.yVelocity());
+    }
+
+    @Test
+    void test_moveToNextTick_platformCollidesOnlyY_appliesGravity() {
+        Player testPlayer = testCollisionPlayer.clone();
+
+        // crosses the player on the Y axis but not the X axis
+        testPlayer.moveToNextTick(List.of(testCollisionPlatformY));
+
+        assertEquals(200, testPlayer.xPosition());
+        assertEquals(200 + Player.GRAVITY, testPlayer.yPosition());
+        assertEquals(0, testPlayer.xVelocity());
+        assertEquals(Player.GRAVITY, testPlayer.yVelocity());
+    }
+
+    @Test
+    void test_moveToNextTick_multipleNonCollidingPlatforms_appliesGravity() {
+        Player testPlayer = testCollisionPlayer.clone();
+        // none of these collide with the player
+        var platforms = List.of(
+            testCollisionPlatformX,
+            testCollisionPlatformY,
+            testCollisionPlatformX
+        );
+        testPlayer.moveToNextTick(platforms);
+
+        assertEquals(200, testPlayer.xPosition());
+        assertEquals(200 + Player.GRAVITY, testPlayer.yPosition());
+        assertEquals(0, testPlayer.xVelocity());
+        assertEquals(Player.GRAVITY, testPlayer.yVelocity());
+    }
+
+    @Test
+    void test_moveToNextTick_oneCollidingPlatform_doesNothing() {
+        Player testPlayer = testCollisionPlayer.clone();
+        // last platform collides wiht player
+        var platforms = List.of(
+            testCollisionPlatformX,
+            testCollisionPlatformY,
+            testCollisionPlatform
+        );
+        testPlayer.moveToNextTick(platforms);
+
+        assertEquals(200, testPlayer.xPosition());
+        assertEquals(200, testPlayer.yPosition());
+        assertEquals(0, testPlayer.xVelocity());
+        assertEquals(GamePlatform.PLATFORM_GRAVITY, testPlayer.yVelocity());
+    }
+
+    @Test
+    void test_addToScore_zeroScore_updatesScore() {
+        var testPlayer = Player.createRandomPlayer();
+
+        testPlayer.addToScore(35);
+        assertEquals(35, testPlayer.score());
+        testPlayer.addToScore(9234);
+        assertEquals(35 + 9234, testPlayer.score());
     }
 }

@@ -1,10 +1,6 @@
-export * from "./socketMessage";
-
-export type Context2D = CanvasRenderingContext2D;
-
-export type PlayerControl = "Up" | "Down" | "Left" | "Right";
-
 export type PlayerState = {
+    name: string;
+
     /** CSS compatible string */
     color: string;
 
@@ -15,7 +11,7 @@ export type PlayerState = {
     y: number;
 
     /** Number of seconds since the player has joined */
-    age: number;
+    score: number;
 }
 
 export type GamePlatform = {
@@ -23,3 +19,5 @@ export type GamePlatform = {
     y: number;
     width: number;
 }
+
+export type PlayerControl = "Up" | "Down" | "Left" | "Right";

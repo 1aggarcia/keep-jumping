@@ -1,4 +1,4 @@
-import { Context2D } from "@lib/types";
+import { Context2D } from "./types";
 import { gameElements } from "../game/elements";
 import { AppState } from "../state/appState";
 import { GAME_HEIGHT, GAME_WIDTH } from "../game/constants";

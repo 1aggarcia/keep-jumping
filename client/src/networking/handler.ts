@@ -1,12 +1,15 @@
 import { getServerEndpoint } from "./config";
 import { AppState } from "../state/appState";
-import { connectionElements } from "./elements";
+import { networkElements } from "./elements";
 import { clearCanvas, renderMetadata } from "../game/renderer";
 import { handleGameUpdate } from "../game/handler";
 import { Button, subscribeButtonsToCursor } from "../canvas/button";
+import { PlayerJoinUpdate } from "../game/types/messages";
+
+const MAX_HISTORY_LEN = 25;
 
 export function sendToServer(state: AppState, message: string) {
-    if (state.server == null) {
+    if (state.server === null) {
         throw new ReferenceError(`Message sent to null server: ${message}`);
     }
     state.server.send(message);
@@ -14,7 +17,7 @@ export function sendToServer(state: AppState, message: string) {
     renderMessageStats(state);
 }
 
-export function connectToServer(state: AppState) {
+export function connectToServer(state: AppState, username: string) {
     clearCanvas(state.context);
     state.messagesIn = 0;
     state.messagesOut = 0;
@@ -26,11 +29,17 @@ export function connectToServer(state: AppState) {
     state.server = server;
 
     server.onopen = () => {
+        const joinUpdate: PlayerJoinUpdate = {
+            type: "playerJoinUpdate",
+            name: username
+        };
+        sendToServer(state, JSON.stringify(joinUpdate));
         clearCanvas(state.context);
         state.connectedStatus = "OPEN";
         renderMetadata(state);
-        connectionElements.errorBox.empty();
-        connectionElements.connectedBox.show();
+        networkElements.errorBox.empty();
+        networkElements.connectedBox.show();
+        networkElements.joinForm.hide();
 
         const disconnectButton = new Button("Disconnect")
             .positionRight()
@@ -41,13 +50,17 @@ export function connectToServer(state: AppState) {
     server.onerror = () => {
         onServerClose(state);
         state.connectedStatus = "ERROR";
-        connectionElements.errorBox.append("<p>Connection error</p>");
+        networkElements.errorBox.append("<p>Connection error</p>");
     };
     server.onmessage = (event) => {
         state.messagesIn++;
         const message = event.data;
         const prettyMessage = getPrettyMessage(message);
-        connectionElements.messagesBox.prepend(`<pre>${prettyMessage}</pre>`);
+        // garbage collect old messages
+        if (state.messagesIn > MAX_HISTORY_LEN) {
+            networkElements.messagesBox.find("pre:last").remove();
+        }
+        networkElements.messagesBox.prepend(`<pre>${prettyMessage}</pre>`);
         renderMessageStats(state);
         handleGameUpdate(message, state);
     };
@@ -57,13 +70,13 @@ function onServerClose(state: AppState) {
     clearCanvas(state.context);
     state.connectedStatus = "CLOSED";
     renderMetadata(state);
-    connectionElements.messagesBox.empty();
-    connectionElements.connectedBox.hide();
+    networkElements.messagesBox.empty();
+    networkElements.connectedBox.hide();
+    networkElements.joinForm
+        .trigger("reset")
+        .show();
 
-    const connectButton = new Button("Connect")
-        .positionRight()
-        .onClick(() => connectToServer(state));
-    subscribeButtonsToCursor(state, [connectButton]);
+    subscribeButtonsToCursor(state, []);
 }
 
 function disconnectFromServer(state: AppState) {
@@ -88,5 +101,5 @@ function getPrettyMessage(message: unknown) {
 function renderMessageStats(state: AppState) {
     const inText = `Received: ${state.messagesIn}`;
     const outText = `Sent: ${state.messagesOut}`;
-    connectionElements.messagesStats.text(inText + " | " + outText);
+    networkElements.messagesStats.text(inText + " | " + outText);
 }

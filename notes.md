@@ -3,7 +3,7 @@
 ## Devops
 - [ ] Reduce redundant checks on pull request
 - [ ] Introduce unit tests for the frontend
-- [ ] Type Check on build
+- [x] Type Check on build
 - [x] CI linting
 - [x] CI testing
 - [x] Dev branch
@@ -13,11 +13,12 @@
 - [x] Java linter
 
 ## Server
-- [ ] Add processing for player scores
+- [ ] Refactor dynamic message handler to dispatch to correct handler
 - [ ] Add persistent storage for user scores
 - [ ] Add collisions for platforms
 - [ ] Include more intelligent platform generation, based on location of nearby platforms
 - [ ] Re-add support for game over
+- [x] Add processing for player scores
 - [x] Define data types for client controls
 - [x] Set up game state
 - [x] Build event loop for game
@@ -31,10 +32,11 @@
 - [x] Add gravity
 
 ## Client
-- [ ] Add scores to sprites
-- [ ] Add names to sprites
 - [ ] Add dark mode
 - [ ] Deprecate "GameJoinUpdate" message
+- [*] Move all graphics inside the canvas
+- [x] Add scores to sprites
+- [x] Add names to sprites
 - [x] Create JS canvas for game
 - [x] Build renderer for server messages
 - [x] Build controller to send user input to server
@@ -42,7 +44,6 @@
 - [x] Make rendered text bigger
 - [x] Render message in/out states
 - [x] Add rendering for platforms
-- [*] Move all graphics inside the canvas
 
 ## Other
 - [ ] Find a way to share constants
