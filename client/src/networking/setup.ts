@@ -5,7 +5,8 @@ import { connectToServer } from "./handler";
 
 export function setUpNetworking(state: AppState) {
     renderMetadata(state);
-    networkElements.viteMode.text(`Mode: ${import.meta.env.MODE} | v${VERSION}`);
+    networkElements.viteMode
+        .text(`Mode: ${import.meta.env.MODE} | v${VERSION}`);
     networkElements.joinForm.on("submit", (event) => {
         const name = new FormData(event.target).get("name");
         if (name === null || name.toString().length === 0) {
