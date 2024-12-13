@@ -102,7 +102,7 @@ public final class Player {
         /*
          * newX = oldX + xVelocity
          * newY = oldY + yVelocity
-         * 
+         *
          * if (isColliding(platform)) {
          *      newX = boundary exceeded - player size
          *      newY = boundary exceeded - player size
@@ -149,7 +149,7 @@ public final class Player {
     }
 
     /**
-     * Determine if the player is touching a platform
+     * Determine if the player is touching a platform.
      * @param platform
      * @return true if the player rectangle makes contact with the platform,
      *  false otherwise
@@ -158,7 +158,7 @@ public final class Player {
         int minY = this.yPosition;
         int maxY = this.yPosition + PLAYER_HEIGHT;
 
-        // check that both bounds of the rectangle are on the same side of the platform
+        // are both sides of the player on the same side of the platform?
         if (minY >= platform.y() || platform.y() >= maxY) {
             return false;
         }

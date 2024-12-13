@@ -88,11 +88,11 @@ public class PlayerEventHandlerTest {
     }
 
     @Test
-    void test_computeVelocity_downControl_returnsPositiveY() throws Exception {
+    void test_computeVelocity_downControl_returnsZero() throws Exception {
         var message = controlListAsMessage(List.of(PlayerControl.DOWN));
         var velocity = PlayerEventHandler.computeVelocity(message);
         assertEquals(0, velocity.xVelocity());
-        assertTrue(velocity.yVelocity() > 0);
+        assertEquals(0, velocity.yVelocity());
     }
 
     @Test
@@ -108,11 +108,11 @@ public class PlayerEventHandlerTest {
     test_computeVelocity_multipleControls_returnsCorrectVelocity()
     throws Exception {
         var controls =
-            List.of(PlayerControl.DOWN, PlayerControl.LEFT, PlayerControl.DOWN);
+            List.of(PlayerControl.LEFT, PlayerControl.DOWN, PlayerControl.LEFT);
         var message = controlListAsMessage(controls);
         var velocity = PlayerEventHandler.computeVelocity(message);
         assertTrue(velocity.xVelocity() < 0);
-        assertTrue(velocity.yVelocity() > 0);
+        assertEquals(0, velocity.yVelocity());
     }
 
     private TextMessage controlListAsMessage(List<PlayerControl> pressedControls) {
