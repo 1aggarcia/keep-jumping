@@ -23,8 +23,8 @@ export function handleGameUpdate(message: string, state: AppState) {
     }
 }
 
-export function handleKeyDown(event: KeyboardEvent, state: AppState) {
-    const control = keyCodeToPlayerControl(event.code);
+export function handleKeyDown(keyCode: string, state: AppState) {
+    const control = keyCodeToPlayerControl(keyCode);
     if (control === null) return;
     if (state.server === null) return;
 
@@ -39,8 +39,8 @@ export function handleKeyDown(event: KeyboardEvent, state: AppState) {
     sendToServer(state, JSON.stringify(update));
 }
 
-export function handleKeyUp(event: KeyboardEvent, state: AppState) {
-    const control = keyCodeToPlayerControl(event.code);
+export function handleKeyUp(keyCode: string, state: AppState) {
+    const control = keyCodeToPlayerControl(keyCode);
     if (control === null) return;
     if (state.server === null) return;
 
