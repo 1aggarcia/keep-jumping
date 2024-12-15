@@ -1,11 +1,13 @@
 package io.github.aggarcia.players;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -16,57 +18,68 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.github.aggarcia.players.messages.PlayerControlUpdate;
 import io.github.aggarcia.players.messages.PlayerJoinUpdate;
+import io.github.aggarcia.players.updates.CreatePlayer;
 import io.github.aggarcia.shared.SocketMessage;
 
 public class PlayerEventHandlerTest {
     @Test
-    void test_processMessage_badMessage_throwsException() {
-        assertThrows(
-            JsonProcessingException.class,
-            () -> PlayerEventHandler.processMessage(new TextMessage(""))
-        );
+    void test_processEvent_badMessage_throwsException() {
+        assertThrows(JsonProcessingException.class, () -> {
+            PlayerEventHandler
+                .processEvent("", new TextMessage(""), Collections.emptyMap());
+        });
     }
 
     @Test
-    void test_processMessage_missingType_throwsExecption() {
+    void test_processEvent_missingType_throwsExecption() {
         var message = new TextMessage("{}");
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> PlayerEventHandler.processMessage(message)
-        );
+        assertThrows(IllegalArgumentException.class, () -> {
+            PlayerEventHandler
+                .processEvent("", message, Collections.emptyMap());
+        });
     }
 
     @Test
-    void test_processMessage_badType_throwsException() throws Exception {
+    void test_processEvent_badType_throwsException() throws Exception {
         var message = new TextMessage("{\"type\":\"bad type\"}");
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> PlayerEventHandler.processMessage(message)
-        );
+        assertThrows(IllegalArgumentException.class, () -> {
+            PlayerEventHandler
+                .processEvent("", message, Collections.emptyMap());
+        });
     }
 
     @Test
-    void test_processMessage_playerJoinUpdate_returnsName()
+    void test_processEvent_playerJoinUpdate_returnsName()
     throws Exception {
         var payload = new PlayerJoinUpdate(SocketMessage.PLAYER_JOIN_UPDATE, "testName");
         var message = new TextMessage(new ObjectMapper().writeValueAsString(payload));
-        assertEquals("testName", PlayerEventHandler.processMessage(message));
+
+        CreatePlayer result = (CreatePlayer) PlayerEventHandler
+            .processEvent("client1", message, Collections.emptyMap());
+
+        assertTrue(result instanceof CreatePlayer);
+        assertFalse(result.isError());
+        assertEquals("client1", result.client());
+        assertEquals("testName", result.player().name());
     }
 
     @Test
-    void test_processMessage_playerControlUpdate_callsComputeVelocity()
+    void test_processEvent_playerControlUpdate_callsComputeVelocity()
     throws Exception {
         var message = controlListAsMessage(Collections.emptyList());
         assertEquals(
-            PlayerEventHandler.computeVelocity(message),
-            PlayerEventHandler.processMessage(message)
+            PlayerEventHandler
+                .processControlUpdate("client1", message, Collections.emptyMap()),
+            PlayerEventHandler
+                .processEvent("client1", message, Collections.emptyMap())
         );
     }
 
     @Test
     void test_computeVelocity_noControls_returnsZeroVelocity() throws Exception {
         var message = controlListAsMessage(Collections.emptyList());
-        var velocity = PlayerEventHandler.computeVelocity(message);
+        var velocity = PlayerEventHandler
+            .processControlUpdate("", message, new HashMap<>());
         assertEquals(0, velocity.xVelocity());
         assertEquals(0, velocity.yVelocity());
     }
@@ -74,7 +87,8 @@ public class PlayerEventHandlerTest {
     @Test
     void test_computeVelocity_rightControl_returnsPositiveX() throws Exception {
         var message = controlListAsMessage(List.of(PlayerControl.RIGHT));
-        var velocity = PlayerEventHandler.computeVelocity(message);
+        var velocity = PlayerEventHandler
+            .processControlUpdate("", message, new HashMap<>());
         assertTrue(velocity.xVelocity() > 0);
         assertEquals(0, velocity.yVelocity());
     }
@@ -82,7 +96,8 @@ public class PlayerEventHandlerTest {
     @Test
     void test_computeVelocity_leftControl_returnsNegativeX() throws Exception {
         var message = controlListAsMessage(List.of(PlayerControl.LEFT));
-        var velocity = PlayerEventHandler.computeVelocity(message);
+        var velocity = PlayerEventHandler
+            .processControlUpdate("", message, new HashMap<>());
         assertTrue(velocity.xVelocity() < 0);
         assertEquals(0, velocity.yVelocity());
     }
@@ -90,7 +105,8 @@ public class PlayerEventHandlerTest {
     @Test
     void test_computeVelocity_downControl_returnsZero() throws Exception {
         var message = controlListAsMessage(List.of(PlayerControl.DOWN));
-        var velocity = PlayerEventHandler.computeVelocity(message);
+        var velocity = PlayerEventHandler
+            .processControlUpdate("", message, new HashMap<>());
         assertEquals(0, velocity.xVelocity());
         assertEquals(0, velocity.yVelocity());
     }
@@ -98,7 +114,8 @@ public class PlayerEventHandlerTest {
     @Test
     void test_computeVelocity_upControl_returnsNegativeY() throws Exception {
         var message = controlListAsMessage(List.of(PlayerControl.UP));
-        var velocity = PlayerEventHandler.computeVelocity(message);
+        var velocity = PlayerEventHandler
+            .processControlUpdate("", message, new HashMap<>());
         assertEquals(0, velocity.xVelocity());
         assertTrue(velocity.yVelocity() < 0);
     }
@@ -110,7 +127,8 @@ public class PlayerEventHandlerTest {
         var controls =
             List.of(PlayerControl.LEFT, PlayerControl.DOWN, PlayerControl.LEFT);
         var message = controlListAsMessage(controls);
-        var velocity = PlayerEventHandler.computeVelocity(message);
+        var velocity = PlayerEventHandler
+            .processControlUpdate("", message, new HashMap<>());
         assertTrue(velocity.xVelocity() < 0);
         assertEquals(0, velocity.yVelocity());
     }

@@ -13,7 +13,7 @@
 - [x] Java linter
 
 ## Server
-- [ ] Refactor dynamic message handler to dispatch to correct handler
+- [*] Refactor dynamic message handler to dispatch to correct handler
 - [ ] Add persistent storage for user scores
 - [ ] Include more intelligent platform generation, based on location of nearby platforms
 - [ ] Re-add support for game over
