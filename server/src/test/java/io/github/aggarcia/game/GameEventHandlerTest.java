@@ -92,7 +92,7 @@ public class GameEventHandlerTest {
     @Test
     void test_advanceToNextTick_oneMovingPlayer_mutatesCorrectPlayer() {
         // player 1 should not move
-        var player1 = Player.createRandomPlayer().yPosition(Player.MAX_PLAYER_Y);
+        var player1 = Player.createRandomPlayer("").yPosition(Player.MAX_PLAYER_Y);
         var player2 = Player.builder()
             .xPosition(0)
             .yPosition(0)
@@ -201,11 +201,11 @@ public class GameEventHandlerTest {
      *  Players are on the ground and are motionless
      */
     private Map<String, Player> createTestPlayers() {
-        var player1 = Player.createRandomPlayer()
+        var player1 = Player.createRandomPlayer("")
             .yPosition(Player.MAX_PLAYER_Y)
             .hasChanged(false);
 
-        var player2 = Player.createRandomPlayer()
+        var player2 = Player.createRandomPlayer("")
             .yPosition(Player.MAX_PLAYER_Y)
             .hasChanged(false);
 

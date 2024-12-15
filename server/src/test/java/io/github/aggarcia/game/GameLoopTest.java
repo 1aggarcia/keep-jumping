@@ -144,7 +144,7 @@ public class GameLoopTest {
 
     private Map<WebSocketSession, Player> getTestPlayers() {
         return new HashMap<>(
-            Map.of(mockSession, Player.createRandomPlayer())
+            Map.of(mockSession, Player.createRandomPlayer(""))
         );
     }
 }

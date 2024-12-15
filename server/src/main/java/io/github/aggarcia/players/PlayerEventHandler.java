@@ -113,8 +113,7 @@ public final class PlayerEventHandler {
                 return new CreatePlayer(true, null, null);
             }
         }
-        var newPlayer = Player.createRandomPlayer();
-        newPlayer.name(name);
+        var newPlayer = Player.createRandomPlayer(name);
         return new CreatePlayer(false, client, newPlayer);
     }
 }

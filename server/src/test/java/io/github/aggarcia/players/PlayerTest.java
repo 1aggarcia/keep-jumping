@@ -38,12 +38,12 @@ public class PlayerTest {
 
     @Test
     void test_createRandomPlayer_initializesCorrectConstantValues() {
-        var player = Player.createRandomPlayer();
+        var player = Player.createRandomPlayer("new test player");
 
         assertEquals(0, player.score());
         assertEquals(0, player.xVelocity());
         assertEquals(0, player.yVelocity());
-        assertEquals("~", player.name());
+        assertEquals("new test player", player.name());
         assertNotNull(player.color());
         assertTrue(player.hasChanged());
     }
@@ -52,7 +52,7 @@ public class PlayerTest {
     void test_createRandomPlayer_generatesPositionInGameBounds() {
         // run test multiple times since it involves randomness
         for (int i = 0; i < 100; i++) {
-            var player = Player.createRandomPlayer();
+            var player = Player.createRandomPlayer("");
 
             assertTrue(player.xPosition() >= 0);
             assertTrue(player.yPosition() >= 0);
@@ -65,7 +65,7 @@ public class PlayerTest {
     void test_createRandomPlayer_generatesPositionAtAFactorOfPlayerSize() {
         // run test multiple times since it involves randomness
         for (int i = 0; i < 100; i++) {
-            var player = Player.createRandomPlayer();
+            var player = Player.createRandomPlayer("");
             assertEquals(0, player.xPosition() % Player.PLAYER_WIDTH);
             assertEquals(0, player.yPosition() % Player.PLAYER_HEIGHT);
         }
@@ -73,7 +73,7 @@ public class PlayerTest {
 
     @Test
     void test_createRandomPlayer_generatesLegalHexColor() {
-        String color = Player.createRandomPlayer().color();
+        String color = Player.createRandomPlayer("").color();
         assertEquals(color.length(), 7);
         assertEquals(color.charAt(0), '#');
 
@@ -97,7 +97,7 @@ public class PlayerTest {
 
     @Test
     void test_moveToNextTick_noXVelocity_doesNotChangeXPhysics() {
-        var testPlayer = Player.createRandomPlayer();
+        var testPlayer = Player.createRandomPlayer("");
         var expectedX = testPlayer.xPosition();
 
         testPlayer.moveToNextTick();
@@ -107,7 +107,7 @@ public class PlayerTest {
 
     @Test
     void test_moveToNextTick_touchingGround_doesNotChangeYPhysics() {
-        var testPlayer = Player.createRandomPlayer()
+        var testPlayer = Player.createRandomPlayer("")
             .hasChanged(false)
             .yPosition(Player.MAX_PLAYER_Y);
 
@@ -119,7 +119,7 @@ public class PlayerTest {
 
     @Test
     void test_moveToNextTick_notTouchingGround_appliesGravityToYPhysics() {
-        var testPlayer = Player.createRandomPlayer()
+        var testPlayer = Player.createRandomPlayer("")
             .hasChanged(false)
             .yPosition(0)
             .yVelocity(15);
@@ -133,7 +133,7 @@ public class PlayerTest {
 
     @Test
     void test_moveToNextTick_collisionWithBottom_stopsPlayerOnBottom() {
-        var testPlayer = Player.createRandomPlayer()
+        var testPlayer = Player.createRandomPlayer("")
             .hasChanged(false)
             .yPosition(Player.MAX_PLAYER_Y - 1)
             .yVelocity(150);
@@ -146,7 +146,7 @@ public class PlayerTest {
     
     @Test
     void test_moveToNextTick_collisionWithTop_stopsPlayerOnTop() {
-        var testPlayer = Player.createRandomPlayer()
+        var testPlayer = Player.createRandomPlayer("")
             .hasChanged(false)
             .yPosition(1);
         // send the player past the top
@@ -160,7 +160,7 @@ public class PlayerTest {
 
     @Test
     void test_moveToNextTick_collisionWithLeft_stopsPlayerOnLeft() {
-        var testPlayer = Player.createRandomPlayer()
+        var testPlayer = Player.createRandomPlayer("")
             .hasChanged(false)
             .xPosition(1)
             .xVelocity(-150);
@@ -173,7 +173,7 @@ public class PlayerTest {
 
     @Test
     void test_moveToNextTick_collisionWithRight_stopsPlayerOnRight() {
-        var testPlayer = Player.createRandomPlayer()
+        var testPlayer = Player.createRandomPlayer("")
             .hasChanged(false)
             .xPosition(Player.MAX_PLAYER_X - 1)
             .xVelocity(150);
@@ -199,7 +199,7 @@ public class PlayerTest {
 
     @Test
     void test_moveToNextTick_minXPositionAndNegativeXVelocity_doesNothing() {
-        var testPlayer = Player.createRandomPlayer()
+        var testPlayer = Player.createRandomPlayer("")
             .hasChanged(false)
             .xPosition(0)
             .xVelocity(-1)
@@ -305,7 +305,7 @@ public class PlayerTest {
 
     @Test
     void test_addToScore_zeroScore_updatesScore() {
-        var testPlayer = Player.createRandomPlayer();
+        var testPlayer = Player.createRandomPlayer("");
 
         testPlayer.addToScore(35);
         assertEquals(35, testPlayer.score());

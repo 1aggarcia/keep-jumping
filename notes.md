@@ -18,6 +18,7 @@
 - [ ] Include more intelligent platform generation, based on location of nearby platforms
 - [ ] Re-add support for game over
 - [ ] Use `JsonTypeInfo` and `JsonSubTypes` from Jackson for deserializing JSON union types (maybe use Protobuf instead?)
+- [x] Make player names read only
 - [x] Add collisions for platforms
 - [x] Add processing for player scores
 - [x] Define data types for client controls
