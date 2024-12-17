@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.web.socket.TextMessage;
@@ -16,9 +17,11 @@ import org.springframework.web.socket.TextMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.github.aggarcia.players.messages.PlayerControlUpdate;
-import io.github.aggarcia.players.messages.PlayerJoinUpdate;
+import io.github.aggarcia.players.events.PlayerControlUpdate;
+import io.github.aggarcia.players.events.PlayerJoinUpdate;
 import io.github.aggarcia.players.updates.CreatePlayer;
+import io.github.aggarcia.players.updates.ErrorUpdate;
+import io.github.aggarcia.players.updates.UpdateVelocity;
 import io.github.aggarcia.shared.SocketMessage;
 
 public class PlayerEventHandlerTest {
@@ -64,7 +67,7 @@ public class PlayerEventHandlerTest {
     }
 
     @Test
-    void test_processEvent_playerControlUpdate_callsComputeVelocity()
+    void test_processEvent_playerControlUpdate_callsProcessControlUpdate()
     throws Exception {
         var message = controlListAsMessage(Collections.emptyList());
         assertEquals(
@@ -76,59 +79,65 @@ public class PlayerEventHandlerTest {
     }
 
     @Test
-    void test_computeVelocity_noControls_returnsZeroVelocity() throws Exception {
+    void test_processControlUpdate_missingPlayer_returnsError() throws Exception {
         var message = controlListAsMessage(Collections.emptyList());
-        var velocity = PlayerEventHandler
-            .processControlUpdate("", message, new HashMap<>());
+        // client id "test client" doesnt exist in the sessions (empty map)
+        var result = (ErrorUpdate) PlayerEventHandler.processControlUpdate(
+            "test client",
+            message,
+            new HashMap<>()
+        );
+        assertTrue(result instanceof ErrorUpdate);
+    }
+
+    @Test
+    void test_processControlUpdate_noControls_returnsZeroVelocity() throws Exception {
+        var message = controlListAsMessage(Collections.emptyList());
+        var velocity = processControlWithValidPlayer(message);
         assertEquals(0, velocity.xVelocity());
         assertEquals(0, velocity.yVelocity());
     }
 
     @Test
-    void test_computeVelocity_rightControl_returnsPositiveX() throws Exception {
+    void test_processControlUpdate_rightControl_returnsPositiveX() throws Exception {
         var message = controlListAsMessage(List.of(PlayerControl.RIGHT));
-        var velocity = PlayerEventHandler
-            .processControlUpdate("", message, new HashMap<>());
+        var velocity = processControlWithValidPlayer(message);
         assertTrue(velocity.xVelocity() > 0);
         assertEquals(0, velocity.yVelocity());
     }
 
     @Test
-    void test_computeVelocity_leftControl_returnsNegativeX() throws Exception {
+    void test_processControlUpdate_leftControl_returnsNegativeX() throws Exception {
         var message = controlListAsMessage(List.of(PlayerControl.LEFT));
-        var velocity = PlayerEventHandler
-            .processControlUpdate("", message, new HashMap<>());
+        var velocity = processControlWithValidPlayer(message);
         assertTrue(velocity.xVelocity() < 0);
         assertEquals(0, velocity.yVelocity());
     }
 
     @Test
-    void test_computeVelocity_downControl_returnsZero() throws Exception {
+    void test_processControlUpdate_downControl_returnsZero() throws Exception {
         var message = controlListAsMessage(List.of(PlayerControl.DOWN));
-        var velocity = PlayerEventHandler
-            .processControlUpdate("", message, new HashMap<>());
+        var velocity = processControlWithValidPlayer(message);
         assertEquals(0, velocity.xVelocity());
         assertEquals(0, velocity.yVelocity());
     }
 
     @Test
-    void test_computeVelocity_upControl_returnsNegativeY() throws Exception {
+    void test_processControlUpdate_upControl_returnsNegativeY() throws Exception {
         var message = controlListAsMessage(List.of(PlayerControl.UP));
-        var velocity = PlayerEventHandler
-            .processControlUpdate("", message, new HashMap<>());
+        var velocity = processControlWithValidPlayer(message);
         assertEquals(0, velocity.xVelocity());
         assertTrue(velocity.yVelocity() < 0);
     }
 
     @Test
     void
-    test_computeVelocity_multipleControls_returnsCorrectVelocity()
+    test_processControlUpdate_multipleControls_returnsCorrectVelocity()
     throws Exception {
         var controls =
             List.of(PlayerControl.LEFT, PlayerControl.DOWN, PlayerControl.LEFT);
         var message = controlListAsMessage(controls);
-        var velocity = PlayerEventHandler
-            .processControlUpdate("", message, new HashMap<>());
+        var velocity = processControlWithValidPlayer(message);
         assertTrue(velocity.xVelocity() < 0);
         assertEquals(0, velocity.yVelocity());
     }
@@ -144,5 +153,15 @@ public class PlayerEventHandlerTest {
             fail(e);
             return null;  // to make the compiler happy
         }
+    }
+
+    /**
+     * Wrapper for calling processControlUpdate with a valid player session
+     */
+    private UpdateVelocity
+    processControlWithValidPlayer(TextMessage event)throws Exception {
+        var players = Map.of("client1", Player.createRandomPlayer("player1"));
+        return (UpdateVelocity) PlayerEventHandler
+            .processControlUpdate("client1", event, players);
     }
 }

@@ -36,6 +36,7 @@
 ## Client
 - [ ] Add dark mode
 - [ ] Deprecate "GameJoinUpdate" message
+- [ ] Process disconnect requests / other errors
 - [*] Move all graphics inside the canvas
 - [x] Add scores to sprites
 - [x] Add names to sprites

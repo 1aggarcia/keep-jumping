@@ -9,8 +9,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.github.aggarcia.players.messages.PlayerControlUpdate;
+import io.github.aggarcia.players.events.PlayerControlUpdate;
 import io.github.aggarcia.players.updates.CreatePlayer;
+import io.github.aggarcia.players.updates.ErrorUpdate;
 import io.github.aggarcia.players.updates.PlayerUpdate;
 import io.github.aggarcia.players.updates.UpdateVelocity;
 
@@ -69,7 +70,7 @@ public final class PlayerEventHandler {
      *  are pressed in the incoming message, e.g. "Right" and "Left".
      * @throws JsonProcessingException
      */
-    public static UpdateVelocity
+    public static PlayerUpdate
     processControlUpdate(
         String client,
         TextMessage event,
@@ -79,6 +80,10 @@ public final class PlayerEventHandler {
             event.getPayload(),
             PlayerControlUpdate.class
         );
+
+        if (!sessions.containsKey(client)) {
+            return new ErrorUpdate("Player does not exist with id " + client);
+        }
 
         // TODO: use previous player velocity, not 0
         int xVelocity = 0;

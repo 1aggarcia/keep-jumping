@@ -5,23 +5,16 @@ import java.util.Optional;
 
 import io.github.aggarcia.players.Player;
 
-public record CreatePlayer(
-    boolean isError,
-    String client,
-    Player player
+public record ErrorUpdate(
+    String message
 ) implements PlayerUpdate {
     @Override
     public Optional<String> reply() {
-        return Optional.empty();
+        return Optional.of(message);
     }
 
-    /**
-     * Add the mapping `client -> player`.
-     */
     @Override
     public void applyTo(Map<String, Player> players) {
-        if (!isError) {
-            players.put(client, player);
-        }
+        // do nothing
     }
 }

@@ -6,7 +6,6 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.game.GameLoop;
@@ -14,6 +13,7 @@ import io.github.aggarcia.players.Player;
 import io.github.aggarcia.players.PlayerEventHandler;
 import io.github.aggarcia.players.updates.PlayerUpdate;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -96,26 +96,20 @@ public class ConnectionHandler extends TextWebSocketHandler {
         @NonNull WebSocketSession client, @NonNull TextMessage event
     ) {
         try {
-            String clientId = client.getId();
-            PlayerUpdate result = PlayerEventHandler
-                .processEvent(clientId, event, players);
-            result.applyTo(players);
-            if (gameLoop.isRunning()) {
-                return;
+            PlayerUpdate update = PlayerEventHandler
+                .processEvent(client.getId(), event, players);
+            update.applyTo(players);
+
+            if (!gameLoop.isRunning()) {
+                gameLoop.start(players.values(), sessions);
             }
-            // first player has joined: need to start the same loop
-            Map<WebSocketSession, Player> playerSessions = new HashMap<>();
-            for (var session : sessions) {
-                var player = players.get(session.getId());
-                if (player == null) {
-                    System.err.println(
-                        "No player for session ID: " + session.getId());
-                    continue;
+            if (update.reply().isPresent()) {
+                synchronized (client) {
+                    var message = new TextMessage(update.reply().get());
+                    client.sendMessage(message);
                 }
-                playerSessions.put(session, player);
             }
-            gameLoop.start(playerSessions);
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             System.err.println(e);
         }
     }

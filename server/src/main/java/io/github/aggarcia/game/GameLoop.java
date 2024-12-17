@@ -1,7 +1,6 @@
 package io.github.aggarcia.game;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -88,15 +87,19 @@ public class GameLoop {
 
     /**
      * Begin the game loop with a reference to the players and open sessions.
+     * @param players - active players
      * @param sessions - all open client sessions
      * @return true if a new loop was started, false if a loop was already
      * running and no new loop was created
      */
-    public boolean start(Map<WebSocketSession, Player> sessions) {
+    public boolean start(
+        Collection<Player> players,
+        Collection<WebSocketSession> sessions
+    ) {
         if (this.isRunning()) {
             return false;
         }
-        this.loopThread = new Thread(() -> runGameLoop(sessions));
+        this.loopThread = new Thread(() -> runGameLoop(players, sessions));
         this.loopThread.start();
         return true;
     }
@@ -113,11 +116,13 @@ public class GameLoop {
 
     /**
      * Internal thread function for the game loop.
+     * @param players - reference to player list to update
      * @param sessions - collection of all sessions to broadcast to
      */
-    private void runGameLoop(Map<WebSocketSession, Player> sessions) {
-        final var players = sessions.values();
-
+    private void runGameLoop(
+        Collection<Player> players,
+        Collection<WebSocketSession> sessions
+    ) {
         int serverAge = 0;  // in seconds
         int tickCount = 0;
         List<GamePlatform> platforms = new ArrayList<>();
@@ -126,7 +131,7 @@ public class GameLoop {
         if (idleThread.isAlive()) {
             idleThread.interrupt();
         }
-        while (sessions.size() > 0) {
+        while (players.size() > 0 && sessions.size() > 0) {
             var response = GameEventHandler
                 .advanceToNextTick(players, platforms, tickCount);
 
@@ -142,7 +147,7 @@ public class GameLoop {
                     platforms,
                     serverAge
                 );
-                broadcast(sessions.keySet(), update);
+                broadcast(sessions, update);
             } catch (JsonProcessingException e) {
                 System.err.println(e);
             }
