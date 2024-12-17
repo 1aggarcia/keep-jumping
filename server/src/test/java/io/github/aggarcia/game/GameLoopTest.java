@@ -12,8 +12,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 import io.github.aggarcia.players.Player;
 
-import java.util.Map;
-import java.util.HashMap;
+import java.util.List;
 import java.util.ArrayList;
 
 @SpringBootTest
@@ -30,7 +29,7 @@ public class GameLoopTest {
     void test_isRunning_loopStartedWithOnePlayer_returnsTrue()
     throws Exception {
         var gameLoop = new GameLoop().withTickDelay(0);
-        gameLoop.start(getTestPlayers());
+        gameLoop.start(getTestPlayers(), getSessions());
         assertTrue(gameLoop.isRunning());
         gameLoop.forceQuit();
     }
@@ -39,7 +38,7 @@ public class GameLoopTest {
     void test_isRunning_afterPlayersCleared_returnsFalse() throws Exception  {
         var gameLoop = new GameLoop().withTickDelay(0);
         var players = getTestPlayers();
-        gameLoop.start(players);
+        gameLoop.start(players, getSessions());
 
         players.clear();
         // gives the loop thread time to notice the change and stop execution
@@ -48,9 +47,21 @@ public class GameLoopTest {
     }
 
     @Test
+    void test_isRunning_afterSessionsCleared_returnsFalse() throws Exception  {
+        var gameLoop = new GameLoop().withTickDelay(0);
+        var sessions = getSessions();
+        gameLoop.start(getTestPlayers(), sessions);
+
+        sessions.clear();
+        // gives the loop thread time to notice the change and stop execution
+        Thread.sleep(10);
+        assertFalse(gameLoop.isRunning());
+    }
+
+    @Test
     void test_forceQuit_activeLoop_stopsLoop() throws Exception {
         var gameLoop = new GameLoop().withTickDelay(0);
-        gameLoop.start(getTestPlayers());
+        gameLoop.start(getTestPlayers(), getSessions());
 
         gameLoop.forceQuit();
         assertFalse(gameLoop.isRunning());
@@ -59,7 +70,7 @@ public class GameLoopTest {
     @Test
     void test_onIdleTimeout_activeLoop_throwsException() throws Exception {
         var gameLoop = new GameLoop().withTickDelay(0);
-        gameLoop.start(getTestPlayers());
+        gameLoop.start(getTestPlayers(), getSessions());
 
         assertThrows(Exception.class, () -> {
             gameLoop.onIdleTimeout(() -> {}, 0);
@@ -80,7 +91,7 @@ public class GameLoopTest {
             }
         }, 0);
 
-        gameLoop.start(getTestPlayers());
+        gameLoop.start(getTestPlayers(), getSessions());
         gameLoop.forceQuit();
         synchronized (sharedList) {
             // give up after 10ms so the test doesn't freeze
@@ -98,7 +109,7 @@ public class GameLoopTest {
             sharedList.add("test item");
         }, 50);
 
-        gameLoop.start(getTestPlayers());
+        gameLoop.start(getTestPlayers(), getSessions());
         gameLoop.forceQuit();
         assertEquals(0, sharedList.size());
     }
@@ -112,9 +123,9 @@ public class GameLoopTest {
             sharedList.add("test item");
         }, 50);
 
-        gameLoop.start(getTestPlayers());
+        gameLoop.start(getTestPlayers(), getSessions());
         gameLoop.forceQuit();
-        gameLoop.start(getTestPlayers());
+        gameLoop.start(getTestPlayers(), getSessions());
 
         // gives enough time for the timeout action to execute, but it shouldn't
         Thread.sleep(100);
@@ -131,20 +142,26 @@ public class GameLoopTest {
             sharedList.add("test item");
         }, 50);
 
-        gameLoop.start(getTestPlayers());
+        gameLoop.start(getTestPlayers(), getSessions());
         gameLoop.forceQuit();
 
         assertEquals(0, sharedList.size());
-        gameLoop.start(getTestPlayers());
+        gameLoop.start(getTestPlayers(), getSessions());
         gameLoop.forceQuit();
 
         Thread.sleep(100);
         assertEquals(1, sharedList.size());
     }
 
-    private Map<WebSocketSession, Player> getTestPlayers() {
-        return new HashMap<>(
-            Map.of(mockSession, Player.createRandomPlayer())
-        );
+    private List<Player> getTestPlayers() {
+        var list = new ArrayList<Player>();
+        list.add(Player.createRandomPlayer(""));
+        return list;
+    }
+
+    private List<WebSocketSession> getSessions() {
+        var list = new ArrayList<WebSocketSession>();
+        list.add(mockSession);
+        return list;
     }
 }

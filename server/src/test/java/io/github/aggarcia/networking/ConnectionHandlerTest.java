@@ -32,10 +32,10 @@ public class ConnectionHandlerTest {
     }
 
     @Test
-    void test_afterConnectionEstablished_firstSession_createsPlayer() {
+    void test_afterConnectionEstablished_firstSession_doesNotCreatePlayer() {
         assertEquals(connectionHandler.players().size(), 0);
         connectionHandler.afterConnectionEstablished(mockSession);
-        assertEquals(connectionHandler.players().size(), 1);
+        assertEquals(connectionHandler.players().size(), 0);
     }
 
     @Test
@@ -54,12 +54,13 @@ public class ConnectionHandlerTest {
         assertEquals(connectionHandler.sessions().size(), 0); 
     }
 
-    @Test
-    void test_afterConnectionClosed_oneSession_deletesPlayer() {
-        // creates the player
-        connectionHandler.afterConnectionEstablished(mockSession);
-        assertEquals(connectionHandler.players().size(), 1);
-        connectionHandler.afterConnectionClosed(mockSession, CloseStatus.NORMAL);
-        assertEquals(connectionHandler.players().size(), 0);
-    }
+    // TODO: test player creation & deletion with handleTextMessage
+    // @Test
+    // void test_afterConnectionClosed_oneSession_deletesPlayer() {
+    //     // creates the player
+    //     connectionHandler.afterConnectionEstablished(mockSession);
+    //     assertEquals(connectionHandler.players().size(), 1);
+    //     connectionHandler.afterConnectionClosed(mockSession, CloseStatus.NORMAL);
+    //     assertEquals(connectionHandler.players().size(), 0);
+    // }
 }

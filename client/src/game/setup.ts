@@ -3,6 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH } from "./constants";
 import { gameElements } from "./elements";
 import { fitCanvasToWindow, handleKeyDown, handleKeyUp } from "./handler";
 
+const JUMP_KEYCODE = "ArrowUp";
 const gameContext = gameElements.canvas[0].getContext("2d");
 
 export function getGameContext() {
@@ -22,6 +23,10 @@ export function setupGame(state: AppState) {
     fitCanvasToWindow(gameElements.canvas);
     addEventListener("resize", () => fitCanvasToWindow(gameElements.canvas));
 
-    addEventListener("keydown", (e) => handleKeyDown(e, state));
-    addEventListener("keyup", (e) => handleKeyUp(e, state));
+    addEventListener("keydown", (e) => handleKeyDown(e.code, state));
+    addEventListener("keyup", (e) => handleKeyUp(e.code, state));
+
+    gameElements.canvas
+        .on("mousedown",() => handleKeyDown(JUMP_KEYCODE, state))
+        .on("mouseup", () => handleKeyUp(JUMP_KEYCODE, state));
 }

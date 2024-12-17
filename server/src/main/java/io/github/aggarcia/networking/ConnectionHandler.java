@@ -6,18 +6,20 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.game.GameLoop;
 import io.github.aggarcia.players.Player;
 import io.github.aggarcia.players.PlayerEventHandler;
-import io.github.aggarcia.players.PlayerEventHandler.PlayerVelocity;
+import io.github.aggarcia.players.updates.PlayerUpdate;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * State management for client sessions. Externally, state is read only.
@@ -28,8 +30,12 @@ public class ConnectionHandler extends TextWebSocketHandler {
     private static final int INSTANCE_ID = RandomUtil.getPositiveInt() % 999;
     private static final int IDLE_TIMEOUT_SECONDS = 15 * 60;  // 15 minutes
 
+    // Session state
+    private final Set<WebSocketSession> sessions =
+        Collections.synchronizedSet(new HashSet<>());
+
     // Game state
-    private final Map<WebSocketSession, Player> sessions =
+    private final Map<String, Player> players =
         Collections.synchronizedMap(new HashMap<>());
 
     // Game loop state
@@ -47,18 +53,13 @@ public class ConnectionHandler extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
-        var newPlayer = Player.createRandomPlayer();
-        sessions.put(session, newPlayer);
-        if (!gameLoop.isRunning()) {
-            gameLoop.start(sessions);
-        }
-
+        sessions.add(session);
         // Entire string needs to be printed at once since the console is
         // shared with other threads
         var consoleMessage = new StringBuilder()
             .append(INSTANCE_ID)
-            .append(" - New player joined")
-            .append(" (total " + sessions.size() + ")")
+            .append(" - New connection: ")
+            .append(session.getId())
             .toString();
         System.out.println(consoleMessage);
     }
@@ -71,44 +72,44 @@ public class ConnectionHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(
         @NonNull WebSocketSession session, @NonNull CloseStatus status
     ) {
-        if (sessions.remove(session) == null) {
+        if (players.remove(session.getId()) == null) {
             System.err.println(
                 "No player was saved for session " + session.getId());
         }
+        sessions.remove(session);
 
         // Entire string needs to be printed at once since the console is
         // shared with other threads
         var consoleMessage = new StringBuilder()
             .append(INSTANCE_ID)
             .append(" - Player left")
-            .append(" (total " + sessions.size() + ")")
+            .append(" (total " + players.size() + ")")
             .toString();
         System.out.println(consoleMessage);
     }
 
     /**
-     * Respond to client messages.
+     * Act on client events. Wrapper for logic in `PlayerEventHandler`.
      */
     @Override
     public void handleTextMessage(
-        @NonNull WebSocketSession session, @NonNull TextMessage message
+        @NonNull WebSocketSession client, @NonNull TextMessage event
     ) {
         try {
-            var player = sessions.get(session);
-            if (player == null) {
-                System.err.println("Player not found, id: " + session.getId());
-                return;
+            PlayerUpdate update = PlayerEventHandler
+                .processEvent(client.getId(), event, players);
+            update.applyTo(players);
+
+            if (!gameLoop.isRunning()) {
+                gameLoop.start(players.values(), sessions);
             }
-            Object result = PlayerEventHandler.processMessage(message);
-            if (result instanceof String name) {
-                player.name(name);
-            } else if (result instanceof PlayerVelocity velocity) {
-                player.xVelocity(velocity.xVelocity());
-                player.yVelocity(velocity.yVelocity());
-            } else {
-                System.err.println("Unknown response type: " + result);
+            if (update.reply().isPresent()) {
+                synchronized (client) {
+                    var message = new TextMessage(update.reply().get());
+                    client.sendMessage(message);
+                }
             }
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             System.err.println(e);
         }
     }
@@ -117,13 +118,13 @@ public class ConnectionHandler extends TextWebSocketHandler {
      * @return read only list of active web socket sessions
      */
     public List<WebSocketSession> sessions() {
-        return this.sessions.keySet().stream().toList();
+        return this.sessions.stream().toList();
     }
 
     /**
      * @return read only list of players
      */
     public List<Player> players() {
-        return this.sessions.values().stream().toList();
+        return this.players.values().stream().toList();
     }
 }

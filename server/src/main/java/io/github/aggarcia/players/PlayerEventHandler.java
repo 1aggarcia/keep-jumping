@@ -9,30 +9,38 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.github.aggarcia.players.messages.PlayerControlUpdate;
+import io.github.aggarcia.players.events.PlayerControlUpdate;
+import io.github.aggarcia.players.updates.CreatePlayer;
+import io.github.aggarcia.players.updates.ErrorUpdate;
+import io.github.aggarcia.players.updates.PlayerUpdate;
+import io.github.aggarcia.players.updates.UpdateVelocity;
 
+/**
+ * Collection of (static) pure functions which determine how to update game
+ * state based on client events.
+ */
 public final class PlayerEventHandler {
     private static final int PLAYER_MOVE_SPEED = 20;
     private static final int PLAYER_JUMP_SPEED = 40;
 
-    public record PlayerVelocity(
-        int xVelocity,
-        int yVelocity
-    ) {}
-
     private PlayerEventHandler() {}
 
     /**
-     * Handle a client message, dispatch to the correct handler, return the
+     * Dispatch client events to the correct handler, return the
      * result.
-     * @param message message, should either be a serialized
-     * PlayerControlUpdate or PlayerJoinUpdate
+     * @param client client, session used for identification of player
+     * @param event message containing JSON event
+     * @param sessions complete game state to determine updates.
+     *  Treated as read only
      * @return response, either PlayerVelocity or an empty Object
      */
-    public static Object processMessage(TextMessage message)
-    throws JsonProcessingException {
+    public static PlayerUpdate processEvent(
+        String client,
+        TextMessage event,
+        Map<String, Player> sessions
+    ) throws JsonProcessingException {
         Map<String, Object> data = new ObjectMapper().readValue(
-            message.getPayload(),
+            event.getPayload(),
             new TypeReference<>() {}
         );
         if (!data.containsKey("type")) {
@@ -40,9 +48,15 @@ public final class PlayerEventHandler {
         }
         String type = data.get("type").toString();
         return switch (type) {
-            case "playerControlUpdate" -> computeVelocity(message);
-            case "playerJoinUpdate" -> data.get("name").toString();
-            default -> throw new IllegalArgumentException();
+            case "playerControlUpdate" ->
+                processControlUpdate(client, event, sessions);
+            case "playerJoinUpdate" -> processJoinUpdate(
+                client,
+                data.get("name").toString(),
+                sessions
+            );
+            default -> throw new IllegalArgumentException(
+                "unknown event type: " + type);
         };
     }
 
@@ -56,17 +70,25 @@ public final class PlayerEventHandler {
      *  are pressed in the incoming message, e.g. "Right" and "Left".
      * @throws JsonProcessingException
      */
-    public static PlayerVelocity
-    computeVelocity(TextMessage message) throws JsonProcessingException {
-        PlayerControlUpdate data = new ObjectMapper().readValue(
-            message.getPayload(),
+    public static PlayerUpdate
+    processControlUpdate(
+        String client,
+        TextMessage event,
+        Map<String, Player> sessions
+    ) throws JsonProcessingException {
+        PlayerControlUpdate eventData = new ObjectMapper().readValue(
+            event.getPayload(),
             PlayerControlUpdate.class
         );
+
+        if (!sessions.containsKey(client)) {
+            return new ErrorUpdate("Player does not exist with id " + client);
+        }
 
         // TODO: use previous player velocity, not 0
         int xVelocity = 0;
         int yVelocity = 0;
-        var pressedControls = new HashSet<>(data.pressedControls());
+        var pressedControls = new HashSet<>(eventData.pressedControls());
 
         // Prioritizes right over left - arbitrary decision
         if (pressedControls.contains(PlayerControl.RIGHT)) {
@@ -78,6 +100,25 @@ public final class PlayerEventHandler {
         if (pressedControls.contains(PlayerControl.UP)) {
             yVelocity = -PLAYER_JUMP_SPEED;
         }
-        return new PlayerVelocity(xVelocity, yVelocity);
+        return new UpdateVelocity(client, xVelocity, yVelocity);
+    }
+
+    public static CreatePlayer processJoinUpdate(
+        String client,
+        String name,
+        Map<String, Player> sessions
+    ) {
+        if (sessions.containsKey(client)) {
+            // client already has a player
+            return new CreatePlayer(true, null, null);
+        }
+        for (var player : sessions.values()) {
+            if (player.name().equals(name)) {
+                // name already taken
+                return new CreatePlayer(true, null, null);
+            }
+        }
+        var newPlayer = Player.createRandomPlayer(name);
+        return new CreatePlayer(false, client, newPlayer);
     }
 }

@@ -1,4 +1,4 @@
-package io.github.aggarcia.players.messages;
+package io.github.aggarcia.players.events;
 
 import java.util.List;
 

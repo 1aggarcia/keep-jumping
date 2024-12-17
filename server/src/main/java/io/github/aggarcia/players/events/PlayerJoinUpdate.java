@@ -1,4 +1,4 @@
-package io.github.aggarcia.players.messages;
+package io.github.aggarcia.players.events;
 
 import io.github.aggarcia.shared.SocketMessage;
 

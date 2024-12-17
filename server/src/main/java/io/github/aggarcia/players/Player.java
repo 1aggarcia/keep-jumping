@@ -27,7 +27,7 @@ public final class Player {
     private static final int HEX_STRING_LEN = 6;
 
     private final String color;
-    private String name;
+    private final String name;
 
     // we don't want setters on position
     @Getter
@@ -52,10 +52,11 @@ public final class Player {
 
     /**
      * Factory function to create a new player with a random color and position.
+     * @param name unique name
      * @return new instance of Player, with position in game bounds and as a
      * factor of the player size
      */
-    public static Player createRandomPlayer() {
+    public static Player createRandomPlayer(String name) {
         Random random = new Random();
 
         StringBuilder color = new StringBuilder("#");
@@ -73,7 +74,7 @@ public final class Player {
 
         return Player.builder()
             .color(color.toString())
-            .name("~")
+            .name(name)
             .xPosition(xPosition)
             .yPosition(yPosition)
             .xVelocity(0)
