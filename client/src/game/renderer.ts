@@ -1,5 +1,5 @@
 import { Context2D } from "../canvas/types";
-import { GameUpdate } from "./types/messages";
+import { GamePing } from "./types/messages";
 import { GamePlatform, PlayerState } from "./types/models";
 import { renderButtons } from "../canvas/button";
 import { renderLabel } from "../canvas/label";
@@ -22,16 +22,16 @@ const PLATFORM_COLOR = "green";
  * Renders the game to the canvas based on the current app state
  * and game update passed in.
  * @param state app state including the context to draw to
- * @param game game state received from the server
+ * @param ping game state received from the server
  */
-export function renderGame(state: AppState, game: GameUpdate) {
+export function renderGame(state: AppState, ping: GamePing) {
     const { context, buttons } = state;
 
     clearCanvas(context);
-    game.platforms.forEach(platform => renderPlatform(context, platform));
-    game.players.forEach(player => renderPlayer(context, player));
+    ping.platforms.forEach(platform => renderPlatform(context, platform));
+    ping.players.forEach(player => renderPlayer(context, player));
     renderLabel(context, {
-        text: `Time: ${game.serverAge}`,
+        text: `Time: ${ping.serverAge}`,
         x: 10,
         y: 20,
         font: "30px Arial",

@@ -1,4 +1,4 @@
-import { PlayerControlUpdate, SocketMessage } from "./types/messages";
+import { ControlChangeEvent, SocketMessage } from "./types/messages";
 import { AppState } from "../state/appState";
 import { renderGame, renderGameOver } from "./renderer";
 import { sendToServer } from "../networking/handler";
@@ -7,19 +7,14 @@ import { PlayerControl } from "./types/models";
 
 const GAME_ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
 
-export function handleGameUpdate(message: string, state: AppState) {
+export function handleServerMessage(message: string, state: AppState) {
     const json: SocketMessage = JSON.parse(message);
-    if (json.type === "gameUpdate") {
+    if (json.type === "GamePing") {
         renderGame(state, json);
-    }
-    if (json.type === "gameJoinUpdate") {
-        renderGame(state, {
-            ...json,
-            type: "gameUpdate",
-        });
-    }
-    if (json.type === "gameOverUpdate") {
+    } else if (json.type === "GameOverEvent") {
         renderGameOver(state.context, json.reason);
+    } else {
+        throw new Error(`Unknown message type: ${message}`);
     }
 }
 
@@ -32,11 +27,10 @@ export function handleKeyDown(keyCode: string, state: AppState) {
     if (state.pressedControls.has(control)) return;
 
     state.pressedControls.add(control);
-    const update: PlayerControlUpdate = {
-        type: "playerControlUpdate",
+    sendToServer<ControlChangeEvent>(state, {
+        type: "ControlChangeEvent",
         pressedControls: Array.from(state.pressedControls),
-    };
-    sendToServer(state, JSON.stringify(update));
+    });
 }
 
 export function handleKeyUp(keyCode: string, state: AppState) {
@@ -45,11 +39,10 @@ export function handleKeyUp(keyCode: string, state: AppState) {
     if (state.server === null) return;
 
     state.pressedControls.delete(control);
-    const update: PlayerControlUpdate = {
-        type: "playerControlUpdate",
+    sendToServer<ControlChangeEvent>(state, {
+        type: "ControlChangeEvent",
         pressedControls: Array.from(state.pressedControls),
-    };
-    sendToServer(state, JSON.stringify(update));
+    });
 }
 
 /**

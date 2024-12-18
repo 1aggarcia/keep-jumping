@@ -6,14 +6,15 @@ import java.util.Map;
 import org.springframework.web.socket.TextMessage;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.github.aggarcia.players.events.PlayerControlUpdate;
+import io.github.aggarcia.players.events.ControlChangeEvent;
+import io.github.aggarcia.players.events.JoinEvent;
 import io.github.aggarcia.players.updates.CreatePlayer;
 import io.github.aggarcia.players.updates.ErrorUpdate;
 import io.github.aggarcia.players.updates.PlayerUpdate;
 import io.github.aggarcia.players.updates.UpdateVelocity;
+import io.github.aggarcia.shared.SocketMessage;
 
 /**
  * Collection of (static) pure functions which determine how to update game
@@ -39,48 +40,34 @@ public final class PlayerEventHandler {
         TextMessage event,
         Map<String, Player> sessions
     ) throws JsonProcessingException {
-        Map<String, Object> data = new ObjectMapper().readValue(
-            event.getPayload(),
-            new TypeReference<>() {}
-        );
-        if (!data.containsKey("type")) {
-            throw new IllegalArgumentException("No type provided");
+        SocketMessage payload = new ObjectMapper()
+            .readValue(event.getPayload(), SocketMessage.class);
+
+        if (payload instanceof ControlChangeEvent control) {
+            return processControlChange(client, control, sessions);
+        } else if (payload instanceof JoinEvent join) {
+            return processJoin(client, join, sessions);
+        } else {
+            return new ErrorUpdate("Unsupported event type: " + payload);
         }
-        String type = data.get("type").toString();
-        return switch (type) {
-            case "playerControlUpdate" ->
-                processControlUpdate(client, event, sessions);
-            case "playerJoinUpdate" -> processJoinUpdate(
-                client,
-                data.get("name").toString(),
-                sessions
-            );
-            default -> throw new IllegalArgumentException(
-                "unknown event type: " + type);
-        };
     }
 
     /**
-     * Computes the player velocity given a client message, treating it
-     * as a PlayerControlUpdate object encoded as JSON.
-     * @param message The message from the client. Must be a
-     *  PlayerControlUpdate formatted as JSON.
+     * Computes the new player velocity according to the controls in the event 
+     * @param client id for player
+     * @param event event with controls
+     * @param sessions reference to game state 
      * @return The player velocity according to the keys pressed in the
-     *  incoming message. Behavior is undefined if two conflicting keys
+     *  incoming event. Behavior is undefined if two conflicting keys
      *  are pressed in the incoming message, e.g. "Right" and "Left".
      * @throws JsonProcessingException
      */
     public static PlayerUpdate
-    processControlUpdate(
+    processControlChange(
         String client,
-        TextMessage event,
+        ControlChangeEvent event,
         Map<String, Player> sessions
     ) throws JsonProcessingException {
-        PlayerControlUpdate eventData = new ObjectMapper().readValue(
-            event.getPayload(),
-            PlayerControlUpdate.class
-        );
-
         if (!sessions.containsKey(client)) {
             return new ErrorUpdate("Player does not exist with id " + client);
         }
@@ -88,7 +75,7 @@ public final class PlayerEventHandler {
         // TODO: use previous player velocity, not 0
         int xVelocity = 0;
         int yVelocity = 0;
-        var pressedControls = new HashSet<>(eventData.pressedControls());
+        var pressedControls = new HashSet<>(event.pressedControls());
 
         // Prioritizes right over left - arbitrary decision
         if (pressedControls.contains(PlayerControl.RIGHT)) {
@@ -103,9 +90,18 @@ public final class PlayerEventHandler {
         return new UpdateVelocity(client, xVelocity, yVelocity);
     }
 
-    public static CreatePlayer processJoinUpdate(
+    /**
+     * Instantiates a new player according to the passed in name,
+     * if the name is unique
+     * @param client id for clinet
+     * @param event 
+     * @param sessions current game state
+     * @return A new player with the name in the event, if the name is unique.
+     *  otherwise, an error
+     */
+    public static CreatePlayer processJoin(
         String client,
-        String name,
+        JoinEvent event,
         Map<String, Player> sessions
     ) {
         if (sessions.containsKey(client)) {
@@ -113,12 +109,12 @@ public final class PlayerEventHandler {
             return new CreatePlayer(true, null, null);
         }
         for (var player : sessions.values()) {
-            if (player.name().equals(name)) {
+            if (player.name().equals(event.name())) {
                 // name already taken
                 return new CreatePlayer(true, null, null);
             }
         }
-        var newPlayer = Player.createRandomPlayer(name);
+        var newPlayer = Player.createRandomPlayer(event.name());
         return new CreatePlayer(false, client, newPlayer);
     }
 }
