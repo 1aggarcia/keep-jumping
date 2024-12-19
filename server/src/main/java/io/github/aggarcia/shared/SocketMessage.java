@@ -13,7 +13,7 @@ import io.github.aggarcia.players.events.JoinEvent;
  * Base class for all event, reply, and ping messages.
  * Subclasses automatically include type information for polymorphic
  * serialization and deserialization.
- * 
+ *
  * IMPORTANT: to add new messages, make sure to add a @JsonSubTypes.Type
  * declaration below so that Jackson can use the name to serialize/deserialize
  * the message as JSON

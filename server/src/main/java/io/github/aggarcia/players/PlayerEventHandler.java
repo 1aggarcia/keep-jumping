@@ -8,6 +8,7 @@ import org.springframework.web.socket.TextMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.github.aggarcia.platforms.GamePlatform;
 import io.github.aggarcia.players.events.ControlChangeEvent;
 import io.github.aggarcia.players.events.JoinEvent;
 import io.github.aggarcia.players.updates.CreatePlayer;
@@ -22,7 +23,7 @@ import io.github.aggarcia.shared.SocketMessage;
  */
 public final class PlayerEventHandler {
     private static final int PLAYER_MOVE_SPEED = 20;
-    private static final int PLAYER_JUMP_SPEED = 40;
+    protected static final int PLAYER_JUMP_SPEED = 40;
 
     private PlayerEventHandler() {}
 
@@ -53,13 +54,14 @@ public final class PlayerEventHandler {
     }
 
     /**
-     * Computes the new player velocity according to the controls in the event 
+     * Computes the new player velocity according to the controls in the event
+     * and the current player velocity.
      * @param client id for player
      * @param event event with controls
-     * @param sessions reference to game state 
-     * @return The player velocity according to the keys pressed in the
-     *  incoming event. Behavior is undefined if two conflicting keys
-     *  are pressed in the incoming message, e.g. "Right" and "Left".
+     * @param sessions reference to game state
+     * @return The new player velocity. Behavior is undefined if two
+     *  conflicting keys are pressed in the incoming message, e.g.
+     *  "Right" and "Left".
      * @throws JsonProcessingException
      */
     public static PlayerUpdate
@@ -71,30 +73,38 @@ public final class PlayerEventHandler {
         if (!sessions.containsKey(client)) {
             return new ErrorUpdate("Player does not exist with id " + client);
         }
+        Player player = sessions.get(client);
 
-        // TODO: use previous player velocity, not 0
-        int xVelocity = 0;
-        int yVelocity = 0;
+        int newXVelocity = 0;
+        int newYVelocity = player.yVelocity();
         var pressedControls = new HashSet<>(event.pressedControls());
 
         // Prioritizes right over left - arbitrary decision
         if (pressedControls.contains(PlayerControl.RIGHT)) {
-            xVelocity = PLAYER_MOVE_SPEED;
+            newXVelocity = PLAYER_MOVE_SPEED;
         } else if (pressedControls.contains(PlayerControl.LEFT)) {
-            xVelocity = -PLAYER_MOVE_SPEED;
+            newXVelocity = -PLAYER_MOVE_SPEED;
         }
 
-        if (pressedControls.contains(PlayerControl.UP)) {
-            yVelocity = -PLAYER_JUMP_SPEED;
+        boolean isPressingUp = pressedControls.contains(PlayerControl.UP);
+        // not great since this allows mid-air jumping
+        boolean canJump = (
+            0 <= player.yVelocity()
+            && player.yVelocity() < (2 * GamePlatform.PLATFORM_GRAVITY)
+        );
+        if (isPressingUp && canJump) {
+            newYVelocity = -PLAYER_JUMP_SPEED;
+        } else if (!isPressingUp && player.yVelocity() < 0) {
+            newYVelocity = 0;
         }
-        return new UpdateVelocity(client, xVelocity, yVelocity);
+        return new UpdateVelocity(client, newXVelocity, newYVelocity);
     }
 
     /**
      * Instantiates a new player according to the passed in name,
-     * if the name is unique
-     * @param client id for clinet
-     * @param event 
+     * if the name is unique.
+     * @param client id for client
+     * @param event
      * @param sessions current game state
      * @return A new player with the name in the event, if the name is unique.
      *  otherwise, an error

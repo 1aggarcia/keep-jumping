@@ -17,6 +17,7 @@ import org.springframework.web.socket.TextMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.github.aggarcia.platforms.GamePlatform;
 import io.github.aggarcia.players.events.ControlChangeEvent;
 import io.github.aggarcia.players.events.JoinEvent;
 import io.github.aggarcia.players.updates.CreatePlayer;
@@ -24,6 +25,9 @@ import io.github.aggarcia.players.updates.ErrorUpdate;
 import io.github.aggarcia.players.updates.UpdateVelocity;
 
 public class PlayerEventHandlerTest {
+    // players cannot jump if they are falling faster than this speed
+    static final int Y_VELOCITY_JUMP_CUTOFF = (2 * GamePlatform.PLATFORM_GRAVITY) - 1;
+
     @Test
     void test_processEvent_badMessage_throwsException() {
         assertThrows(JsonProcessingException.class, () -> {
@@ -114,11 +118,45 @@ public class PlayerEventHandlerTest {
     }
 
     @Test
-    void test_processControlChange_upControl_returnsNegativeY() throws Exception {
+    void test_processControlChange_upControlOnGround_returnsNegativeY() throws Exception {
         var event = new ControlChangeEvent(List.of(PlayerControl.UP));
         var velocity = processControlWithValidPlayer(event);
         assertEquals(0, velocity.xVelocity());
         assertTrue(velocity.yVelocity() < 0);
+    }
+
+    @Test
+    void test_processControlChange_upControlFallingSlowly_returnsNegative() throws Exception {
+        var event = new ControlChangeEvent(List.of(PlayerControl.UP));
+        Player player1 = Player.builder()
+            .xPosition(0)
+            .xVelocity(0)
+            .yPosition(50)
+            .yVelocity(Y_VELOCITY_JUMP_CUTOFF)
+            .build();
+        Map<String, Player> sessions = Map.of("player1", player1);
+
+        var velocity = (UpdateVelocity) PlayerEventHandler
+            .processControlChange("player1", event, sessions);
+
+        assertEquals(-PlayerEventHandler.PLAYER_JUMP_SPEED, velocity.yVelocity());
+    }
+
+    @Test
+    void test_processControlChange_upControlFallingQuickly_returnsSameY() throws Exception {
+        var event = new ControlChangeEvent(List.of(PlayerControl.UP));
+        Player player1 = Player.builder()
+            .xPosition(0)
+            .xVelocity(0)
+            .yPosition(50)
+            .yVelocity(Y_VELOCITY_JUMP_CUTOFF + 1)
+            .build();
+        Map<String, Player> sessions = Map.of("player1", player1);
+
+        var velocity = (UpdateVelocity) PlayerEventHandler
+            .processControlChange("player1", event, sessions);
+
+        assertEquals(Y_VELOCITY_JUMP_CUTOFF + 1, velocity.yVelocity());
     }
 
     @Test
@@ -131,6 +169,23 @@ public class PlayerEventHandlerTest {
         var velocity = processControlWithValidPlayer(event);
         assertTrue(velocity.xVelocity() < 0);
         assertEquals(0, velocity.yVelocity());
+    }
+
+    @Test
+    void test_processControlChange_movingPlayer_maintainsMotion() throws Exception {
+        var event = new ControlChangeEvent(List.of(PlayerControl.LEFT));
+        Player player1 = Player.builder()
+            .xPosition(0)
+            .xVelocity(0)
+            .yPosition(50)
+            .yVelocity(1000)  // falling very quickly
+            .build();
+        Map<String, Player> sessions = Map.of("player1", player1);
+        var velocity = (UpdateVelocity) PlayerEventHandler
+            .processControlChange("player1", event, sessions);
+        assertEquals("player1", velocity.clientId());
+        assertTrue(velocity.xVelocity() < 0);
+        assertEquals(1000, velocity.yVelocity());
     }
 
     // TODO: tests for processJoin
