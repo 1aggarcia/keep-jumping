@@ -114,6 +114,7 @@ public final class PlayerEventHandler {
         JoinEvent event,
         Map<String, Player> sessions
     ) {
+        // TODO: put limit on player count
         if (sessions.containsKey(client)) {
             // client already has a player
             return new CreatePlayer(true, null, null);
