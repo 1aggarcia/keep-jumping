@@ -1,5 +1,5 @@
 import { Context2D } from "../canvas/types";
-import { GameUpdate } from "./types/messages";
+import { GamePing } from "./types/messages";
 import { GamePlatform, PlayerState } from "./types/models";
 import { renderButtons } from "../canvas/button";
 import { renderLabel } from "../canvas/label";
@@ -15,6 +15,7 @@ const RED_HEX = "#ff0000";
 
 const PLATFORM_HEIGHT = 30;
 const PLATFORM_COLOR = "green";
+const LEADERBOARD_LINE_HEIGHT = 35;
 
 /**
  * Does NOT mutate the app state.
@@ -22,21 +23,21 @@ const PLATFORM_COLOR = "green";
  * Renders the game to the canvas based on the current app state
  * and game update passed in.
  * @param state app state including the context to draw to
- * @param game game state received from the server
+ * @param ping game state received from the server
  */
-export function renderGame(state: AppState, game: GameUpdate) {
+export function renderGame(state: AppState, ping: GamePing) {
     const { context, buttons } = state;
 
     clearCanvas(context);
-    game.platforms.forEach(platform => renderPlatform(context, platform));
-    game.players.forEach(player => renderPlayer(context, player));
+    ping.platforms.forEach(platform => renderPlatform(context, platform));
+    ping.players.forEach(player => renderPlayer(context, player));
     renderLabel(context, {
-        text: `Time: ${game.serverAge}`,
+        text: `Time: ${ping.serverAge}`,
         x: 10,
-        y: 20,
-        font: "30px Arial",
-
+        y: GAME_HEIGHT - 20,
+        font: "27px Arial",
     });
+    renderLeaderboard(context, ping.players);
     renderButtons(context, buttons);
     renderMetadata(state);
 }
@@ -74,6 +75,27 @@ export function renderMetadata(state: AppState) {
     });
 }
 
+function renderLeaderboard(context: Context2D, players: PlayerState[]) {
+    const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+
+    renderLabel(context, {
+        text: "Leaderboard",
+        x: 10,
+        y: LEADERBOARD_LINE_HEIGHT,
+        font: "25px Arial",
+    });
+    for (let i = 1; i <= sortedPlayers.length; i++) {
+        const player = sortedPlayers[i - 1];
+        renderLabel(context, {
+            text: `${i}. ${player.name} | ${player.score}`,
+            x: 10,
+            y: LEADERBOARD_LINE_HEIGHT + (i * LEADERBOARD_LINE_HEIGHT),
+            font: "bold 27px Arial",
+            color: player.color,
+        });
+    }
+}
+
 function renderPlatform(context: Context2D, platform: GamePlatform) {
     const { x, y, width } = platform;
     if (x > GAME_WIDTH || y > GAME_HEIGHT) {
@@ -92,7 +114,7 @@ function renderPlayer(context: Context2D, player: PlayerState) {
         return;
     }
     renderLabel(context, {
-        text: `${player.name}: ${player.score}`,
+        text: player.name,
         x: player.x + (PLAYER_WIDTH / 2),
         y: player.y - 15,
         color: player.color,

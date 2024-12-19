@@ -8,22 +8,20 @@ import io.github.aggarcia.players.Player;
 import io.github.aggarcia.players.PlayerState;
 import io.github.aggarcia.shared.SocketMessage;
 
-public record GameUpdate(
-    /** Should always be GAME_UPDATE */
-    SocketMessage type,
+public record GamePing(
     int serverAge,
     List<PlayerState> players,
     List<GamePlatform> platforms
-) {
+) implements SocketMessage {
     /**
-     * Factory function to create a game update message based on
+     * Factory function to create a game ping message based on
      * the current state of the game.
      * @param players list of players in the game
      * @param serverAge age in seconds since the game started
-     * @return new instance of GameUpdate
+     * @return new instance of GamePing
      */
     public static
-    GameUpdate fromGameState(
+    GamePing fromGameState(
         Collection<Player> players,
         Collection<GamePlatform> platforms,
         int serverAge
@@ -33,8 +31,7 @@ public record GameUpdate(
             .map(player -> player.toPlayerState())
             .toList();
 
-        return new GameUpdate(
-            SocketMessage.GAME_UPDATE,
+        return new GamePing(
             serverAge,
             playersState,
             platforms.stream().toList()

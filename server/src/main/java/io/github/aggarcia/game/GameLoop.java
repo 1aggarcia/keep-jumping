@@ -123,6 +123,7 @@ public class GameLoop {
         Collection<Player> players,
         Collection<WebSocketSession> sessions
     ) {
+        // TODO: add time limit of one hour to game loop
         int serverAge = 0;  // in seconds
         int tickCount = 0;
         List<GamePlatform> platforms = new ArrayList<>();
@@ -142,7 +143,7 @@ public class GameLoop {
                 serverAge++;
             }
             if (response.isUpdateNeeded()) try {
-                var update = GameUpdate.fromGameState(
+                var update = GamePing.fromGameState(
                     players,
                     platforms,
                     serverAge

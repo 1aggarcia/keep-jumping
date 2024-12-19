@@ -2,17 +2,25 @@ import { getServerEndpoint } from "./config";
 import { AppState } from "../state/appState";
 import { networkElements } from "./elements";
 import { clearCanvas, renderMetadata } from "../game/renderer";
-import { handleGameUpdate } from "../game/handler";
+import { handleServerMessage } from "../game/handler";
 import { Button, subscribeButtonsToCursor } from "../canvas/button";
-import { PlayerJoinUpdate } from "../game/types/messages";
+import { JoinEvent } from "../game/types/messages";
 
 const MAX_HISTORY_LEN = 25;
 
-export function sendToServer(state: AppState, message: string) {
+export function sendToServer<T>(state: AppState, message: T) {
     if (state.server === null) {
         throw new ReferenceError(`Message sent to null server: ${message}`);
     }
-    state.server.send(message);
+    let encoded: string;
+    if (typeof message === "string") {
+        encoded = message;
+    } else if (typeof message === "object") {
+        encoded = JSON.stringify(message);
+    } else {
+        throw new TypeError(`Cannot serialize message type: ${message}`);
+    }
+    state.server.send(encoded);
     state.messagesOut++;
     renderMessageStats(state);
 }
@@ -29,11 +37,10 @@ export function connectToServer(state: AppState, username: string) {
     state.server = server;
 
     server.onopen = () => {
-        const joinUpdate: PlayerJoinUpdate = {
-            type: "playerJoinUpdate",
+        sendToServer<JoinEvent>(state, {
+            type: "JoinEvent",
             name: username
-        };
-        sendToServer(state, JSON.stringify(joinUpdate));
+        });
         clearCanvas(state.context);
         state.connectedStatus = "OPEN";
         renderMetadata(state);
@@ -62,7 +69,7 @@ export function connectToServer(state: AppState, username: string) {
         }
         networkElements.messagesBox.prepend(`<pre>${prettyMessage}</pre>`);
         renderMessageStats(state);
-        handleGameUpdate(message, state);
+        handleServerMessage(message, state);
     };
 }
 
