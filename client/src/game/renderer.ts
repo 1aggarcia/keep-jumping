@@ -37,7 +37,7 @@ export function renderGame(state: AppState, ping: GamePing) {
         y: GAME_HEIGHT - 20,
         font: "27px Arial",
     });
-    renderLeaderboard(context, ping.players); 
+    renderLeaderboard(context, ping.players);
     renderButtons(context, buttons);
     renderMetadata(state);
 }
