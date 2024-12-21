@@ -13,11 +13,11 @@
 - [x] Java linter
 
 ## Server
-- [*] Refactor dynamic message handler to dispatch to correct handler
 - [ ] Add persistent storage for user scores
-- [ ] Include more intelligent platform generation, based on location of nearby platforms
+- [*] Include more intelligent platform generation, based on location of nearby platforms
 - [ ] Re-add support for game over
-- [ ] Use `JsonTypeInfo` and `JsonSubTypes` from Jackson for deserializing JSON union types (maybe use Protobuf instead?)
+- [x] Use `JsonTypeInfo` and `JsonSubTypes` from Jackson for deserializing JSON union types (maybe use Protobuf instead?)
+- [x] Refactor dynamic message handler to dispatch to correct handler
 - [x] Make player names read only
 - [x] Add collisions for platforms
 - [x] Add processing for player scores
@@ -35,9 +35,10 @@
 
 ## Client
 - [ ] Add dark mode
-- [ ] Deprecate "GameJoinUpdate" message
 - [ ] Process disconnect requests / other errors
 - [*] Move all graphics inside the canvas
+- [x] Add leaderboard rendering
+- [x] Deprecate "GameJoinUpdate" message
 - [x] Add scores to sprites
 - [x] Add names to sprites
 - [x] Create JS canvas for game

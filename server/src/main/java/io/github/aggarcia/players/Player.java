@@ -24,6 +24,9 @@ public final class Player {
     public static final int
         MAX_PLAYER_Y = GameConstants.HEIGHT - PLAYER_HEIGHT;
 
+    // so that players don't spawn close to the bottom
+    protected static final int MAX_SPAWN_HEIGHT = MAX_PLAYER_Y / 3;
+
     private static final int HEX_STRING_LEN = 6;
 
     private final String color;
@@ -70,7 +73,7 @@ public final class Player {
         int xPosition = random
             .nextInt(GameConstants.WIDTH / PLAYER_WIDTH) * PLAYER_WIDTH;
         int yPosition = random
-            .nextInt(GameConstants.HEIGHT / PLAYER_HEIGHT) * PLAYER_HEIGHT;
+            .nextInt(MAX_SPAWN_HEIGHT / PLAYER_HEIGHT) * PLAYER_HEIGHT;
 
         return Player.builder()
             .color(color.toString())

@@ -57,7 +57,7 @@ public class PlayerTest {
             assertTrue(player.xPosition() >= 0);
             assertTrue(player.yPosition() >= 0);
             assertTrue(player.xPosition() <= GameConstants.WIDTH - Player.PLAYER_WIDTH);
-            assertTrue(player.yPosition() <= GameConstants.HEIGHT - Player.PLAYER_HEIGHT);
+            assertTrue(player.yPosition() <= Player.MAX_SPAWN_HEIGHT);
         }
     }
 

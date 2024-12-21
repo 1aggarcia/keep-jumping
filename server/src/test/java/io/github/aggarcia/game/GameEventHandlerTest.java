@@ -1,9 +1,11 @@
 package io.github.aggarcia.game;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +18,8 @@ import io.github.aggarcia.platforms.GamePlatform;
 import io.github.aggarcia.players.Player;
 
 public class GameEventHandlerTest {
+    static final int RANDOM_TRIALS = 1000;
+
     // commenting out all the tests on `isUpdateNeeded` since it serves
     // no purpose (for now)
 
@@ -69,17 +73,6 @@ public class GameEventHandlerTest {
     //     assertFalse(response.isUpdateNeeded());
     // }
 
-    @Test
-    void test_advanceToNextTick_motionlessPlayers_doesNotMutatePlayers() {
-        var players = createTestPlayers();
-        var expected1 = players.get("1").clone();
-        var expected2 = players.get("2").clone();
-
-        advanceTickWithPlayers(players);
-        assertEquals(expected1, players.get("1"));
-        assertEquals(expected2, players.get("2"));
-    }
-
     // @Test
     // void test_advanceToNextTick_oneMovingPlayer_requiresUpdate() {
     //     var players = createTestPlayers();
@@ -90,10 +83,20 @@ public class GameEventHandlerTest {
     // }
 
     @Test
-    void test_advanceToNextTick_oneMovingPlayer_mutatesCorrectPlayer() {
+    void test_advanceToNextTick_onePlayer_advancesPlayer() {
+        var player = Player.createRandomPlayer("");
+        var expected = player.clone()
+            .moveToNextTick()
+            .hasChanged(false);
+        advanceTickWithPlayers(Map.of("1", player));
+        assertEquals(expected, player);
+    }
+
+    @Test
+    void test_advanceToNextTick_multiplePlayers_advancesEachPlayer() {
         // player 1 should not move
-        var player1 = Player.createRandomPlayer("").yPosition(Player.MAX_PLAYER_Y);
-        var player2 = Player.builder()
+        Player player1 = Player.createRandomPlayer("");
+        Player player2 = Player.builder()
             .xPosition(0)
             .yPosition(0)
             .xPosition(0)
@@ -107,6 +110,7 @@ public class GameEventHandlerTest {
         );
         var expected1 = players.get("1")
             .clone()
+            .moveToNextTick()
             .hasChanged(false);
         var expected2 = players.get("2")
             .clone()
@@ -117,6 +121,17 @@ public class GameEventHandlerTest {
         assertTrue(response.isUpdateNeeded());
         assertEquals(expected1, players.get("1"));
         assertEquals(expected2, players.get("2"));
+    }
+
+    @Test
+    void test_advanceToNextTick_playerTouchingGround_removesPlayer() {
+        // must be mutable, List.of creates immutable lists
+        var players = new ArrayList<Player>();
+        players.add(
+            Player.createRandomPlayer("").yPosition(Player.MAX_PLAYER_Y)
+        );
+        GameEventHandler.advanceToNextTick(players, Collections.emptyList(), 0);
+        assertTrue(players.isEmpty());
     }
 
     @Test
@@ -175,7 +190,7 @@ public class GameEventHandlerTest {
 
     @Test
     void test_advanceToNextTick_playerOnPlatform_playerFallsWithPlatform() {
-        var testPlayer = Player.builder()
+        Player testPlayer = Player.builder()
             .xPosition(50)
             .yPosition(50)
             .xVelocity(50)
@@ -196,17 +211,38 @@ public class GameEventHandlerTest {
         assertEquals(GamePlatform.PLATFORM_GRAVITY, testPlayer.yVelocity());
     }
 
+    @Test
+    void test_shouldSpawnPlatform_platformCloseToTop_returnsFalse() {
+        for (int i = 0; i < RANDOM_TRIALS; i++) {
+            var minPlatform = GamePlatform.generateAtHeight(0);
+            var maxPlatform = GamePlatform
+                .generateAtHeight(GameEventHandler.MIN_PLATFORM_SPACING - 1);
+
+            assertFalse(GameEventHandler.shouldSpawnPlatform(List.of(minPlatform)));
+            assertFalse(GameEventHandler.shouldSpawnPlatform(List.of(maxPlatform)));
+        }
+    }
+
+    @Test
+    void test_shouldSpawnPlatform_platformFarFromTop_returnsTrue() {
+        for (int i = 0; i < RANDOM_TRIALS; i++) {
+            var platform = GamePlatform
+                .generateAtHeight(GameEventHandler.MAX_PLATFORM_SPACING + 1);
+            assertTrue(GameEventHandler.shouldSpawnPlatform(List.of(platform)));
+        }
+    }
+
     /**
      * @return map of two players with keys "1", "2".
      *  Players are on the ground and are motionless
      */
     private Map<String, Player> createTestPlayers() {
         var player1 = Player.createRandomPlayer("")
-            .yPosition(Player.MAX_PLAYER_Y)
+            .yPosition(0)
             .hasChanged(false);
 
         var player2 = Player.createRandomPlayer("")
-            .yPosition(Player.MAX_PLAYER_Y)
+            .yPosition(0)
             .hasChanged(false);
 
         // Map.of creates an immutable map, so to make
