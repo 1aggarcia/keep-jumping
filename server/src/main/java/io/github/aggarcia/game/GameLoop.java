@@ -1,7 +1,6 @@
 package io.github.aggarcia.game;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -11,7 +10,6 @@ import org.springframework.web.socket.WebSocketSession;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.platforms.GamePlatform;
 import io.github.aggarcia.players.Player;
 
@@ -126,7 +124,7 @@ public class GameLoop {
         // TODO: add time limit of one hour to game loop
         int serverAge = 0;  // in seconds
         int tickCount = 0;
-        List<GamePlatform> platforms = new ArrayList<>();
+        List<GamePlatform> platforms = GameEventHandler.spawnInitPlatforms();
 
         System.out.println("Starting game loop");
         if (idleThread.isAlive()) {
@@ -138,7 +136,9 @@ public class GameLoop {
 
             tickCount = response.nextTickCount();
             platforms = response.nextPlatformsState();
-            maybeAddPlatform(platforms, tickCount);
+            if (GameEventHandler.shouldSpawnPlatform(platforms)) {
+                platforms.add(GamePlatform.generateAtHeight(0));
+            }
             if (tickCount == 0) {
                 serverAge++;
             }
@@ -162,18 +162,6 @@ public class GameLoop {
         System.out.println("Closing game loop");
         idleThread = new Thread(idleTimeoutAction);
         idleThread.start();
-    }
-
-    /**
-     * Decides randomly to add or not to add
-     * a new platform to the passed in list.
-     */
-    private void maybeAddPlatform(List<GamePlatform> platforms, int tickCount) {
-        // so that platforms are not too close to each other
-        if (tickCount % 8 != 0) return;
-        if (RandomUtil.getPositiveInt() % 3 != 0) return;
-
-        platforms.add(GamePlatform.createRandomPlatform());
     }
 
     /**
