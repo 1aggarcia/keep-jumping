@@ -16,6 +16,11 @@ const RED_HEX = "#ff0000";
 const PLATFORM_HEIGHT = 30;
 const PLATFORM_COLOR = "green";
 const LEADERBOARD_LINE_HEIGHT = 35;
+const OFF_SCREEN_PLAYER_HEIGHT = 5;
+
+// give players a smaller width as they go further off-screen
+const offScreenWidth =
+    ({ y }: PlayerState) => Math.max(0, PLAYER_WIDTH - (Math.abs(y) / 7));
 
 /**
  * Does NOT mutate the app state.
@@ -113,14 +118,27 @@ function renderPlayer(context: Context2D, player: PlayerState) {
         console.error(`Sprite position out of bounds: (${x}, ${y})`);
         return;
     }
+    const isPlayerVisible = player.y > 0;
+
     renderLabel(context, {
         text: player.name,
         x: player.x + (PLAYER_WIDTH / 2),
-        y: player.y - 15,
+        y: isPlayerVisible ? player.y - 15 : 40,
         color: player.color,
         textAlign: "center",
         font: "bold 22px Arial",
     });
     context.fillStyle = player.color;
-    context.fillRect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT);
+    if (isPlayerVisible) {
+        context.fillRect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT);
+    } else {
+        const playerWidth = offScreenWidth(player);
+        const offsetX = x + (PLAYER_WIDTH - playerWidth) / 2;
+        context.fillRect(
+            offsetX,
+            OFF_SCREEN_PLAYER_HEIGHT,
+            playerWidth,
+            OFF_SCREEN_PLAYER_HEIGHT
+        );
+    }
 };

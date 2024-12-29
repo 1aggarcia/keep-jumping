@@ -148,14 +148,14 @@ public class PlayerTest {
     void test_moveToNextTick_collisionWithTop_stopsPlayerOnTop() {
         var testPlayer = Player.createRandomPlayer("")
             .hasChanged(false)
-            .yPosition(1);
+            .yPosition(Player.MIN_PLAYER_Y + 1);
         // send the player past the top
         testPlayer.yVelocity(-150);
 
         testPlayer.moveToNextTick();
         assertTrue(testPlayer.hasChanged());
         assertEquals(0, testPlayer.yVelocity());
-        assertEquals(0, testPlayer.yPosition());
+        assertEquals(Player.MIN_PLAYER_Y, testPlayer.yPosition());
     }
 
     @Test

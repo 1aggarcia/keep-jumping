@@ -24,6 +24,9 @@ public final class Player {
     public static final int
         MAX_PLAYER_Y = GameConstants.HEIGHT - PLAYER_HEIGHT;
 
+    // players are allowed to jump slighly above the visible space
+    public static final int MIN_PLAYER_Y = -500;
+
     // so that players don't spawn close to the bottom
     protected static final int MAX_SPAWN_HEIGHT = MAX_PLAYER_Y / 3;
 
@@ -132,8 +135,8 @@ public final class Player {
         if (newY > MAX_PLAYER_Y) {
             newY = MAX_PLAYER_Y;
             this.yVelocity = 0;
-        } else if (newY < 0) {
-            newY = 0;
+        } else if (newY < MIN_PLAYER_Y) {
+            newY = MIN_PLAYER_Y;
             this.yVelocity = 0;
         }
 

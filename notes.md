@@ -13,9 +13,12 @@
 - [x] Java linter
 
 ## Server
+- [ ] Always spawn players on or above a platform
+- [ ] Detect player passing through platforms between two frames
 - [ ] Add persistent storage for user scores
 - [*] Include more intelligent platform generation, based on location of nearby platforms
 - [ ] Re-add support for game over
+- [x] Allow players to jump off screen
 - [x] Use `JsonTypeInfo` and `JsonSubTypes` from Jackson for deserializing JSON union types (maybe use Protobuf instead?)
 - [x] Refactor dynamic message handler to dispatch to correct handler
 - [x] Make player names read only
