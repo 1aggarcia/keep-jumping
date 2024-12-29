@@ -22,6 +22,8 @@ public class GameLoop {
      */
     private int tickDelayMs = GameConstants.TICK_DELAY_MS;
 
+    private int maxTimeSeconds = GameConstants.MAX_TIME_SECONDS;
+
     /**
      * Thread for the game loop.
      */
@@ -46,9 +48,28 @@ public class GameLoop {
      * @return reference to the same object
      */
     public GameLoop withTickDelay(int tickDelayMs) {
+        if (this.isRunning()) {
+            throw new RuntimeException(
+                "Cannot change tick delay while loop is running");
+        }
         this.tickDelayMs = tickDelayMs;
         return this;
     }
+
+    /**
+     * Override the default value for the tick delay.
+     * @param maxTimeSeconds - max time the game loop can be active
+     * @return reference to the same object
+     */
+    public GameLoop withMaxTime(int maxTimeSeconds) {
+        if (this.isRunning()) {
+            throw new RuntimeException(
+                "Cannot change max loop time while loop is running");
+        }
+        this.maxTimeSeconds = maxTimeSeconds;
+        return this;
+    }
+
 
     /**
      * Set an action to run after the game loop is inactive for a period of
@@ -121,8 +142,7 @@ public class GameLoop {
         Collection<Player> players,
         Collection<WebSocketSession> sessions
     ) {
-        // TODO: add time limit of one hour to game loop
-        int serverAge = 0;  // in seconds
+        int gameAgeSeconds = 0;
         int tickCount = 0;
         List<GamePlatform> platforms = GameEventHandler.spawnInitPlatforms();
 
@@ -130,7 +150,11 @@ public class GameLoop {
         if (idleThread.isAlive()) {
             idleThread.interrupt();
         }
-        while (players.size() > 0 && sessions.size() > 0) {
+        while (
+            players.size() > 0
+            && sessions.size() > 0
+            && gameAgeSeconds < this.maxTimeSeconds
+        ) {
             var response = GameEventHandler
                 .advanceToNextTick(players, platforms, tickCount);
 
@@ -140,13 +164,13 @@ public class GameLoop {
                 platforms.add(GamePlatform.generateAtHeight(0));
             }
             if (tickCount == 0) {
-                serverAge++;
+                gameAgeSeconds++;
             }
             if (response.isUpdateNeeded()) try {
                 var update = GamePing.fromGameState(
                     players,
                     platforms,
-                    serverAge
+                    gameAgeSeconds
                 );
                 broadcast(sessions, update);
             } catch (JsonProcessingException e) {
@@ -160,6 +184,15 @@ public class GameLoop {
             }
         }
         System.out.println("Closing game loop");
+        players.clear();
+        for (var session : sessions) {
+            try {
+                session.close();
+            } catch (IOException e) {
+                System.err.println(e);
+            }
+        }
+        sessions.clear();
         idleThread = new Thread(idleTimeoutAction);
         idleThread.start();
     }

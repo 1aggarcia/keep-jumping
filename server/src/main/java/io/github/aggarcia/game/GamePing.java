@@ -17,14 +17,14 @@ public record GamePing(
      * Factory function to create a game ping message based on
      * the current state of the game.
      * @param players list of players in the game
-     * @param serverAge age in seconds since the game started
+     * @param gameAge age in seconds since the game started
      * @return new instance of GamePing
      */
     public static
     GamePing fromGameState(
         Collection<Player> players,
         Collection<GamePlatform> platforms,
-        int serverAge
+        int gameAge
     ) {
         List<PlayerState> playersState = players
             .stream()
@@ -32,7 +32,7 @@ public record GamePing(
             .toList();
 
         return new GamePing(
-            serverAge,
+            gameAge,
             playersState,
             platforms.stream().toList()
         );

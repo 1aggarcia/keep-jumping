@@ -10,6 +10,7 @@ const GAME_ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
 export function handleServerMessage(message: string, state: AppState) {
     const json: SocketMessage = JSON.parse(message);
     if (json.type === "GamePing") {
+        state.lastPing = json;
         renderGame(state, json);
     } else if (json.type === "GameOverEvent") {
         renderGameOver(state.context, json.reason);

@@ -2,6 +2,7 @@ package io.github.aggarcia.game;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -151,6 +152,33 @@ public class GameLoopTest {
 
         Thread.sleep(100);
         assertEquals(1, sharedList.size());
+    }
+
+    @Test
+    void test_start_afterMaxTime_closesLoop() throws Exception {
+        var gameLoop = new GameLoop()
+            .withTickDelay(1)
+            .withMaxTime(1);
+
+        gameLoop.start(getTestPlayers(), getSessions());
+        assertTrue(gameLoop.isRunning());
+        // even with 50% extra time, watch out for false negatives.
+        Thread.sleep(1500);
+        assertFalse(gameLoop.isRunning());
+    }
+
+    @Test
+    void test_start_afterLoopCloses_clearsPlayersAndSessions() throws Exception {
+        var gameLoop = new GameLoop();
+        var players = getTestPlayers();
+        var sessions = getSessions();
+
+        assertNotEquals(0, players.size());
+        assertNotEquals(0, sessions.size());
+        gameLoop.start(players, sessions);
+        gameLoop.forceQuit();
+        assertEquals(0, players.size());
+        assertEquals(0, sessions.size());
     }
 
     private List<Player> getTestPlayers() {

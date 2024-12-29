@@ -96,6 +96,9 @@ public class ConnectionHandler extends TextWebSocketHandler {
         @NonNull WebSocketSession client, @NonNull TextMessage event
     ) {
         try {
+            if (!sessions.contains(client)) {
+                return;
+            }
             PlayerUpdate update = PlayerEventHandler
                 .processEvent(client.getId(), event, players);
             update.applyTo(players);

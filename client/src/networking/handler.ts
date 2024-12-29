@@ -1,7 +1,7 @@
 import { getServerEndpoint } from "./config";
 import { AppState } from "../state/appState";
 import { networkElements } from "./elements";
-import { clearCanvas, renderMetadata } from "../game/renderer";
+import { clearCanvas, renderGame, renderMetadata } from "../game/renderer";
 import { handleServerMessage } from "../game/handler";
 import { Button, subscribeButtonsToCursor } from "../canvas/button";
 import { JoinEvent } from "../game/types/messages";
@@ -74,9 +74,7 @@ export function connectToServer(state: AppState, username: string) {
 }
 
 function onServerClose(state: AppState) {
-    clearCanvas(state.context);
     state.connectedStatus = "CLOSED";
-    renderMetadata(state);
     networkElements.messagesBox.empty();
     networkElements.connectedBox.hide();
     networkElements.joinForm
@@ -84,6 +82,11 @@ function onServerClose(state: AppState) {
         .show();
 
     subscribeButtonsToCursor(state, []);
+    if (state.lastPing === null) {
+        console.warn("onServerClose called before receiving any pings");
+        return;
+    }
+    renderGame(state, state.lastPing);
 }
 
 function disconnectFromServer(state: AppState) {
