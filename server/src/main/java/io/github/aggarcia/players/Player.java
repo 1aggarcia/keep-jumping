@@ -105,7 +105,8 @@ public final class Player {
      * @param platforms collidable blocks that the player should not touch
      * @return reference to the same object
      */
-    public Player moveToNextTick(Collection<GamePlatform> platforms) {
+    public synchronized Player
+    moveToNextTick(Collection<GamePlatform> platforms) {
         /*
          * newX = oldX + xVelocity
          * newY = oldY + yVelocity
@@ -161,7 +162,7 @@ public final class Player {
      * @return true if the player rectangle makes contact with the platform,
      *  false otherwise
      */
-    private boolean isTouchingPlatform(GamePlatform platform) {
+    private synchronized boolean isTouchingPlatform(GamePlatform platform) {
         int minY = this.yPosition;
         int maxY = this.yPosition + PLAYER_HEIGHT;
 
@@ -191,7 +192,7 @@ public final class Player {
      * @param points number of points to add
      * @return reference to the same object
      */
-    public Player addToScore(int points) {
+    public synchronized Player addToScore(int points) {
         this.score += points;
         return this;
     }
@@ -200,7 +201,7 @@ public final class Player {
      * Convert a Player record to a PlayerState record.
      * @return instance of PlayerState
      */
-    public PlayerState toPlayerState() {
+    public synchronized PlayerState toPlayerState() {
         return new PlayerState(
             this.name(),
             this.color(),
@@ -210,7 +211,7 @@ public final class Player {
         );
     }
 
-    public Player clone() {
+    public synchronized Player clone() {
         return Player.builder()
             .color(this.color())
             .name(this.name())

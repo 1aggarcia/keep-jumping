@@ -65,6 +65,7 @@ public final class GameEventHandler {
                 >= GameConstants.HEIGHT - Player.PLAYER_HEIGHT
             ) {
                 // game over for player
+                // TODO: close associated client session
                 players.remove(player);
                 // TODO send event to player
             } else if (nextTickCount == 0) {

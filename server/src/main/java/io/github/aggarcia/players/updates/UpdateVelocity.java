@@ -21,7 +21,9 @@ public record UpdateVelocity(
                 "no player for id: " + this.clientId);
         }
         var player = players.get(this.clientId);
-        player.xVelocity(this.xVelocity);
-        player.yVelocity(this.yVelocity);
+        synchronized (player) {
+            player.xVelocity(this.xVelocity);
+            player.yVelocity(this.yVelocity);
+        }
     }
 }

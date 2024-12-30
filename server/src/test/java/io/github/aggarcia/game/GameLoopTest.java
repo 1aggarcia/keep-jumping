@@ -117,7 +117,7 @@ public class GameLoopTest {
 
     @Test
     void test_start_whileTimeoutActionWaiting_cancelsAction() throws Exception {
-        var gameLoop = new GameLoop().withTickDelay(0);
+        var gameLoop = new GameLoop();
         var sharedList = new ArrayList<>();
 
         gameLoop.onIdleTimeout(() -> {

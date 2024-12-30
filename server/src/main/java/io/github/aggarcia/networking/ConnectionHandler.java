@@ -10,8 +10,8 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.game.GameLoop;
 import io.github.aggarcia.players.Player;
-import io.github.aggarcia.players.PlayerEventHandler;
 import io.github.aggarcia.players.updates.PlayerUpdate;
+import static io.github.aggarcia.players.PlayerEventHandler.processEvent;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -99,8 +99,7 @@ public class ConnectionHandler extends TextWebSocketHandler {
             if (!sessions.contains(client)) {
                 return;
             }
-            PlayerUpdate update = PlayerEventHandler
-                .processEvent(client.getId(), event, players);
+            PlayerUpdate update = processEvent(client.getId(), event, players);
             update.applyTo(players);
 
             if (!gameLoop.isRunning()) {

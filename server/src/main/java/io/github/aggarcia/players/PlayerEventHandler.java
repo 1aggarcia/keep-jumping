@@ -74,9 +74,15 @@ public final class PlayerEventHandler {
             return new ErrorUpdate("Player does not exist with id " + client);
         }
         Player player = sessions.get(client);
+        int oldYVelocity;
+        // read y velocity once before other threads can change it
+        synchronized (player) {
+            oldYVelocity = player.yVelocity();
+        }
+
 
         int newXVelocity = 0;
-        int newYVelocity = player.yVelocity();
+        int newYVelocity = oldYVelocity;
         var pressedControls = new HashSet<>(event.pressedControls());
 
         // Prioritizes right over left - arbitrary decision
@@ -89,12 +95,12 @@ public final class PlayerEventHandler {
         boolean isPressingUp = pressedControls.contains(PlayerControl.UP);
         // not great since this allows mid-air jumping
         boolean canJump = (
-            0 <= player.yVelocity()
-            && player.yVelocity() < (2 * GamePlatform.PLATFORM_GRAVITY)
+            0 <= oldYVelocity
+            && oldYVelocity < (2 * GamePlatform.PLATFORM_GRAVITY)
         );
         if (isPressingUp && canJump) {
             newYVelocity = -PLAYER_JUMP_SPEED;
-        } else if (!isPressingUp && player.yVelocity() < 0) {
+        } else if (!isPressingUp && oldYVelocity < 0) {
             newYVelocity = 0;
         }
         return new UpdateVelocity(client, newXVelocity, newYVelocity);
