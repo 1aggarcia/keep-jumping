@@ -2,7 +2,6 @@ package io.github.aggarcia.game;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -11,12 +10,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.github.aggarcia.platforms.GamePlatform;
-import io.github.aggarcia.players.Player;
+import static io.github.aggarcia.game.GameEventHandler.advanceToNextTick;
+
 
 /**
  * Interface to hide the thread management logic of running the game loop.
  */
 public class GameLoop {
+    private final GameStore gameStore = new GameStore();
+
      /**
      * Amount of time to wait between each tick.
      */
@@ -41,6 +43,13 @@ public class GameLoop {
 
 
     // PUBLIC API //
+
+    /**
+     * @return reference to the store used by the loop
+     */
+    public GameStore gameStore() {
+        return this.gameStore;
+    }
 
     /**
      * Override the default value for the tick delay.
@@ -106,19 +115,15 @@ public class GameLoop {
 
     /**
      * Begin the game loop with a reference to the players and open sessions.
-     * @param players - active players
      * @param sessions - all open client sessions
      * @return true if a new loop was started, false if a loop was already
      * running and no new loop was created
      */
-    public boolean start(
-        Collection<Player> players,
-        Collection<WebSocketSession> sessions
-    ) {
+    public boolean start(Collection<WebSocketSession> sessions) {
         if (this.isRunning()) {
             return false;
         }
-        this.loopThread = new Thread(() -> runGameLoop(players, sessions));
+        this.loopThread = new Thread(() -> runGameLoop(sessions));
         this.loopThread.start();
         return true;
     }
@@ -139,39 +144,37 @@ public class GameLoop {
      * @param sessions - collection of all sessions to broadcast to
      */
     private void runGameLoop(
-        Collection<Player> players,
         Collection<WebSocketSession> sessions
     ) {
         int gameAgeSeconds = 0;
-        int tickCount = 0;
-        List<GamePlatform> platforms = GameEventHandler.spawnInitPlatforms();
+        final var players = gameStore.players();
+        gameStore.platforms(GameEventHandler.spawnInitPlatforms());
 
         System.out.println("Starting game loop");
         if (idleThread.isAlive()) {
             idleThread.interrupt();
+            try {
+                idleThread.join();
+            } catch (InterruptedException e) {
+                System.err.println(e);
+            }
         }
         while (
             players.size() > 0
             && sessions.size() > 0
             && gameAgeSeconds < this.maxTimeSeconds
         ) {
-            var response = GameEventHandler
-                .advanceToNextTick(players, platforms, tickCount);
-
-            tickCount = response.nextTickCount();
-            platforms = response.nextPlatformsState();
-            if (GameEventHandler.shouldSpawnPlatform(platforms)) {
-                platforms.add(GamePlatform.generateAtHeight(0));
+            var response = advanceToNextTick(gameStore);
+            gameStore.tickCount(response.nextTickCount());
+            this.gameStore.platforms(response.nextPlatformsState());
+            if (GameEventHandler.shouldSpawnPlatform(gameStore.platforms())) {
+                gameStore.platforms().add(GamePlatform.generateAtHeight(0));
             }
-            if (tickCount == 0) {
+            if (gameStore.tickCount() == 0) {
                 gameAgeSeconds++;
             }
             if (response.isUpdateNeeded()) try {
-                var update = GamePing.fromGameState(
-                    players,
-                    platforms,
-                    gameAgeSeconds
-                );
+                var update = GamePing.fromGameState(gameStore, gameAgeSeconds);
                 broadcast(sessions, update);
             } catch (JsonProcessingException e) {
                 System.err.println(e);

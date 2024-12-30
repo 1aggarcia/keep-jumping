@@ -1,9 +1,8 @@
 package io.github.aggarcia.players.updates;
 
-import java.util.Map;
 import java.util.Optional;
 
-import io.github.aggarcia.players.Player;
+import io.github.aggarcia.game.GameStore;
 
 public record ErrorUpdate(
     String message
@@ -14,7 +13,7 @@ public record ErrorUpdate(
     }
 
     @Override
-    public void applyTo(Map<String, Player> players) {
+    public void applyTo(GameStore store) {
         // do nothing
     }
 }

@@ -99,11 +99,12 @@ public class ConnectionHandler extends TextWebSocketHandler {
             if (!sessions.contains(client)) {
                 return;
             }
-            PlayerUpdate update = processEvent(client.getId(), event, players);
-            update.applyTo(players);
+            var store = gameLoop.gameStore();
+            PlayerUpdate update = processEvent(client.getId(), event, store);
+            update.applyTo(store);
 
             if (!gameLoop.isRunning()) {
-                gameLoop.start(players.values(), sessions);
+                gameLoop.start(sessions);
             }
             if (update.reply().isPresent()) {
                 synchronized (client) {

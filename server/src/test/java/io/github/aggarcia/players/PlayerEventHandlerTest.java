@@ -17,12 +17,17 @@ import org.springframework.web.socket.TextMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.github.aggarcia.game.GameStore;
 import io.github.aggarcia.platforms.GamePlatform;
 import io.github.aggarcia.players.events.ControlChangeEvent;
 import io.github.aggarcia.players.events.JoinEvent;
 import io.github.aggarcia.players.updates.CreatePlayer;
 import io.github.aggarcia.players.updates.ErrorUpdate;
 import io.github.aggarcia.players.updates.UpdateVelocity;
+
+import static io.github.aggarcia.players.PlayerEventHandler.processEvent;
+import static io.github.aggarcia.players.PlayerEventHandler.processJoin;
+import static io.github.aggarcia.players.PlayerEventHandler.processControlChange;;
 
 public class PlayerEventHandlerTest {
     // players cannot jump if they are falling faster than this speed
@@ -31,8 +36,7 @@ public class PlayerEventHandlerTest {
     @Test
     void test_processEvent_badMessage_throwsException() {
         assertThrows(JsonProcessingException.class, () -> {
-            PlayerEventHandler
-                .processEvent("", new TextMessage(""), Collections.emptyMap());
+            processEvent("", new TextMessage(""), new GameStore());
         });
     }
 
@@ -40,8 +44,7 @@ public class PlayerEventHandlerTest {
     void test_processEvent_badType_throwsException() throws Exception {
         var message = new TextMessage("{\"type\":\"bad type\"}");
         assertThrows(JsonProcessingException.class, () -> {
-            PlayerEventHandler
-                .processEvent("", message, Collections.emptyMap());
+            processEvent("", message, new GameStore());
         });
     }
 
@@ -51,8 +54,8 @@ public class PlayerEventHandlerTest {
         var payload = new JoinEvent("testName");
         var message = new TextMessage(new ObjectMapper().writeValueAsString(payload));
 
-        CreatePlayer result = (CreatePlayer) PlayerEventHandler
-            .processEvent("client1", message, Collections.emptyMap());
+        CreatePlayer result =
+            (CreatePlayer) processEvent("client1", message, new GameStore());
 
         assertTrue(result instanceof CreatePlayer);
         assertFalse(result.isError());
@@ -66,10 +69,8 @@ public class PlayerEventHandlerTest {
         var event = new ControlChangeEvent(Collections.emptyList());
         var message = serialize(event);
         assertEquals(
-            PlayerEventHandler
-                .processControlChange("client1", event, Collections.emptyMap()),
-            PlayerEventHandler
-                .processEvent("client1", message, Collections.emptyMap())
+            processControlChange("client1", event, new GameStore()),
+            processEvent("client1", message, new GameStore())
         );
     }
 
@@ -77,10 +78,10 @@ public class PlayerEventHandlerTest {
     void test_processControlChange_missingPlayer_returnsError() throws Exception {
         var event = new ControlChangeEvent(Collections.emptyList());
         // client id "test client" doesnt exist in the sessions (empty map)
-        var result = (ErrorUpdate) PlayerEventHandler.processControlChange(
+        var result = (ErrorUpdate) processControlChange(
             "test client",
             event,
-            new HashMap<>()
+            new GameStore()
         );
         assertTrue(result instanceof ErrorUpdate);
     }
@@ -134,10 +135,12 @@ public class PlayerEventHandlerTest {
             .yPosition(50)
             .yVelocity(Y_VELOCITY_JUMP_CUTOFF)
             .build();
-        Map<String, Player> sessions = Map.of("player1", player1);
-
-        var velocity = (UpdateVelocity) PlayerEventHandler
-            .processControlChange("player1", event, sessions);
+        
+        var velocity = (UpdateVelocity) processControlChange(
+            "player1",
+            event,
+            testStateWithPlayer(player1)
+        );
 
         assertEquals(-PlayerEventHandler.PLAYER_JUMP_SPEED, velocity.yVelocity());
     }
@@ -151,10 +154,12 @@ public class PlayerEventHandlerTest {
             .yPosition(50)
             .yVelocity(Y_VELOCITY_JUMP_CUTOFF + 1)
             .build();
-        Map<String, Player> sessions = Map.of("player1", player1);
 
-        var velocity = (UpdateVelocity) PlayerEventHandler
-            .processControlChange("player1", event, sessions);
+        var velocity = (UpdateVelocity) processControlChange(
+            "player1",
+            event,
+            testStateWithPlayer(player1)
+        );
 
         assertEquals(Y_VELOCITY_JUMP_CUTOFF + 1, velocity.yVelocity());
     }
@@ -180,9 +185,12 @@ public class PlayerEventHandlerTest {
             .yPosition(50)
             .yVelocity(1000)  // falling very quickly
             .build();
-        Map<String, Player> sessions = Map.of("player1", player1);
-        var velocity = (UpdateVelocity) PlayerEventHandler
-            .processControlChange("player1", event, sessions);
+
+        var velocity = (UpdateVelocity) processControlChange(
+            "player1",
+            event,
+            testStateWithPlayer(player1)
+        );
         assertEquals("player1", velocity.clientId());
         assertTrue(velocity.xVelocity() < 0);
         assertEquals(1000, velocity.yVelocity());
@@ -199,13 +207,20 @@ public class PlayerEventHandlerTest {
         }
     }
 
+    private GameStore testStateWithPlayer(Player player) {
+        return GameStore.builder()
+            .players(Map.of("player1", player))
+            .build();
+    }
+
     /**
      * Wrapper for calling processControlChange with a valid player session
      */
     private UpdateVelocity
     processControlWithValidPlayer(ControlChangeEvent event)throws Exception {
-        var players = Map.of("client1", Player.createRandomPlayer("player1"));
-        return (UpdateVelocity) PlayerEventHandler
-            .processControlChange("client1", event, players);
+        var state = GameStore.builder()
+            .players(Map.of("client1", Player.createRandomPlayer("player1")))
+            .build();
+        return (UpdateVelocity) processControlChange("client1", event, state);
     }
 }

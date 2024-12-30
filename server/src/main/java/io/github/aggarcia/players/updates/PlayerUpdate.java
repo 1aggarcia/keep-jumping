@@ -1,9 +1,8 @@
 package io.github.aggarcia.players.updates;
 
-import java.util.Map;
 import java.util.Optional;
 
-import io.github.aggarcia.players.Player;
+import io.github.aggarcia.game.GameStore;
 
 public interface PlayerUpdate {
     /**
@@ -15,7 +14,7 @@ public interface PlayerUpdate {
     /**
      * Modify the game state in a deterministic manner based on this
      * PlayerUpdate.
-     * @param players
+     * @param store
      */
-    void applyTo(Map<String, Player> players);
+    void applyTo(GameStore store);
 }

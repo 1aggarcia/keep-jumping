@@ -1,8 +1,8 @@
 package io.github.aggarcia.players.updates;
 
-import java.util.Map;
 import java.util.Optional;
 
+import io.github.aggarcia.game.GameStore;
 import io.github.aggarcia.players.Player;
 
 public record CreatePlayer(
@@ -19,9 +19,9 @@ public record CreatePlayer(
      * Add the mapping `client -> player`.
      */
     @Override
-    public void applyTo(Map<String, Player> players) {
+    public void applyTo(GameStore store) {
         if (!isError) {
-            players.put(client, player);
+            store.players().put(client, player);
         }
     }
 }

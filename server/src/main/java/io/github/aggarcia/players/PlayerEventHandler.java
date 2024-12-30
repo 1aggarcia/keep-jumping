@@ -1,13 +1,13 @@
 package io.github.aggarcia.players;
 
 import java.util.HashSet;
-import java.util.Map;
 
 import org.springframework.web.socket.TextMessage;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.github.aggarcia.game.GameStore;
 import io.github.aggarcia.platforms.GamePlatform;
 import io.github.aggarcia.players.events.ControlChangeEvent;
 import io.github.aggarcia.players.events.JoinEvent;
@@ -32,22 +32,22 @@ public final class PlayerEventHandler {
      * result.
      * @param client client, session used for identification of player
      * @param event message containing JSON event
-     * @param sessions complete game state to determine updates.
+     * @param store complete game state to determine updates.
      *  Treated as read only
      * @return response, either PlayerVelocity or an empty Object
      */
     public static PlayerUpdate processEvent(
         String client,
         TextMessage event,
-        Map<String, Player> sessions
+        GameStore store
     ) throws JsonProcessingException {
         SocketMessage payload = new ObjectMapper()
             .readValue(event.getPayload(), SocketMessage.class);
 
         if (payload instanceof ControlChangeEvent control) {
-            return processControlChange(client, control, sessions);
+            return processControlChange(client, control, store);
         } else if (payload instanceof JoinEvent join) {
-            return processJoin(client, join, sessions);
+            return processJoin(client, join, store);
         } else {
             return new ErrorUpdate("Unsupported event type: " + payload);
         }
@@ -68,8 +68,9 @@ public final class PlayerEventHandler {
     processControlChange(
         String client,
         ControlChangeEvent event,
-        Map<String, Player> sessions
+        GameStore store
     ) throws JsonProcessingException {
+        var sessions = store.players();
         if (!sessions.containsKey(client)) {
             return new ErrorUpdate("Player does not exist with id " + client);
         }
@@ -111,16 +112,17 @@ public final class PlayerEventHandler {
      * if the name is unique.
      * @param client id for client
      * @param event
-     * @param sessions current game state
+     * @param store current game state
      * @return A new player with the name in the event, if the name is unique.
      *  otherwise, an error
      */
     public static CreatePlayer processJoin(
         String client,
         JoinEvent event,
-        Map<String, Player> sessions
+        GameStore store
     ) {
         // TODO: put limit on player count
+        var sessions = store.players();
         if (sessions.containsKey(client)) {
             // client already has a player
             return new CreatePlayer(true, null, null);
