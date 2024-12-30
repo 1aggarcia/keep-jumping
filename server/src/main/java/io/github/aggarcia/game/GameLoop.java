@@ -17,7 +17,7 @@ import static io.github.aggarcia.game.GameEventHandler.advanceToNextTick;
  * Interface to hide the thread management logic of running the game loop.
  */
 public class GameLoop {
-    private final GameStore gameStore = new GameStore();
+    private final GameStore gameStore;
 
      /**
      * Amount of time to wait between each tick.
@@ -41,6 +41,9 @@ public class GameLoop {
      */
     private Runnable idleTimeoutAction = () -> {};
 
+    public GameLoop(GameStore gameStore) {
+        this.gameStore = gameStore;
+    }
 
     // PUBLIC API //
 
@@ -114,16 +117,23 @@ public class GameLoop {
     }
 
     /**
-     * Begin the game loop with a reference to the players and open sessions.
-     * @param sessions - all open client sessions
+     * Start a new thread running the game loop, if none is currently active.
      * @return true if a new loop was started, false if a loop was already
      * running and no new loop was created
      */
-    public boolean start(Collection<WebSocketSession> sessions) {
+    public boolean start() {
         if (this.isRunning()) {
             return false;
         }
-        this.loopThread = new Thread(() -> runGameLoop(sessions));
+        if (idleThread.isAlive()) {
+            idleThread.interrupt();
+            try {
+                idleThread.join();
+            } catch (InterruptedException e) {
+                System.err.println(e);
+            }
+        }
+        this.loopThread = new Thread(this::runGameLoop);
         this.loopThread.start();
         return true;
     }
@@ -140,14 +150,11 @@ public class GameLoop {
 
     /**
      * Internal thread function for the game loop.
-     * @param players - reference to player list to update
-     * @param sessions - collection of all sessions to broadcast to
      */
-    private void runGameLoop(
-        Collection<WebSocketSession> sessions
-    ) {
+    private void runGameLoop() {
         int gameAgeSeconds = 0;
         final var players = gameStore.players();
+        final var sessions = gameStore.sessions();
         gameStore.platforms(GameEventHandler.spawnInitPlatforms());
 
         System.out.println("Starting game loop");

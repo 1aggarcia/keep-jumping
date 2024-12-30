@@ -62,14 +62,13 @@ public final class PlayerEventHandler {
      * @return The new player velocity. Behavior is undefined if two
      *  conflicting keys are pressed in the incoming message, e.g.
      *  "Right" and "Left".
-     * @throws JsonProcessingException
      */
     public static PlayerUpdate
     processControlChange(
         String client,
         ControlChangeEvent event,
         GameStore store
-    ) throws JsonProcessingException {
+    ) {
         var sessions = store.players();
         if (!sessions.containsKey(client)) {
             return new ErrorUpdate("Player does not exist with id " + client);
@@ -122,18 +121,20 @@ public final class PlayerEventHandler {
         GameStore store
     ) {
         // TODO: put limit on player count
-        var sessions = store.players();
-        if (sessions.containsKey(client)) {
+        var players = store.players();
+        var isFirstPlayer = players.isEmpty();
+        if (players.containsKey(client)) {
             // client already has a player
-            return new CreatePlayer(true, null, null);
+            // TODO: return error type here
+            return new CreatePlayer(true, false, null, null);
         }
-        for (var player : sessions.values()) {
+        for (var player : players.values()) {
             if (player.name().equals(event.name())) {
                 // name already taken
-                return new CreatePlayer(true, null, null);
+                return new CreatePlayer(true, false, null, null);
             }
         }
         var newPlayer = Player.createRandomPlayer(event.name());
-        return new CreatePlayer(false, client, newPlayer);
+        return new CreatePlayer(false, isFirstPlayer, client, newPlayer);
     }
 }

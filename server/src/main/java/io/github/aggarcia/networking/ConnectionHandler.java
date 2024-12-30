@@ -8,18 +8,12 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 
 import ch.qos.logback.core.testUtil.RandomUtil;
-import io.github.aggarcia.game.GameLoop;
+import io.github.aggarcia.game.GameStore;
 import io.github.aggarcia.players.Player;
-import io.github.aggarcia.players.updates.PlayerUpdate;
 import static io.github.aggarcia.players.PlayerEventHandler.processEvent;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * State management for client sessions. Externally, state is read only.
@@ -28,24 +22,12 @@ import java.util.Set;
  */
 public class ConnectionHandler extends TextWebSocketHandler {
     private static final int INSTANCE_ID = RandomUtil.getPositiveInt() % 999;
-    private static final int IDLE_TIMEOUT_SECONDS = 15 * 60;  // 15 minutes
 
-    // Session state
-    private final Set<WebSocketSession> sessions =
-        Collections.synchronizedSet(new HashSet<>());
+    private final GameStore gameStore;
 
-    // Game state
-    private final Map<String, Player> players =
-        Collections.synchronizedMap(new HashMap<>());
-
-    // Game loop state
-    private GameLoop gameLoop = new GameLoop().onIdleTimeout(() -> {
-        System.out.println(
-            "Shutting down: Idle timeout reached ("
-            + IDLE_TIMEOUT_SECONDS + "s)"
-        );
-        System.exit(0);
-    }, IDLE_TIMEOUT_SECONDS * 1000);
+    public ConnectionHandler(GameStore gameStore) {
+        this.gameStore = gameStore;
+    }
 
     /**
      * Record the client session when a new client connects,
@@ -53,7 +35,7 @@ public class ConnectionHandler extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) {
-        sessions.add(session);
+        gameStore.sessions().add(session);
         // Entire string needs to be printed at once since the console is
         // shared with other threads
         var consoleMessage = new StringBuilder()
@@ -72,11 +54,12 @@ public class ConnectionHandler extends TextWebSocketHandler {
     public void afterConnectionClosed(
         @NonNull WebSocketSession session, @NonNull CloseStatus status
     ) {
+        var players = gameStore.players();
         if (players.remove(session.getId()) == null) {
             System.err.println(
                 "No player was saved for session " + session.getId());
         }
-        sessions.remove(session);
+        gameStore.sessions().remove(session);
 
         // Entire string needs to be printed at once since the console is
         // shared with other threads
@@ -96,21 +79,17 @@ public class ConnectionHandler extends TextWebSocketHandler {
         @NonNull WebSocketSession client, @NonNull TextMessage event
     ) {
         try {
-            if (!sessions.contains(client)) {
+            if (!gameStore.sessions().contains(client)) {
                 return;
             }
-            var store = gameLoop.gameStore();
-            PlayerUpdate update = processEvent(client.getId(), event, store);
-            update.applyTo(store);
-
-            if (!gameLoop.isRunning()) {
-                gameLoop.start(sessions);
+            var update = processEvent(client.getId(), event, gameStore);
+            update.applyTo(gameStore);
+            if (!update.reply().isPresent()) {
+                return;
             }
-            if (update.reply().isPresent()) {
-                synchronized (client) {
-                    var message = new TextMessage(update.reply().get());
-                    client.sendMessage(message);
-                }
+            synchronized (client) {
+                var message = new TextMessage(update.reply().get());
+                client.sendMessage(message);
             }
         } catch (IOException e) {
             System.err.println(e);
@@ -121,13 +100,13 @@ public class ConnectionHandler extends TextWebSocketHandler {
      * @return read only list of active web socket sessions
      */
     public List<WebSocketSession> sessions() {
-        return this.sessions.stream().toList();
+        return gameStore.sessions().stream().toList();
     }
 
     /**
      * @return read only list of players
      */
     public List<Player> players() {
-        return this.players.values().stream().toList();
+        return gameStore.players().values().stream().toList();
     }
 }

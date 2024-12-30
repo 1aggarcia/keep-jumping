@@ -9,6 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketSession;
 
+import io.github.aggarcia.game.GameStore;
+
 // naming convention: test_<unit>_<state>_<expected behavior>
 @SpringBootTest
 public class ConnectionHandlerTest {
@@ -19,7 +21,7 @@ public class ConnectionHandlerTest {
 
     @BeforeEach
     void resetState() {
-        connectionHandler = new ConnectionHandler();
+        connectionHandler = new ConnectionHandler(new GameStore());
     }
 
     @Test
