@@ -18,6 +18,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.github.aggarcia.game.GameStore;
+import io.github.aggarcia.game.GameStoreTest;
 import io.github.aggarcia.platforms.GamePlatform;
 import io.github.aggarcia.players.events.ControlChangeEvent;
 import io.github.aggarcia.players.events.JoinEvent;
@@ -58,7 +59,6 @@ public class PlayerEventHandlerTest {
             (CreatePlayer) processEvent("client1", message, new GameStore());
 
         assertTrue(result instanceof CreatePlayer);
-        assertFalse(result.isError());
         assertEquals("client1", result.client());
         assertEquals("testName", result.player().name());
     }
@@ -202,24 +202,79 @@ public class PlayerEventHandlerTest {
     @Test
     void test_processJoin_firstPlayer_returnsIsFirstPlayerTrue() {
         var event = new JoinEvent("");
-        var createUpdate = processJoin("", event, new GameStore());
+        var createUpdate =
+            (CreatePlayer) processJoin("", event, new GameStore());
         assertTrue(createUpdate.isFirstPlayer());
     }
 
     @Test
-    void test_processJoin_secondPlayer_returnsIsFirstPlayerFalse() {
-        var store = testStateWithPlayer(Player.createRandomPlayer("player1"));
-        var event = new JoinEvent("player2");
-        var createUpdate = processJoin("", event, store);
+    void test_processJoin_manyPlayers_returnsIsFirstPlayerFalse() {
+        var event = new JoinEvent("");
+
+        Map<String, Player> players = new HashMap<>();
+        // create one less than the limit, so there's room for one more player
+        for (int i = 0; i < PlayerEventHandler.MAX_PLAYER_COUNT - 1; i++) {
+            var stringI = Integer.toString(i);
+            players.put(stringI, Player.createRandomPlayer(stringI));
+        }
+
+        var store = GameStore.builder().players(players).build();
+        var createUpdate = (CreatePlayer) processJoin("", event, store);
         assertFalse(createUpdate.isFirstPlayer());
+    }
+
+    @Test
+    void test_processJoin_maxPlayers_returnsError() {
+        var event = new JoinEvent("");
+
+        Map<String, Player> players = new HashMap<>();
+        for (int i = 0; i < PlayerEventHandler.MAX_PLAYER_COUNT; i++) {
+            var stringI = Integer.toString(i);
+            players.put(stringI, Player.createRandomPlayer(stringI));
+        }
+
+        var store = GameStore.builder().players(players).build();
+        var update = processJoin("", event, store);
+        assertTrue(update instanceof ErrorUpdate);
     }
 
     @Test
     void test_processJoin_uniquePlayer_returnsPlayerWithCorrectName() {
         var event = new JoinEvent("player1");
-        var createUpdate = processJoin("client1", event, new GameStore());
+        var createUpdate =
+            (CreatePlayer) processJoin("client1", event, new GameStore());
         assertEquals("client1", createUpdate.client());
         assertEquals("player1", createUpdate.player().name());
+    }
+
+    @Test
+    void test_processJoin_duplicateClient_returnsError() {
+        var event = new JoinEvent("");
+        var player = Player.createRandomPlayer("duplicate_client");
+        var store = testStateWithPlayer(player);
+
+        var update = processJoin("duplicate_client", event, store);
+        assertTrue(update instanceof ErrorUpdate);
+    }
+
+    @Test
+    void test_processJoin_duplicatePlayer_returnsError() {
+        var event = new JoinEvent("duplicate_player");
+        var player = Player.createRandomPlayer("duplicate_player");
+        var store = testStateWithPlayer(player);
+
+        var update = processJoin("", event, store);
+        assertTrue(update instanceof ErrorUpdate);
+    }
+
+    @Test
+    void test_processJoin_sameNameCapitalizedDifferently_returnsError() {
+        var event = new JoinEvent("abcd");
+        var player = Player.createRandomPlayer("AbCd");
+        var store = testStateWithPlayer(player);
+
+        var update = processJoin("", event, store);
+        assertTrue(update instanceof ErrorUpdate);
     }
 
     private <T> TextMessage serialize(T data) {

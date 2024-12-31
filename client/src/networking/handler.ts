@@ -1,12 +1,18 @@
 import { getServerEndpoint } from "./config";
 import { AppState } from "../state/appState";
 import { networkElements } from "./elements";
-import { clearCanvas, renderGame, renderMetadata } from "../game/renderer";
-import { handleServerMessage } from "../game/handler";
+import {
+    clearCanvas,
+    renderGame,
+    renderGameOver,
+    renderMetadata,
+    rerender
+} from "../game/renderer";
 import { Button, subscribeButtonsToCursor } from "../canvas/button";
-import { JoinEvent } from "../game/types/messages";
+import { JoinEvent, SocketMessage } from "../game/types/messages";
 
 const MAX_HISTORY_LEN = 25;
+const ERROR_DISPLAY_TIME = 5000;
 
 export function sendToServer<T>(state: AppState, message: T) {
     if (state.server === null) {
@@ -56,6 +62,7 @@ export function connectToServer(state: AppState, username: string) {
     server.onclose = () => onServerClose(state);
     server.onerror = () => {
         onServerClose(state);
+        addErrorNotification(state, "Connection error");
         state.connectedStatus = "ERROR";
         networkElements.errorBox.append("<p>Connection error</p>");
     };
@@ -73,6 +80,30 @@ export function connectToServer(state: AppState, username: string) {
     };
 }
 
+function handleServerMessage(message: string, state: AppState) {
+    const json: SocketMessage = JSON.parse(message);
+    if (json.type === "GamePing") {
+        state.lastPing = json;
+        renderGame(state, json);
+    } else if (json.type === "GameOverEvent") {
+        renderGameOver(state.context, json.reason);
+    } else if (json.type === "ErrorReply") {
+        addErrorNotification(state, json.message);
+    } else {
+        throw new Error(`Unknown message type: ${message}`);
+    }
+}
+
+function addErrorNotification(state: AppState, error: string) {
+    state.errors.unshift(error);  // enqueue at start
+    rerender(state);
+    setTimeout(() => {
+        state.errors.pop();  // dequeue from end
+        rerender(state);
+    }, ERROR_DISPLAY_TIME);
+}
+
+
 function onServerClose(state: AppState) {
     state.connectedStatus = "CLOSED";
     networkElements.messagesBox.empty();
@@ -82,11 +113,7 @@ function onServerClose(state: AppState) {
         .show();
 
     subscribeButtonsToCursor(state, []);
-    if (state.lastPing === null) {
-        console.warn("onServerClose called before receiving any pings");
-        return;
-    }
-    renderGame(state, state.lastPing);
+    rerender(state);
 }
 
 function disconnectFromServer(state: AppState) {

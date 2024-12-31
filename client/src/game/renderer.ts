@@ -1,7 +1,7 @@
 import { Context2D } from "../canvas/types";
 import { GamePing } from "./types/messages";
 import { GamePlatform, PlayerState } from "./types/models";
-import { renderButtons } from "../canvas/button";
+import { BUTTON_HEIGHT, renderButtons } from "../canvas/button";
 import { renderLabel } from "../canvas/label";
 import { AppState } from "../state/appState";
 import {
@@ -47,6 +47,16 @@ export function renderGame(state: AppState, ping: GamePing) {
     renderMetadata(state);
 }
 
+export function rerender(state: AppState) {
+    if (state.lastPing !== null) {
+        renderGame(state, state.lastPing);
+        return;
+    }
+    clearCanvas(state.context);
+    renderButtons(state.context, state.buttons);
+    renderMetadata(state);
+}
+
 // TODO: change server to send game over update, then change this to use the
 // `renderLabel` helper
 export function renderGameOver(context: Context2D, reason: string) {
@@ -77,6 +87,19 @@ export function renderMetadata(state: AppState) {
         y: 20,
         textAlign: "center",
         font: "25px Arial"
+    });
+
+    const disconnectButtonOffset = BUTTON_HEIGHT + 10;
+    state.errors.forEach((error, index) => {
+        renderLabel(state.context, {
+            text: error,
+            x: GAME_WIDTH - 10,
+            y: disconnectButtonOffset + (index * 40),
+            textAlign: "right",
+            textBaseline: "top",
+            color: RED_HEX,
+            font: "25px Arial"
+        });
     });
 }
 

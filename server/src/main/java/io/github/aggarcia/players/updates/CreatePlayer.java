@@ -6,7 +6,6 @@ import io.github.aggarcia.game.GameStore;
 import io.github.aggarcia.players.Player;
 
 public record CreatePlayer(
-    boolean isError,
     boolean isFirstPlayer,
     String client,
     Player player
@@ -21,9 +20,6 @@ public record CreatePlayer(
      */
     @Override
     public void applyTo(GameStore store) {
-        if (isError) {
-            return;
-        }
         store.players().put(client, player);
         if (isFirstPlayer) {
             store.tiggerStartEvent();

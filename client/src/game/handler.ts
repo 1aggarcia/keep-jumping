@@ -1,23 +1,10 @@
-import { ControlChangeEvent, SocketMessage } from "./types/messages";
+import { ControlChangeEvent } from "./types/messages";
 import { AppState } from "../state/appState";
-import { renderGame, renderGameOver } from "./renderer";
 import { sendToServer } from "../networking/handler";
 import { GAME_HEIGHT, GAME_WIDTH } from "./constants";
 import { PlayerControl } from "./types/models";
 
 const GAME_ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
-
-export function handleServerMessage(message: string, state: AppState) {
-    const json: SocketMessage = JSON.parse(message);
-    if (json.type === "GamePing") {
-        state.lastPing = json;
-        renderGame(state, json);
-    } else if (json.type === "GameOverEvent") {
-        renderGameOver(state.context, json.reason);
-    } else {
-        throw new Error(`Unknown message type: ${message}`);
-    }
-}
 
 export function handleKeyDown(keyCode: string, state: AppState) {
     const control = keyCodeToPlayerControl(keyCode);

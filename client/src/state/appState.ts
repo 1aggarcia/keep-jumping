@@ -8,6 +8,7 @@ export type AppState = {
     connectedStatus: "CLOSED" | "CONNECTING" | "OPEN" | "ERROR";
     pressedControls: Set<PlayerControl>;
     lastPing: GamePing | null;
+    errors: string[];
     context: Context2D;
     buttons: Button[];
     messagesIn: number;

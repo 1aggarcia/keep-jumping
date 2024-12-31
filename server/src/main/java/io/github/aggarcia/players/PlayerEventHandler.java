@@ -24,6 +24,7 @@ import io.github.aggarcia.shared.SocketMessage;
 public final class PlayerEventHandler {
     private static final int PLAYER_MOVE_SPEED = 20;
     protected static final int PLAYER_JUMP_SPEED = 40;
+    protected static final int MAX_PLAYER_COUNT = 15;
 
     private PlayerEventHandler() {}
 
@@ -49,7 +50,7 @@ public final class PlayerEventHandler {
         } else if (payload instanceof JoinEvent join) {
             return processJoin(client, join, store);
         } else {
-            return new ErrorUpdate("Unsupported event type: " + payload);
+            return ErrorUpdate.fromText("Unsupported event type: " + payload);
         }
     }
 
@@ -71,7 +72,8 @@ public final class PlayerEventHandler {
     ) {
         var sessions = store.players();
         if (!sessions.containsKey(client)) {
-            return new ErrorUpdate("Player does not exist with id " + client);
+            return ErrorUpdate
+                .fromText("No player exists for client " + client);
         }
         Player player = sessions.get(client);
         int oldYVelocity;
@@ -113,28 +115,30 @@ public final class PlayerEventHandler {
      * @param event
      * @param store current game state
      * @return A new player with the name in the event, if the name is unique.
-     *  otherwise, an error
+     *  otherwise, an error.
      */
-    public static CreatePlayer processJoin(
-        String client,
-        JoinEvent event,
-        GameStore store
-    ) {
-        // TODO: put limit on player count
+    public static PlayerUpdate
+    processJoin(String client, JoinEvent event, GameStore store) {
         var players = store.players();
-        var isFirstPlayer = players.isEmpty();
+        if (players.size() >= MAX_PLAYER_COUNT) {
+            return ErrorUpdate
+                .fromText("Player limit reached: " + players.size());
+        }
         if (players.containsKey(client)) {
-            // client already has a player
-            // TODO: return error type here
-            return new CreatePlayer(true, false, null, null);
+            return ErrorUpdate
+                .fromText("Client is already playing: " + client);
         }
-        for (var player : players.values()) {
-            if (player.name().equals(event.name())) {
-                // name already taken
-                return new CreatePlayer(true, false, null, null);
-            }
+
+        boolean isUsernameTaken = players
+            .values()
+            .stream()
+            .anyMatch(player -> player.name().equalsIgnoreCase(event.name()));
+        if (isUsernameTaken) {
+            return ErrorUpdate
+                .fromText("Username already in use: " + event.name());
         }
+        var isFirstPlayer = players.isEmpty();
         var newPlayer = Player.createRandomPlayer(event.name());
-        return new CreatePlayer(false, isFirstPlayer, client, newPlayer);
+        return new CreatePlayer(isFirstPlayer, client, newPlayer);
     }
 }

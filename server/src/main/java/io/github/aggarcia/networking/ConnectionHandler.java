@@ -9,11 +9,9 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.game.GameStore;
-import io.github.aggarcia.players.Player;
 import static io.github.aggarcia.players.PlayerEventHandler.processEvent;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * State management for client sessions. Externally, state is read only.
@@ -94,19 +92,5 @@ public class ConnectionHandler extends TextWebSocketHandler {
         } catch (IOException e) {
             System.err.println(e);
         }
-    }
-
-    /**
-     * @return read only list of active web socket sessions
-     */
-    public List<WebSocketSession> sessions() {
-        return gameStore.sessions().stream().toList();
-    }
-
-    /**
-     * @return read only list of players
-     */
-    public List<Player> players() {
-        return gameStore.players().values().stream().toList();
     }
 }

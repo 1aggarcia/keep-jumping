@@ -38,8 +38,9 @@
 
 ## Client
 - [ ] Add dark mode
-- [ ] Process disconnect requests / other errors
+- [*] Process disconnect requests / other errors
 - [*] Move all graphics inside the canvas
+- [x] Show errors to user
 - [x] Add leaderboard rendering
 - [x] Deprecate "GameJoinUpdate" message
 - [x] Add scores to sprites

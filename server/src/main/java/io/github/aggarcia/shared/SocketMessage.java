@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import io.github.aggarcia.game.GamePing;
 import io.github.aggarcia.players.events.ControlChangeEvent;
 import io.github.aggarcia.players.events.JoinEvent;
+import io.github.aggarcia.players.replies.ErrorReply;
 
 /**
  * Base class for all event, reply, and ping messages.
@@ -27,6 +28,7 @@ import io.github.aggarcia.players.events.JoinEvent;
     @JsonSubTypes.Type(
         value = ControlChangeEvent.class, name = "ControlChangeEvent"),
     @JsonSubTypes.Type(value = GamePing.class, name = "GamePing"),
-    @JsonSubTypes.Type(value = JoinEvent.class, name = "JoinEvent")
+    @JsonSubTypes.Type(value = JoinEvent.class, name = "JoinEvent"),
+    @JsonSubTypes.Type(value = ErrorReply.class, name = "ErrorReply"),
 })
 public interface SocketMessage {}

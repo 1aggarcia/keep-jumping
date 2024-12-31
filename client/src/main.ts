@@ -8,6 +8,7 @@ const appState: AppState = {
     connectedStatus: "CLOSED",
     pressedControls: new Set(),
     lastPing: null,
+    errors: [],
     context: getGameContext(),
     buttons: [],
     messagesIn: 0,
