@@ -10,6 +10,7 @@ import {
 } from "../game/renderer";
 import { Button, subscribeButtonsToCursor } from "../canvas/button";
 import { JoinEvent, SocketMessage } from "../game/types/messages";
+import { formatBytesString, getPrettyMessage } from "./formatters";
 
 const MAX_HISTORY_LEN = 25;
 const ERROR_DISPLAY_TIME = 5000;
@@ -33,6 +34,7 @@ export function sendToServer<T>(state: AppState, message: T) {
 
 export function connectToServer(state: AppState, username: string) {
     clearCanvas(state.context);
+    state.bytesIn = 0;
     state.messagesIn = 0;
     state.messagesOut = 0;
     state.connectedStatus = "CONNECTING";
@@ -68,7 +70,11 @@ export function connectToServer(state: AppState, username: string) {
     };
     server.onmessage = (event) => {
         state.messagesIn++;
+
         const message = event.data;
+        const byteCount = new Blob([message]).size;
+        state.bytesIn += byteCount;
+
         const prettyMessage = getPrettyMessage(message);
         // garbage collect old messages
         if (state.messagesIn > MAX_HISTORY_LEN) {
@@ -124,19 +130,14 @@ function disconnectFromServer(state: AppState) {
     server.close();
 }
 
-function getPrettyMessage(message: unknown) {
-    if (!(typeof message === "string")) {
-        return `${message}`;
-    }
-    try {
-        return JSON.stringify(JSON.parse(message), undefined, 2);
-    } catch {
-        return message;
-    }
-}
-
 function renderMessageStats(state: AppState) {
-    const inText = `Received: ${state.messagesIn}`;
     const outText = `Sent: ${state.messagesOut}`;
-    networkElements.messagesStats.text(inText + " | " + outText);
+    const inText = `Received: ${state.messagesIn}`;
+    const bytesText = `Data in: ${formatBytesString(state.bytesIn)}`;
+
+    const meanPingSize = Math.floor(state.bytesIn / state.messagesIn);
+    const meanText = `Mean ping size: ${formatBytesString(meanPingSize)}`;
+
+    networkElements.messagesStats
+        .text(outText + " | " + inText + " | " + bytesText + " | " + meanText);
 }

@@ -11,6 +11,8 @@ const appState: AppState = {
     errors: [],
     context: getGameContext(),
     buttons: [],
+
+    bytesIn: 0,
     messagesIn: 0,
     messagesOut: 0,
 };

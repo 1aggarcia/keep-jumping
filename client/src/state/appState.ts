@@ -11,6 +11,9 @@ export type AppState = {
     errors: string[];
     context: Context2D;
     buttons: Button[];
+
+    // non-essential stats
+    bytesIn: number;
     messagesIn: number;
     messagesOut: number;
 };
