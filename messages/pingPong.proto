@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option java_package = "io.github.aggarcia.generated";
+
+message PingPong {
+    oneof payload {
+        Ping ping = 1;
+        Pong pong = 2;
+    }
+}
+
+message Ping {
+    string request = 1;
+}
+
+message Pong {
+    string reply = 1;
+}

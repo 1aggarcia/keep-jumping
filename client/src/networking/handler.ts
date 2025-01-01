@@ -10,7 +10,13 @@ import {
 } from "../game/renderer";
 import { Button, subscribeButtonsToCursor } from "../canvas/button";
 import { JoinEvent, SocketMessage } from "../game/types/messages";
-import { formatBytesString, getPrettyMessage } from "./formatters";
+import {
+    serialize,
+    deserialize,
+    formatBytesString,
+    getPrettyMessage,
+} from "./formatters";
+import { PingPong } from "../generated/pingPong";
 
 const MAX_HISTORY_LEN = 25;
 const ERROR_DISPLAY_TIME = 5000;
@@ -45,6 +51,7 @@ export function connectToServer(state: AppState, username: string) {
     state.server = server;
 
     server.onopen = () => {
+        sendPing(server);
         sendToServer<JoinEvent>(state, {
             type: "JoinEvent",
             name: username
@@ -72,8 +79,14 @@ export function connectToServer(state: AppState, username: string) {
         state.messagesIn++;
 
         const message = event.data;
+        // this is probably not accurate, but a suitable estimation
         const byteCount = new Blob([message]).size;
         state.bytesIn += byteCount;
+
+        if (message instanceof Blob) {
+            handlePong(message);
+            return;
+        }
 
         const prettyMessage = getPrettyMessage(message);
         // garbage collect old messages
@@ -84,6 +97,28 @@ export function connectToServer(state: AppState, username: string) {
         renderMessageStats(state);
         handleServerMessage(message, state);
     };
+}
+
+function sendPing(server: WebSocket) {
+    const ping = PingPong.fromObject({
+        ping: {
+            request: "hola mundo"
+        }
+    });
+    server.send(serialize(ping));
+}
+
+async function handlePong(messageBlob: Blob) {
+    const arrayBuffer = await messageBlob.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    const message = deserialize(bytes);
+    if (message === null) {
+        throw new Error("deserialization error");
+    }
+    if (message.payload !== "pong") {
+        throw new Error("bad message type: " + message.payload);
+    }
+    console.log(message.pong.toObject());
 }
 
 function handleServerMessage(message: string, state: AppState) {

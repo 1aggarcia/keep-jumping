@@ -1,24 +1,32 @@
 package io.github.aggarcia.networking;
 
 import org.springframework.lang.NonNull;
+import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
-import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 
 import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.game.GameStore;
+import io.github.aggarcia.generated.PingPongOuterClass.Ping;
+import io.github.aggarcia.generated.PingPongOuterClass.PingPong;
+import io.github.aggarcia.generated.PingPongOuterClass.Pong;
+import io.github.aggarcia.generated.PingPongOuterClass.PingPong.PayloadCase;
+
 import static io.github.aggarcia.players.PlayerEventHandler.processEvent;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * State management for client sessions. Externally, state is read only.
  * None of the methods should throw exepctions, since that would cause the
  * server to crash.
  */
-public class ConnectionHandler extends TextWebSocketHandler {
+public class ConnectionHandler extends AbstractWebSocketHandler {
     private static final int INSTANCE_ID = RandomUtil.getPositiveInt() % 999;
 
     private final GameStore gameStore;
@@ -91,6 +99,63 @@ public class ConnectionHandler extends TextWebSocketHandler {
             }
         } catch (IOException e) {
             System.err.println(e);
+        }
+    }
+
+    /**
+     * Handle sample ping message, sepereate from the rest of the app.
+     */
+    @Override
+    public void handleBinaryMessage(
+        @NonNull WebSocketSession session, @NonNull BinaryMessage data
+    ) {
+        var payload = data.getPayload().array();
+        try {
+            var message = deserialize(payload);
+            if (message.isEmpty()) {
+                System.err.println("Invalid protocol buffer " + payload);
+                return;
+            }
+            var payloadCase = message.get().getPayloadCase();
+            if (payloadCase != PayloadCase.PING) {
+                System.err.println("Unexpected message type " + payloadCase);
+                return;
+            }
+            Ping ping = message.get().getPing();
+            Pong pong = Pong.newBuilder()
+                .setReply("pong: " + ping.getRequest())
+                .build();
+            PingPong reply = PingPong.newBuilder()
+                .setPong(pong)
+                .build();
+
+            session.sendMessage(new BinaryMessage(serialize(reply)));
+        } catch (IOException e) {
+            System.err.println(e);
+        }
+    }
+
+    /**
+     * Convert a protobuf message to a binary array.
+     * @param message
+     * @return serialized data
+     */
+    private byte[] serialize(PingPong message) {
+        return message.toByteArray();
+    }
+
+    /**
+     * Convert a binary array to a protobuf message.
+     * @param payload
+     * @return protobuf message if decoding is possible, empty otherwise
+     */
+    private Optional<PingPong> deserialize(byte[] payload) {
+        try {
+            return Optional.of(PingPong.parseFrom(payload));
+        } catch (InvalidProtocolBufferException e) {
+            System.err.println(e);
+            // exceptions are a side effect; pure FP style is to return empty
+            return Optional.empty();
         }
     }
 }

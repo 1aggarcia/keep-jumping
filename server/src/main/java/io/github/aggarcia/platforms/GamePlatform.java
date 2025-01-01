@@ -11,7 +11,7 @@ public record GamePlatform(
     int width,
     int x,
     int y
-    ) {
+) {
     // public for Player access
     public static final int PLATFORM_GRAVITY = 5;
     protected static final int MIN_WIDTH = 300;
