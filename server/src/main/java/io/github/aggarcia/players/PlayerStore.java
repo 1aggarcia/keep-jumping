@@ -14,7 +14,7 @@ import lombok.experimental.Accessors;
 @Data
 @Builder
 @Accessors(fluent = true)
-public final class Player {
+public final class PlayerStore {
     public static final int PLAYER_WIDTH = 40;
     public static final int PLAYER_HEIGHT = 40;
     public static final int GRAVITY = 2;
@@ -62,7 +62,7 @@ public final class Player {
      * @return new instance of Player, with position in game bounds and as a
      * factor of the player size
      */
-    public static Player createRandomPlayer(String name) {
+    public static PlayerStore createRandomPlayer(String name) {
         Random random = new Random();
 
         StringBuilder color = new StringBuilder("#");
@@ -78,7 +78,7 @@ public final class Player {
         int yPosition = random
             .nextInt(MAX_SPAWN_HEIGHT / PLAYER_HEIGHT) * PLAYER_HEIGHT;
 
-        return Player.builder()
+        return PlayerStore.builder()
             .color(color.toString())
             .name(name)
             .xPosition(xPosition)
@@ -91,9 +91,9 @@ public final class Player {
     }
 
     /**
-     * @see Player#moveToNextTick(Collection)
+     * @see PlayerStore#moveToNextTick(Collection)
      */
-    public Player moveToNextTick() {
+    public PlayerStore moveToNextTick() {
         return this.moveToNextTick(Collections.emptyList());
     }
 
@@ -105,7 +105,7 @@ public final class Player {
      * @param platforms collidable blocks that the player should not touch
      * @return reference to the same object
      */
-    public synchronized Player
+    public synchronized PlayerStore
     moveToNextTick(Collection<GamePlatform> platforms) {
         /*
          * newX = oldX + xVelocity
@@ -192,27 +192,13 @@ public final class Player {
      * @param points number of points to add
      * @return reference to the same object
      */
-    public synchronized Player addToScore(int points) {
+    public synchronized PlayerStore addToScore(int points) {
         this.score += points;
         return this;
     }
 
-    /**
-     * Convert a Player record to a PlayerState record.
-     * @return instance of PlayerState
-     */
-    public synchronized PlayerState toPlayerState() {
-        return new PlayerState(
-            this.name(),
-            this.color(),
-            this.xPosition(),
-            this.yPosition(),
-            this.score()
-        );
-    }
-
-    public synchronized Player clone() {
-        return Player.builder()
+    public synchronized PlayerStore clone() {
+        return PlayerStore.builder()
             .color(this.color())
             .name(this.name())
             .xPosition(this.xPosition())

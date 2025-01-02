@@ -3,15 +3,15 @@ package io.github.aggarcia.players.updates;
 import java.util.Optional;
 
 import io.github.aggarcia.game.GameStore;
-import io.github.aggarcia.players.Player;
+import io.github.aggarcia.players.PlayerStore;
 
 public record CreatePlayer(
     boolean isFirstPlayer,
     String client,
-    Player player
+    PlayerStore player
 ) implements PlayerUpdate {
     @Override
-    public Optional<String> reply() {
+    public Optional<byte[]> reply() {
         return Optional.empty();
     }
 

@@ -10,7 +10,7 @@ public record UpdateVelocity(
     int yVelocity
 ) implements PlayerUpdate {
     @Override
-    public Optional<String> reply() {
+    public Optional<byte[]> reply() {
         return Optional.empty();
     }
 

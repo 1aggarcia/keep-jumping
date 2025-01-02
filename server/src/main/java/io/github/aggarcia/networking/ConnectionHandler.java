@@ -7,19 +7,14 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
 import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.game.GameStore;
-import io.github.aggarcia.generated.PingPongOuterClass.Ping;
-import io.github.aggarcia.generated.PingPongOuterClass.PingPong;
-import io.github.aggarcia.generated.PingPongOuterClass.Pong;
-import io.github.aggarcia.generated.PingPongOuterClass.PingPong.PayloadCase;
+import io.github.aggarcia.players.updates.PlayerUpdate;
 
 import static io.github.aggarcia.players.PlayerEventHandler.processEvent;
+import static io.github.aggarcia.shared.Serializer.deserialize;
 
 import java.io.IOException;
-import java.util.Optional;
 
 /**
  * State management for client sessions. Externally, state is read only.
@@ -77,85 +72,45 @@ public class ConnectionHandler extends AbstractWebSocketHandler {
         System.out.println(consoleMessage);
     }
 
-    /**
-     * Act on client events. Wrapper for logic in `PlayerEventHandler`.
-     */
-    @Override
-    public void handleTextMessage(
-        @NonNull WebSocketSession client, @NonNull TextMessage event
-    ) {
-        try {
-            if (!gameStore.sessions().contains(client)) {
-                return;
-            }
-            var update = processEvent(client.getId(), event, gameStore);
-            update.applyTo(gameStore);
-            if (!update.reply().isPresent()) {
-                return;
-            }
-            synchronized (client) {
-                var message = new TextMessage(update.reply().get());
-                client.sendMessage(message);
-            }
-        } catch (IOException e) {
-            System.err.println(e);
-        }
-    }
 
     /**
      * Handle sample ping message, sepereate from the rest of the app.
      */
     @Override
     public void handleBinaryMessage(
-        @NonNull WebSocketSession session, @NonNull BinaryMessage data
+        @NonNull WebSocketSession client, @NonNull BinaryMessage data
     ) {
         var payload = data.getPayload().array();
-        try {
-            var message = deserialize(payload);
-            if (message.isEmpty()) {
-                System.err.println("Invalid protocol buffer " + payload);
-                return;
-            }
-            var payloadCase = message.get().getPayloadCase();
-            if (payloadCase != PayloadCase.PING) {
-                System.err.println("Unexpected message type " + payloadCase);
-                return;
-            }
-            Ping ping = message.get().getPing();
-            Pong pong = Pong.newBuilder()
-                .setReply("pong: " + ping.getRequest())
-                .build();
-            PingPong reply = PingPong.newBuilder()
-                .setPong(pong)
-                .build();
+        var message = deserialize(payload);
+        if (message.isEmpty()) {
+            System.err.println("Invalid protocol buffer " + payload);
+            return;
+        }
+        var event = message.get();
+        PlayerUpdate update = processEvent(client.getId(), event, gameStore);
 
-            session.sendMessage(new BinaryMessage(serialize(reply)));
-        } catch (IOException e) {
-            System.err.println(e);
+        update.applyTo(gameStore);
+        if (!update.reply().isPresent()) {
+            return;
+        }
+        synchronized (client) {
+            var reply = new BinaryMessage(update.reply().get());
+            try {
+                client.sendMessage(reply);
+            } catch (IOException e) {
+                System.err.println(e);
+            }
         }
     }
 
-    /**
-     * Convert a protobuf message to a binary array.
-     * @param message
-     * @return serialized data
+     /**
+     * Old handler for events. Previously events were text messages,
+     *  now they are binary.
      */
-    private byte[] serialize(PingPong message) {
-        return message.toByteArray();
-    }
-
-    /**
-     * Convert a binary array to a protobuf message.
-     * @param payload
-     * @return protobuf message if decoding is possible, empty otherwise
-     */
-    private Optional<PingPong> deserialize(byte[] payload) {
-        try {
-            return Optional.of(PingPong.parseFrom(payload));
-        } catch (InvalidProtocolBufferException e) {
-            System.err.println(e);
-            // exceptions are a side effect; pure FP style is to return empty
-            return Optional.empty();
-        }
+    @Override
+    public void handleTextMessage(
+        @NonNull WebSocketSession client, @NonNull TextMessage message
+    ) {
+        System.err.println("Got text message: " + message.getPayload());
     }
 }

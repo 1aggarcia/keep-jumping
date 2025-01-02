@@ -11,7 +11,7 @@ import java.util.Set;
 import org.springframework.web.socket.WebSocketSession;
 
 import io.github.aggarcia.platforms.GamePlatform;
-import io.github.aggarcia.players.Player;
+import io.github.aggarcia.players.PlayerStore;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,7 +35,7 @@ public class GameStore {
         Collections.synchronizedSet(new HashSet<>());
 
     @Builder.Default
-    private final Map<String, Player> players =
+    private final Map<String, PlayerStore> players =
         Collections.synchronizedMap(new HashMap<>());
 
     @Builder.Default

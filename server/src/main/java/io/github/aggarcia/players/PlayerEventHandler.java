@@ -2,20 +2,16 @@ package io.github.aggarcia.players;
 
 import java.util.HashSet;
 
-import org.springframework.web.socket.TextMessage;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.github.aggarcia.game.GameStore;
+import io.github.aggarcia.generated.SocketMessageOuterClass.ControlChangeEvent;
+import io.github.aggarcia.generated.SocketMessageOuterClass.JoinEvent;
+import io.github.aggarcia.generated.SocketMessageOuterClass.PlayerControl;
+import io.github.aggarcia.generated.SocketMessageOuterClass.SocketMessage;
 import io.github.aggarcia.platforms.GamePlatform;
-import io.github.aggarcia.players.events.ControlChangeEvent;
-import io.github.aggarcia.players.events.JoinEvent;
 import io.github.aggarcia.players.updates.CreatePlayer;
 import io.github.aggarcia.players.updates.ErrorUpdate;
 import io.github.aggarcia.players.updates.PlayerUpdate;
 import io.github.aggarcia.players.updates.UpdateVelocity;
-import io.github.aggarcia.shared.SocketMessage;
 
 /**
  * Collection of (static) pure functions which determine how to update game
@@ -32,26 +28,31 @@ public final class PlayerEventHandler {
      * Dispatch client events to the correct handler, return the
      * result.
      * @param client client, session used for identification of player
-     * @param event message containing JSON event
+     * @param event message containing event
      * @param store complete game state to determine updates.
      *  Treated as read only
      * @return response, either PlayerVelocity or an empty Object
      */
     public static PlayerUpdate processEvent(
         String client,
-        TextMessage event,
+        SocketMessage event,
         GameStore store
-    ) throws JsonProcessingException {
-        SocketMessage payload = new ObjectMapper()
-            .readValue(event.getPayload(), SocketMessage.class);
-
-        if (payload instanceof ControlChangeEvent control) {
-            return processControlChange(client, control, store);
-        } else if (payload instanceof JoinEvent join) {
-            return processJoin(client, join, store);
-        } else {
-            return ErrorUpdate.fromText("Unsupported event type: " + payload);
-        }
+    ) {
+        // this is the coolest thing ive ever seen Java do
+        return switch (event.getPayloadCase()) {
+            case CONTROLCHANGEEVENT ->
+                processControlChange(
+                    client, event.getControlChangeEvent(), store
+                );
+            case JOINEVENT ->
+                processJoin(
+                    client, event.getJoinEvent(), store
+                );
+            default ->
+                ErrorUpdate.fromText(
+                    "Unsupported event type: " + event.getPayloadCase()
+                );
+        };
     }
 
     /**
@@ -75,7 +76,7 @@ public final class PlayerEventHandler {
             return ErrorUpdate
                 .fromText("No player exists for client " + client);
         }
-        Player player = sessions.get(client);
+        PlayerStore player = sessions.get(client);
         int oldYVelocity;
         // read y velocity once before other threads can change it
         synchronized (player) {
@@ -85,7 +86,7 @@ public final class PlayerEventHandler {
 
         int newXVelocity = 0;
         int newYVelocity = oldYVelocity;
-        var pressedControls = new HashSet<>(event.pressedControls());
+        var pressedControls = new HashSet<>(event.getPressedControlsList());
 
         // Prioritizes right over left - arbitrary decision
         if (pressedControls.contains(PlayerControl.RIGHT)) {
@@ -129,16 +130,17 @@ public final class PlayerEventHandler {
                 .fromText("Client is already playing: " + client);
         }
 
+        String name = event.getName();
         boolean isUsernameTaken = players
             .values()
             .stream()
-            .anyMatch(player -> player.name().equalsIgnoreCase(event.name()));
+            .anyMatch(player -> player.name().equalsIgnoreCase(name));
         if (isUsernameTaken) {
             return ErrorUpdate
-                .fromText("Username already in use: " + event.name());
+                .fromText("Username already in use: " + name);
         }
         var isFirstPlayer = players.isEmpty();
-        var newPlayer = Player.createRandomPlayer(event.name());
+        var newPlayer = PlayerStore.createRandomPlayer(name);
         return new CreatePlayer(isFirstPlayer, client, newPlayer);
     }
 }

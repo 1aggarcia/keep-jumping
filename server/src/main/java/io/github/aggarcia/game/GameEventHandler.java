@@ -4,8 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ch.qos.logback.core.testUtil.RandomUtil;
+import io.github.aggarcia.generated.SocketMessageOuterClass.GamePing;
+import io.github.aggarcia.generated.SocketMessageOuterClass.Platform;
+import io.github.aggarcia.generated.SocketMessageOuterClass.Player;
+import io.github.aggarcia.generated.SocketMessageOuterClass.SocketMessage;
 import io.github.aggarcia.platforms.GamePlatform;
-import io.github.aggarcia.players.Player;
+import io.github.aggarcia.players.PlayerStore;
 
 public final class GameEventHandler {
     protected static final int SCORE_PER_SECOND = 5;
@@ -48,8 +52,8 @@ public final class GameEventHandler {
             }
         }
         // make a copy since we are modifying the original
-        var playersCopy = new ArrayList<Player>(store.players().values());
-        for (Player player : playersCopy) {
+        var playersCopy = new ArrayList<PlayerStore>(store.players().values());
+        for (PlayerStore player : playersCopy) {
             player.moveToNextTick(nextPlatformsState);
             if (player.hasChanged()) {
                 // isUpdateNeeded = true;
@@ -57,7 +61,7 @@ public final class GameEventHandler {
             }
             if (
                 player.yPosition()
-                >= GameConstants.HEIGHT - Player.PLAYER_HEIGHT
+                >= GameConstants.HEIGHT - PlayerStore.PLAYER_HEIGHT
             ) {
                 // game over for player
                 // TODO: close associated client session
@@ -73,6 +77,44 @@ public final class GameEventHandler {
             nextPlatformsState,
             nextTickCount
         );
+    }
+
+     /**
+     * Create a GamePing message based on the current state of the GameStore.
+     * @param store
+     * @param gameAge game loop age in seconds
+     * @return GamePing message
+     */
+    public static SocketMessage createGamePing(GameStore store, int gameAge) {
+        List<Player> players = store.players().values()
+            .stream()
+            .map(p -> Player.newBuilder()
+                .setColor(p.color())
+                .setName(p.name())
+                .setScore(p.score())
+                .setX(p.xPosition())
+                .setY(p.yPosition())
+                .build()
+            )
+            .toList();
+
+        List<Platform> platforms = store.platforms()
+            .stream()
+            .map(p -> Platform.newBuilder()
+                .setWidth(p.width())
+                .setX(p.x())
+                .setY(p.y())
+                .build()
+            )
+            .toList();
+
+        var ping = GamePing.newBuilder()
+            .setServerAge(gameAge)
+            .addAllPlayers(players)
+            .addAllPlatforms(platforms)
+            .build();
+
+        return SocketMessage.newBuilder().setGamePing(ping).build();
     }
 
     /**

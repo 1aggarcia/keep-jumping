@@ -6,10 +6,11 @@ import io.github.aggarcia.game.GameStore;
 
 public interface PlayerUpdate {
     /**
-     * Optional reply to send back to the client.
+     * Optional reply to send back to the client. It should already
+     * be encoded into binary
      * If empty, no reply should be sent
      */
-    Optional<String> reply();
+    Optional<byte[]> reply();
 
     /**
      * Modify the game state in a deterministic manner based on this

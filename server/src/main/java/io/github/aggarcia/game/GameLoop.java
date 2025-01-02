@@ -3,14 +3,14 @@ package io.github.aggarcia.game;
 import java.io.IOException;
 import java.util.Collection;
 
-import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import io.github.aggarcia.generated.SocketMessageOuterClass.SocketMessage;
 import io.github.aggarcia.platforms.GamePlatform;
 import static io.github.aggarcia.game.GameEventHandler.advanceToNextTick;
+import static io.github.aggarcia.game.GameEventHandler.createGamePing;
+import static io.github.aggarcia.shared.Serializer.serialize;
 
 
 /**
@@ -180,11 +180,9 @@ public class GameLoop {
             if (gameStore.tickCount() == 0) {
                 gameAgeSeconds++;
             }
-            if (response.isUpdateNeeded()) try {
-                var update = GamePing.fromGameState(gameStore, gameAgeSeconds);
+            if (response.isUpdateNeeded()) {
+                var update = createGamePing(gameStore, gameAgeSeconds);
                 broadcast(sessions, update);
-            } catch (JsonProcessingException e) {
-                System.err.println(e);
             }
             try {
                 Thread.sleep(tickDelayMs);
@@ -209,19 +207,18 @@ public class GameLoop {
 
     /**
      * Send a message to muliple clients at once.
-     * @param message message of a JSON serializable type. Will be stringified
-     * with the Jackson object mapper.
+     * @param message SocketMessage protobuf instance
      */
     private synchronized <T> void broadcast(
         Collection<WebSocketSession> sessions,
-        T message
-    ) throws JsonProcessingException {
-        var stringMessage = new ObjectMapper().writeValueAsString(message);
+        SocketMessage message
+    ) {
+        var binary = new BinaryMessage(serialize(message));
 
         for (WebSocketSession session : sessions) try {
             synchronized (session) {
                 if (!session.isOpen()) continue;
-                session.sendMessage(new TextMessage(stringMessage));
+                session.sendMessage(binary);
             }
         } catch (IOException e) {
             System.err.println(e);
