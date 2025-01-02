@@ -28,5 +28,28 @@ You should be able to run the server in your IDE, but this is possible from the 
 
 - Run: `npm run dev`
 - Build: `npm run build`
+- Lint: `npm run lint`
 
 The frontend looks for a server running on `localhost` by default. To specify a different server, create a `.env` file inside the `client` folder and set the `VITE_SERVER_ENDPOINT` enviornment variable to the desired server host.
+
+## Design
+
+### Client
+The client is a simple I/O device. It is only responsible for sending controls to the server when the player presses a control, and drawing the game on an HTML canvas when the server sends a ping. It performs no game logic.
+
+### Server
+The server holds the game state in memory and manages multiple client sessions. The server receives client events and updates the game state accordingly. On a fixed interval, the server advances the game by one tick and broadcasts the game state to all clients.
+
+#### Events
+Events are messages sent between clients and servers. They are encoded as binary using [Protocol Buffers](https://protobuf.dev/), which although introduce more boilerplate than JSON (the first encoding I used), are between 60-90% smaller than the JSON equivalent for this use case.
+
+The server processes events with pure functions, using the following abstraction:
+```
+process(event, gameState) -> { gameUpdate, reply }
+```
+Where `gameUpdate` is a data type describing how to modify the game state, and `reply` is an optional message to send back to the client. With this model, the result is determined exclusively by the inputs and the game logic is decoupled from network I/O. Side effects are performed outside the `process` function and are limited to sending replies and applying `gameUpdate`s (simple puts, gets, deletes).
+
+The `process` function has various implementations depending on the event type such as `JoinEvent` or `ControlChangeEvent`.
+
+#### Ticks
+The game loop runs on a seperate thread and is more tightly coupled with the game store and the network. Presently there is a function `advanceToNextTick(gameState) -> { nextPlatformState, nextTickCount }`, which is impure since it modifies the player state directly, although it is deterministic and is simple to test.

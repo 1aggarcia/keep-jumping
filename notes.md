@@ -19,6 +19,7 @@
 - [ ] Add persistent storage for user scores
 - [ ] Re-add support for game over
 - [*] Include more intelligent platform generation, based on location of nearby platforms
+- [x] Migrate string JSON messages to binary Protobuf messages
 - [x] Allow players to jump off screen
 - [x] Use `JsonTypeInfo` and `JsonSubTypes` from Jackson for deserializing JSON union types (maybe use Protobuf instead?)
 - [x] Refactor dynamic message handler to dispatch to correct handler
@@ -56,7 +57,7 @@
 
 ## Other
 - [ ] Find a way to share constants
-- [ ] Reduce data sent over the network
+- [*] Reduce data sent over the network
 - [x] Setup `lib` folder for shared models
 
 # CLI
