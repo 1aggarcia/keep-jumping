@@ -1,17 +1,17 @@
 package io.github.aggarcia.players.updates;
 
-import java.util.Map;
 import java.util.Optional;
 
-import io.github.aggarcia.players.Player;
+import io.github.aggarcia.game.GameStore;
+import io.github.aggarcia.players.PlayerStore;
 
 public record CreatePlayer(
-    boolean isError,
+    boolean isFirstPlayer,
     String client,
-    Player player
+    PlayerStore player
 ) implements PlayerUpdate {
     @Override
-    public Optional<String> reply() {
+    public Optional<byte[]> reply() {
         return Optional.empty();
     }
 
@@ -19,9 +19,10 @@ public record CreatePlayer(
      * Add the mapping `client -> player`.
      */
     @Override
-    public void applyTo(Map<String, Player> players) {
-        if (!isError) {
-            players.put(client, player);
+    public void applyTo(GameStore store) {
+        store.players().put(client, player);
+        if (isFirstPlayer) {
+            store.tiggerStartEvent();
         }
     }
 }

@@ -7,8 +7,12 @@ const appState: AppState = {
     server: null,
     connectedStatus: "CLOSED",
     pressedControls: new Set(),
+    lastPing: null,
+    errors: [],
     context: getGameContext(),
     buttons: [],
+
+    bytesIn: 0,
     messagesIn: 0,
     messagesOut: 0,
 };

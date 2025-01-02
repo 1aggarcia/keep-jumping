@@ -2,6 +2,7 @@ package io.github.aggarcia.game;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -10,10 +11,13 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.socket.WebSocketSession;
 
-import io.github.aggarcia.players.Player;
+import io.github.aggarcia.players.PlayerStore;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 
 @SpringBootTest
 public class GameLoopTest {
@@ -22,37 +26,42 @@ public class GameLoopTest {
 
     @Test
     void test_isRunning_afterConstruction_returnsFalse() {
-        assertFalse(new GameLoop().isRunning());
+        assertFalse(testLoop().isRunning());
     }
 
     @Test
     void test_isRunning_loopStartedWithOnePlayer_returnsTrue()
     throws Exception {
-        var gameLoop = new GameLoop().withTickDelay(0);
-        gameLoop.start(getTestPlayers(), getSessions());
+        var gameLoop = testLoop().withTickDelay(0);
+        gameLoop.start();
         assertTrue(gameLoop.isRunning());
         gameLoop.forceQuit();
     }
 
     @Test
-    void test_isRunning_afterPlayersCleared_returnsFalse() throws Exception  {
-        var gameLoop = new GameLoop().withTickDelay(0);
-        var players = getTestPlayers();
-        gameLoop.start(players, getSessions());
+    void test_isRunning_afterPlayersCleared_returnsFalse() throws Exception {
+        var store = new GameStore();
+        store.players().put("", PlayerStore.createRandomPlayer(""));
 
-        players.clear();
+        var loop = new GameLoop(store).withTickDelay(0);
+        loop.start();
+        assertTrue(loop.isRunning());
+        store.players().clear();
+
         // gives the loop thread time to notice the change and stop execution
         Thread.sleep(10);
-        assertFalse(gameLoop.isRunning());
+        assertFalse(loop.isRunning());
     }
 
     @Test
-    void test_isRunning_afterSessionsCleared_returnsFalse() throws Exception  {
-        var gameLoop = new GameLoop().withTickDelay(0);
-        var sessions = getSessions();
-        gameLoop.start(getTestPlayers(), sessions);
+    void test_isRunning_afterSessionsCleared_returnsFalse() throws Exception {
+        var store = GameStore.builder()
+            .sessions(getSessions())
+            .build();
+        var gameLoop = new GameLoop(store).withTickDelay(0);
+        gameLoop.start();
 
-        sessions.clear();
+        store.sessions().clear();
         // gives the loop thread time to notice the change and stop execution
         Thread.sleep(10);
         assertFalse(gameLoop.isRunning());
@@ -60,8 +69,8 @@ public class GameLoopTest {
 
     @Test
     void test_forceQuit_activeLoop_stopsLoop() throws Exception {
-        var gameLoop = new GameLoop().withTickDelay(0);
-        gameLoop.start(getTestPlayers(), getSessions());
+        var gameLoop = testLoop().withTickDelay(0);
+        gameLoop.start();
 
         gameLoop.forceQuit();
         assertFalse(gameLoop.isRunning());
@@ -69,8 +78,8 @@ public class GameLoopTest {
 
     @Test
     void test_onIdleTimeout_activeLoop_throwsException() throws Exception {
-        var gameLoop = new GameLoop().withTickDelay(0);
-        gameLoop.start(getTestPlayers(), getSessions());
+        var gameLoop = testLoop().withTickDelay(0);
+        gameLoop.start();
 
         assertThrows(Exception.class, () -> {
             gameLoop.onIdleTimeout(() -> {}, 0);
@@ -81,7 +90,7 @@ public class GameLoopTest {
     @Test
     void test_onIdleTimeout_inactiveLoop_runsActionAfterLoopFinishes()
     throws Exception {
-        var gameLoop = new GameLoop().withTickDelay(0);
+        var gameLoop = testLoop();
         var sharedList = new ArrayList<>();
 
         gameLoop.onIdleTimeout(() -> {
@@ -91,7 +100,7 @@ public class GameLoopTest {
             }
         }, 0);
 
-        gameLoop.start(getTestPlayers(), getSessions());
+        gameLoop.start();
         gameLoop.forceQuit();
         synchronized (sharedList) {
             // give up after 10ms so the test doesn't freeze
@@ -102,30 +111,37 @@ public class GameLoopTest {
 
     @Test
     void test_onIdleTimeout_actionSet_doesNotRunActionBeforeTimeout() throws Exception {
-        var gameLoop = new GameLoop().withTickDelay(0);
+        var gameLoop = testLoop().withTickDelay(0);
         var sharedList = new ArrayList<>();
 
         gameLoop.onIdleTimeout(() -> {
             sharedList.add("test item");
         }, 50);
 
-        gameLoop.start(getTestPlayers(), getSessions());
+        gameLoop.start();
         gameLoop.forceQuit();
         assertEquals(0, sharedList.size());
     }
 
     @Test
     void test_start_whileTimeoutActionWaiting_cancelsAction() throws Exception {
-        var gameLoop = new GameLoop().withTickDelay(0);
+        var store = GameStore.builder()
+            .players(Map.of("", PlayerStore.createRandomPlayer("")))
+            .sessions(Set.of(mockSession))
+            .build();
+
+        var gameLoop = new GameLoop(store); 
         var sharedList = new ArrayList<>();
 
         gameLoop.onIdleTimeout(() -> {
             sharedList.add("test item");
         }, 50);
 
-        gameLoop.start(getTestPlayers(), getSessions());
+        gameLoop.start();
         gameLoop.forceQuit();
-        gameLoop.start(getTestPlayers(), getSessions());
+
+        // need to fill the game store so the thread doesnt immediately stop
+        gameLoop.start();
 
         // gives enough time for the timeout action to execute, but it shouldn't
         Thread.sleep(100);
@@ -135,33 +151,68 @@ public class GameLoopTest {
     @Test
     void test_start_whileTimeoutActionWaiting_performsActionAfterLoopCloses()
     throws Exception {
-        var gameLoop = new GameLoop().withTickDelay(0);
+        var gameLoop = testLoop().withTickDelay(0);
         var sharedList = new ArrayList<>();
 
         gameLoop.onIdleTimeout(() -> {
             sharedList.add("test item");
         }, 50);
 
-        gameLoop.start(getTestPlayers(), getSessions());
+        gameLoop.start();
         gameLoop.forceQuit();
 
         assertEquals(0, sharedList.size());
-        gameLoop.start(getTestPlayers(), getSessions());
+        gameLoop.start();
         gameLoop.forceQuit();
 
         Thread.sleep(100);
         assertEquals(1, sharedList.size());
     }
 
-    private List<Player> getTestPlayers() {
-        var list = new ArrayList<Player>();
-        list.add(Player.createRandomPlayer(""));
-        return list;
+    @Test
+    void test_start_afterMaxTime_closesLoop() throws Exception {
+        var gameLoop = testLoop()
+            .withTickDelay(1)
+            .withMaxTime(1);
+
+        gameLoop.start();
+        assertTrue(gameLoop.isRunning());
+        // even with 50% extra time, watch out for false negatives.
+        Thread.sleep(1500);
+        assertFalse(gameLoop.isRunning());
     }
 
-    private List<WebSocketSession> getSessions() {
-        var list = new ArrayList<WebSocketSession>();
-        list.add(mockSession);
-        return list;
+    @Test
+    void test_start_afterLoopCloses_clearsSessions() throws Exception {
+        var store = GameStore.builder()
+            .sessions(getSessions())
+            .build();
+        var gameLoop = new GameLoop(store);
+
+        assertNotEquals(0, store.sessions().size());
+        gameLoop.start();
+        gameLoop.forceQuit();
+        assertEquals(0, store.sessions().size());
+    }
+
+    private Set<WebSocketSession> getSessions() {
+        var set = new HashSet<WebSocketSession>();
+        set.add(mockSession);
+        return set;
+    }
+
+    private Map<String, PlayerStore> getPlayers() {
+        var map = new HashMap<String, PlayerStore>();
+        map.put("player1", PlayerStore.createRandomPlayer("player1"));
+        map.put("player2", PlayerStore.createRandomPlayer("player2"));
+        return map;
+    }
+
+    private GameLoop testLoop() {
+        var store = GameStore.builder()
+            .sessions(getSessions())
+            .players(getPlayers())
+            .build();
+        return new GameLoop(store);
     }
 }

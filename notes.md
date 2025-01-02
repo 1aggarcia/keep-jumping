@@ -13,9 +13,14 @@
 - [x] Java linter
 
 ## Server
+- [ ] Don't send redundant information (old platforms) to reduce ping size (current avg 300 B)
+- [ ] Always spawn players on or above a platform
+- [ ] Detect player passing through platforms between two frames
 - [ ] Add persistent storage for user scores
-- [*] Include more intelligent platform generation, based on location of nearby platforms
 - [ ] Re-add support for game over
+- [*] Include more intelligent platform generation, based on location of nearby platforms
+- [x] Migrate string JSON messages to binary Protobuf messages
+- [x] Allow players to jump off screen
 - [x] Use `JsonTypeInfo` and `JsonSubTypes` from Jackson for deserializing JSON union types (maybe use Protobuf instead?)
 - [x] Refactor dynamic message handler to dispatch to correct handler
 - [x] Make player names read only
@@ -35,8 +40,9 @@
 
 ## Client
 - [ ] Add dark mode
-- [ ] Process disconnect requests / other errors
+- [*] Process disconnect requests / other errors
 - [*] Move all graphics inside the canvas
+- [x] Show errors to user
 - [x] Add leaderboard rendering
 - [x] Deprecate "GameJoinUpdate" message
 - [x] Add scores to sprites
@@ -51,7 +57,7 @@
 
 ## Other
 - [ ] Find a way to share constants
-- [ ] Reduce data sent over the network
+- [*] Reduce data sent over the network
 - [x] Setup `lib` folder for shared models
 
 # CLI

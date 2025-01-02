@@ -2,210 +2,298 @@ package io.github.aggarcia.players;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.web.socket.TextMessage;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import io.github.aggarcia.game.GameStore;
+import io.github.aggarcia.generated.SocketMessageOuterClass.ControlChangeEvent;
+import io.github.aggarcia.generated.SocketMessageOuterClass.JoinEvent;
+import io.github.aggarcia.generated.SocketMessageOuterClass.PlayerControl;
+import io.github.aggarcia.generated.SocketMessageOuterClass.SocketMessage;
 import io.github.aggarcia.platforms.GamePlatform;
-import io.github.aggarcia.players.events.ControlChangeEvent;
-import io.github.aggarcia.players.events.JoinEvent;
 import io.github.aggarcia.players.updates.CreatePlayer;
 import io.github.aggarcia.players.updates.ErrorUpdate;
 import io.github.aggarcia.players.updates.UpdateVelocity;
+
+import static io.github.aggarcia.players.PlayerEventHandler.processEvent;
+import static io.github.aggarcia.players.PlayerEventHandler.processJoin;
+import static io.github.aggarcia.players.PlayerEventHandler.processControlChange;;
 
 public class PlayerEventHandlerTest {
     // players cannot jump if they are falling faster than this speed
     static final int Y_VELOCITY_JUMP_CUTOFF = (2 * GamePlatform.PLATFORM_GRAVITY) - 1;
 
     @Test
-    void test_processEvent_badMessage_throwsException() {
-        assertThrows(JsonProcessingException.class, () -> {
-            PlayerEventHandler
-                .processEvent("", new TextMessage(""), Collections.emptyMap());
-        });
-    }
+    void test_processEvent_playerJoinUpdate_returnsName() {
+        var event = joinEvent("testName");
+        var wrappedEvent = SocketMessage.newBuilder()
+            .setJoinEvent(event).build();
 
-    @Test
-    void test_processEvent_badType_throwsException() throws Exception {
-        var message = new TextMessage("{\"type\":\"bad type\"}");
-        assertThrows(JsonProcessingException.class, () -> {
-            PlayerEventHandler
-                .processEvent("", message, Collections.emptyMap());
-        });
-    }
-
-    @Test
-    void test_processEvent_playerJoinUpdate_returnsName()
-    throws Exception {
-        var payload = new JoinEvent("testName");
-        var message = new TextMessage(new ObjectMapper().writeValueAsString(payload));
-
-        CreatePlayer result = (CreatePlayer) PlayerEventHandler
-            .processEvent("client1", message, Collections.emptyMap());
+        CreatePlayer result = (CreatePlayer) processEvent(
+            "client1",
+            wrappedEvent,
+            new GameStore()
+        );
 
         assertTrue(result instanceof CreatePlayer);
-        assertFalse(result.isError());
         assertEquals("client1", result.client());
         assertEquals("testName", result.player().name());
     }
 
     @Test
-    void test_processEvent_playerControlUpdate_callsProcessControlUpdate()
-    throws Exception {
-        var event = new ControlChangeEvent(Collections.emptyList());
-        var message = serialize(event);
+    void test_processEvent_playerControlUpdate_callsProcessControlUpdate() {
+        var event = controlChangeEvent();
+        var wrappedEvent = SocketMessage.newBuilder()
+            .setControlChangeEvent(event).build();
+        var store = GameStore.builder()
+            .players(Map.of("client1", PlayerStore.createRandomPlayer("")))
+            .build();
+
         assertEquals(
-            PlayerEventHandler
-                .processControlChange("client1", event, Collections.emptyMap()),
-            PlayerEventHandler
-                .processEvent("client1", message, Collections.emptyMap())
+            processControlChange("client1", event, store),
+            processEvent("client1", wrappedEvent, store)
         );
     }
 
     @Test
-    void test_processControlChange_missingPlayer_returnsError() throws Exception {
-        var event = new ControlChangeEvent(Collections.emptyList());
+    void test_processControlChange_missingPlayer_returnsError() {
+        var event = controlChangeEvent();
         // client id "test client" doesnt exist in the sessions (empty map)
-        var result = (ErrorUpdate) PlayerEventHandler.processControlChange(
+        var result = (ErrorUpdate) processControlChange(
             "test client",
             event,
-            new HashMap<>()
+            new GameStore()
         );
         assertTrue(result instanceof ErrorUpdate);
     }
 
     @Test
-    void test_processControlChange_noControls_returnsZeroVelocity() throws Exception {
-        var event = new ControlChangeEvent(Collections.emptyList());
+    void test_processControlChange_noControls_returnsZeroVelocity() {
+        var event = controlChangeEvent();
         var velocity = processControlWithValidPlayer(event);
         assertEquals(0, velocity.xVelocity());
         assertEquals(0, velocity.yVelocity());
     }
 
     @Test
-    void test_processControlChange_rightControl_returnsPositiveX() throws Exception {
-        var event = new ControlChangeEvent(List.of(PlayerControl.RIGHT));
+    void test_processControlChange_rightControl_returnsPositiveX() {
+        var event = controlChangeEvent(PlayerControl.RIGHT);
         var velocity = processControlWithValidPlayer(event);
         assertTrue(velocity.xVelocity() > 0);
         assertEquals(0, velocity.yVelocity());
     }
 
     @Test
-    void test_processControlChange_leftControl_returnsNegativeX() throws Exception {
-        var event = new ControlChangeEvent(List.of(PlayerControl.LEFT));
+    void test_processControlChange_leftControl_returnsNegativeX() {
+        var event = controlChangeEvent(PlayerControl.LEFT);
         var velocity = processControlWithValidPlayer(event);
         assertTrue(velocity.xVelocity() < 0);
         assertEquals(0, velocity.yVelocity());
     }
 
     @Test
-    void test_processControlChange_downControl_returnsZero() throws Exception {
-        var event = new ControlChangeEvent(List.of(PlayerControl.DOWN));
+    void test_processControlChange_downControl_returnsZero() {
+        var event = controlChangeEvent(PlayerControl.DOWN);
         var velocity = processControlWithValidPlayer(event);
         assertEquals(0, velocity.xVelocity());
         assertEquals(0, velocity.yVelocity());
     }
 
     @Test
-    void test_processControlChange_upControlOnGround_returnsNegativeY() throws Exception {
-        var event = new ControlChangeEvent(List.of(PlayerControl.UP));
+    void test_processControlChange_upControlOnGround_returnsNegativeY() {
+        var event = controlChangeEvent(PlayerControl.UP);
         var velocity = processControlWithValidPlayer(event);
         assertEquals(0, velocity.xVelocity());
         assertTrue(velocity.yVelocity() < 0);
     }
 
     @Test
-    void test_processControlChange_upControlFallingSlowly_returnsNegative() throws Exception {
-        var event = new ControlChangeEvent(List.of(PlayerControl.UP));
-        Player player1 = Player.builder()
+    void test_processControlChange_upControlFallingSlowly_returnsNegative() {
+        var event = controlChangeEvent(PlayerControl.UP);
+        PlayerStore player1 = PlayerStore.builder()
             .xPosition(0)
             .xVelocity(0)
             .yPosition(50)
             .yVelocity(Y_VELOCITY_JUMP_CUTOFF)
+            .name("player1")
             .build();
-        Map<String, Player> sessions = Map.of("player1", player1);
-
-        var velocity = (UpdateVelocity) PlayerEventHandler
-            .processControlChange("player1", event, sessions);
+        
+        var velocity = (UpdateVelocity) processControlChange(
+            "player1",
+            event,
+            testStateWithPlayer(player1)
+        );
 
         assertEquals(-PlayerEventHandler.PLAYER_JUMP_SPEED, velocity.yVelocity());
     }
 
     @Test
-    void test_processControlChange_upControlFallingQuickly_returnsSameY() throws Exception {
-        var event = new ControlChangeEvent(List.of(PlayerControl.UP));
-        Player player1 = Player.builder()
+    void test_processControlChange_upControlFallingQuickly_returnsSameY() {
+        var event = controlChangeEvent(PlayerControl.UP);
+        PlayerStore player1 = PlayerStore.builder()
             .xPosition(0)
             .xVelocity(0)
             .yPosition(50)
             .yVelocity(Y_VELOCITY_JUMP_CUTOFF + 1)
+            .name("player1")
             .build();
-        Map<String, Player> sessions = Map.of("player1", player1);
 
-        var velocity = (UpdateVelocity) PlayerEventHandler
-            .processControlChange("player1", event, sessions);
+        var velocity = (UpdateVelocity) processControlChange(
+            "player1",
+            event,
+            testStateWithPlayer(player1)
+        );
 
         assertEquals(Y_VELOCITY_JUMP_CUTOFF + 1, velocity.yVelocity());
     }
 
     @Test
     void
-    test_processControlChange_multipleControls_returnsCorrectVelocity()
-    throws Exception {
-        var controls =
-            List.of(PlayerControl.LEFT, PlayerControl.DOWN, PlayerControl.LEFT);
-        var event = new ControlChangeEvent(controls);
+    test_processControlChange_multipleControls_returnsCorrectVelocity() {
+        var event = controlChangeEvent(
+            PlayerControl.LEFT,
+            PlayerControl.DOWN,
+            PlayerControl.LEFT
+        );
         var velocity = processControlWithValidPlayer(event);
         assertTrue(velocity.xVelocity() < 0);
         assertEquals(0, velocity.yVelocity());
     }
 
     @Test
-    void test_processControlChange_movingPlayer_maintainsMotion() throws Exception {
-        var event = new ControlChangeEvent(List.of(PlayerControl.LEFT));
-        Player player1 = Player.builder()
+    void test_processControlChange_movingPlayer_maintainsMotion() {
+        var event = controlChangeEvent(PlayerControl.LEFT);
+        PlayerStore player1 = PlayerStore.builder()
             .xPosition(0)
             .xVelocity(0)
             .yPosition(50)
             .yVelocity(1000)  // falling very quickly
+            .name("player1")
             .build();
-        Map<String, Player> sessions = Map.of("player1", player1);
-        var velocity = (UpdateVelocity) PlayerEventHandler
-            .processControlChange("player1", event, sessions);
+
+        var velocity = (UpdateVelocity) processControlChange(
+            "player1",
+            event,
+            testStateWithPlayer(player1)
+        );
         assertEquals("player1", velocity.clientId());
         assertTrue(velocity.xVelocity() < 0);
         assertEquals(1000, velocity.yVelocity());
     }
 
-    // TODO: tests for processJoin
+    @Test
+    void test_processJoin_firstPlayer_returnsIsFirstPlayerTrue() {
+        var event = joinEvent("");
+        var createUpdate =
+            (CreatePlayer) processJoin("", event, new GameStore());
+        assertTrue(createUpdate.isFirstPlayer());
+    }
 
-    private <T> TextMessage serialize(T data) {
-        try {
-            return new TextMessage(new ObjectMapper().writeValueAsString(data));
-        } catch (JsonProcessingException e) {
-            fail(e);
-            return null;  // to make the compiler happy
+    @Test
+    void test_processJoin_manyPlayers_returnsIsFirstPlayerFalse() {
+        var event = joinEvent("");
+
+        Map<String, PlayerStore> players = new HashMap<>();
+        // create one less than the limit, so there's room for one more player
+        for (int i = 0; i < PlayerEventHandler.MAX_PLAYER_COUNT - 1; i++) {
+            var stringI = Integer.toString(i);
+            players.put(stringI, PlayerStore.createRandomPlayer(stringI));
         }
+
+        var store = GameStore.builder().players(players).build();
+        var createUpdate = (CreatePlayer) processJoin("", event, store);
+        assertFalse(createUpdate.isFirstPlayer());
+    }
+
+    @Test
+    void test_processJoin_maxPlayers_returnsError() {
+        var event = joinEvent("");
+
+        Map<String, PlayerStore> players = new HashMap<>();
+        for (int i = 0; i < PlayerEventHandler.MAX_PLAYER_COUNT; i++) {
+            var stringI = Integer.toString(i);
+            players.put(stringI, PlayerStore.createRandomPlayer(stringI));
+        }
+
+        var store = GameStore.builder().players(players).build();
+        var update = processJoin("", event, store);
+        assertTrue(update instanceof ErrorUpdate);
+    }
+
+    @Test
+    void test_processJoin_uniquePlayer_returnsPlayerWithCorrectName() {
+        var event = joinEvent("player1");
+        var createUpdate =
+            (CreatePlayer) processJoin("client1", event, new GameStore());
+        assertEquals("client1", createUpdate.client());
+        assertEquals("player1", createUpdate.player().name());
+    }
+
+    @Test
+    void test_processJoin_duplicateClient_returnsError() {
+        var event = joinEvent("");
+        var player = PlayerStore.createRandomPlayer("duplicate_client");
+        var store = testStateWithPlayer(player);
+
+        var update = processJoin("duplicate_client", event, store);
+        assertTrue(update instanceof ErrorUpdate);
+    }
+
+    @Test
+    void test_processJoin_duplicatePlayer_returnsError() {
+        var event = joinEvent("duplicate_player");
+        var player = PlayerStore.createRandomPlayer("duplicate_player");
+        var store = testStateWithPlayer(player);
+
+        var update = processJoin("", event, store);
+        assertTrue(update instanceof ErrorUpdate);
+    }
+
+    @Test
+    void test_processJoin_sameNameCapitalizedDifferently_returnsError() {
+        var event = joinEvent("abcd");
+        var player = PlayerStore.createRandomPlayer("AbCd");
+        var store = testStateWithPlayer(player);
+
+        var update = processJoin("", event, store);
+        assertTrue(update instanceof ErrorUpdate);
+    }
+
+    private GameStore testStateWithPlayer(PlayerStore player) {
+        Map<String, PlayerStore> players = new HashMap<>();
+        players.put(player.name(), player);
+
+        return GameStore.builder()
+            .players(players)
+            .build();
+    }
+
+    /** Shorthand */
+    private JoinEvent joinEvent(String name) {
+        return JoinEvent.newBuilder().setName(name).build();
+    }
+
+    /** Shorthand */
+    private ControlChangeEvent controlChangeEvent(PlayerControl... controls) {
+        var builder = ControlChangeEvent.newBuilder();
+        for (var control : controls) {
+            builder.addPressedControls(control);
+        }
+        return builder.build();
     }
 
     /**
      * Wrapper for calling processControlChange with a valid player session
      */
     private UpdateVelocity
-    processControlWithValidPlayer(ControlChangeEvent event)throws Exception {
-        var players = Map.of("client1", Player.createRandomPlayer("player1"));
-        return (UpdateVelocity) PlayerEventHandler
-            .processControlChange("client1", event, players);
+    processControlWithValidPlayer(ControlChangeEvent event) {
+        var state = GameStore.builder()
+            .players(Map.of("client1", PlayerStore.createRandomPlayer("player1")))
+            .build();
+        return (UpdateVelocity) processControlChange("client1", event, state);
     }
 }

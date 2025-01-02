@@ -1,12 +1,15 @@
 package io.github.aggarcia.game;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import ch.qos.logback.core.testUtil.RandomUtil;
+import io.github.aggarcia.generated.SocketMessageOuterClass.GamePing;
+import io.github.aggarcia.generated.SocketMessageOuterClass.Platform;
+import io.github.aggarcia.generated.SocketMessageOuterClass.Player;
+import io.github.aggarcia.generated.SocketMessageOuterClass.SocketMessage;
 import io.github.aggarcia.platforms.GamePlatform;
-import io.github.aggarcia.players.Player;
+import io.github.aggarcia.players.PlayerStore;
 
 public final class GameEventHandler {
     protected static final int SCORE_PER_SECOND = 5;
@@ -28,17 +31,12 @@ public final class GameEventHandler {
 
     /**
      * Move all players to thier position in the next tick.
-     * @param players current state of all players
-     * @param platforms current state of all platforms
+     * @param store
      * @returns response with isUpdatedNeeded flag and nextTickCount
      */
-    public static TickResponse advanceToNextTick(
-        Collection<Player> players,
-        Collection<GamePlatform> platforms,
-        int tickCount
-    ) {
+    public static TickResponse advanceToNextTick(GameStore store) {
         boolean isUpdateNeeded = true;
-        int nextTickCount = (tickCount + 1) % TICKS_PER_SECOND;
+        int nextTickCount = (store.tickCount() + 1) % TICKS_PER_SECOND;
         List<GamePlatform> nextPlatformsState = new ArrayList<>();
         // TODO: consider removing `isUpdateNeeded`
         // given that platforms always move, `isUpdateNeeded` is always true
@@ -46,7 +44,7 @@ public final class GameEventHandler {
         //if (nextTickCount == 0) {
         //    isUpdateNeeded = true;  // update needed to refresh the server age
         //}
-        for (GamePlatform platform : platforms) {
+        for (GamePlatform platform : store.platforms()) {
             var nextPlatform = platform.toNextTick();
             // to "delete" platforms that fall below the ground
             if (nextPlatform.y() <= GameConstants.HEIGHT) {
@@ -54,7 +52,8 @@ public final class GameEventHandler {
             }
         }
         // make a copy since we are modifying the original
-        for (Player player : new ArrayList<>(players)) {
+        var playersCopy = new ArrayList<PlayerStore>(store.players().values());
+        for (PlayerStore player : playersCopy) {
             player.moveToNextTick(nextPlatformsState);
             if (player.hasChanged()) {
                 // isUpdateNeeded = true;
@@ -62,10 +61,11 @@ public final class GameEventHandler {
             }
             if (
                 player.yPosition()
-                >= GameConstants.HEIGHT - Player.PLAYER_HEIGHT
+                >= GameConstants.HEIGHT - PlayerStore.PLAYER_HEIGHT
             ) {
                 // game over for player
-                players.remove(player);
+                // TODO: close associated client session
+                store.players().values().remove(player);
                 // TODO send event to player
             } else if (nextTickCount == 0) {
                 player.addToScore(SCORE_PER_SECOND);
@@ -77,6 +77,44 @@ public final class GameEventHandler {
             nextPlatformsState,
             nextTickCount
         );
+    }
+
+     /**
+     * Create a GamePing message based on the current state of the GameStore.
+     * @param store
+     * @param gameAge game loop age in seconds
+     * @return GamePing message
+     */
+    public static SocketMessage createGamePing(GameStore store, int gameAge) {
+        List<Player> players = store.players().values()
+            .stream()
+            .map(p -> Player.newBuilder()
+                .setColor(p.color())
+                .setName(p.name())
+                .setScore(p.score())
+                .setX(p.xPosition())
+                .setY(p.yPosition())
+                .build()
+            )
+            .toList();
+
+        List<Platform> platforms = store.platforms()
+            .stream()
+            .map(p -> Platform.newBuilder()
+                .setWidth(p.width())
+                .setX(p.x())
+                .setY(p.y())
+                .build()
+            )
+            .toList();
+
+        var ping = GamePing.newBuilder()
+            .setServerAge(gameAge)
+            .addAllPlayers(players)
+            .addAllPlatforms(platforms)
+            .build();
+
+        return SocketMessage.newBuilder().setGamePing(ping).build();
     }
 
     /**

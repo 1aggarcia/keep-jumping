@@ -1,21 +1,17 @@
 package io.github.aggarcia.players;
 
 import java.util.HashSet;
-import java.util.Map;
 
-import org.springframework.web.socket.TextMessage;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import io.github.aggarcia.game.GameStore;
+import io.github.aggarcia.generated.SocketMessageOuterClass.ControlChangeEvent;
+import io.github.aggarcia.generated.SocketMessageOuterClass.JoinEvent;
+import io.github.aggarcia.generated.SocketMessageOuterClass.PlayerControl;
+import io.github.aggarcia.generated.SocketMessageOuterClass.SocketMessage;
 import io.github.aggarcia.platforms.GamePlatform;
-import io.github.aggarcia.players.events.ControlChangeEvent;
-import io.github.aggarcia.players.events.JoinEvent;
 import io.github.aggarcia.players.updates.CreatePlayer;
 import io.github.aggarcia.players.updates.ErrorUpdate;
 import io.github.aggarcia.players.updates.PlayerUpdate;
 import io.github.aggarcia.players.updates.UpdateVelocity;
-import io.github.aggarcia.shared.SocketMessage;
 
 /**
  * Collection of (static) pure functions which determine how to update game
@@ -24,6 +20,7 @@ import io.github.aggarcia.shared.SocketMessage;
 public final class PlayerEventHandler {
     private static final int PLAYER_MOVE_SPEED = 20;
     protected static final int PLAYER_JUMP_SPEED = 40;
+    protected static final int MAX_PLAYER_COUNT = 15;
 
     private PlayerEventHandler() {}
 
@@ -31,26 +28,31 @@ public final class PlayerEventHandler {
      * Dispatch client events to the correct handler, return the
      * result.
      * @param client client, session used for identification of player
-     * @param event message containing JSON event
-     * @param sessions complete game state to determine updates.
+     * @param event message containing event
+     * @param store complete game state to determine updates.
      *  Treated as read only
      * @return response, either PlayerVelocity or an empty Object
      */
     public static PlayerUpdate processEvent(
         String client,
-        TextMessage event,
-        Map<String, Player> sessions
-    ) throws JsonProcessingException {
-        SocketMessage payload = new ObjectMapper()
-            .readValue(event.getPayload(), SocketMessage.class);
-
-        if (payload instanceof ControlChangeEvent control) {
-            return processControlChange(client, control, sessions);
-        } else if (payload instanceof JoinEvent join) {
-            return processJoin(client, join, sessions);
-        } else {
-            return new ErrorUpdate("Unsupported event type: " + payload);
-        }
+        SocketMessage event,
+        GameStore store
+    ) {
+        // this is the coolest thing ive ever seen Java do
+        return switch (event.getPayloadCase()) {
+            case CONTROLCHANGEEVENT ->
+                processControlChange(
+                    client, event.getControlChangeEvent(), store
+                );
+            case JOINEVENT ->
+                processJoin(
+                    client, event.getJoinEvent(), store
+                );
+            default ->
+                ErrorUpdate.fromText(
+                    "Unsupported event type: " + event.getPayloadCase()
+                );
+        };
     }
 
     /**
@@ -62,22 +64,29 @@ public final class PlayerEventHandler {
      * @return The new player velocity. Behavior is undefined if two
      *  conflicting keys are pressed in the incoming message, e.g.
      *  "Right" and "Left".
-     * @throws JsonProcessingException
      */
     public static PlayerUpdate
     processControlChange(
         String client,
         ControlChangeEvent event,
-        Map<String, Player> sessions
-    ) throws JsonProcessingException {
+        GameStore store
+    ) {
+        var sessions = store.players();
         if (!sessions.containsKey(client)) {
-            return new ErrorUpdate("Player does not exist with id " + client);
+            return ErrorUpdate
+                .fromText("No player exists for client " + client);
         }
-        Player player = sessions.get(client);
+        PlayerStore player = sessions.get(client);
+        int oldYVelocity;
+        // read y velocity once before other threads can change it
+        synchronized (player) {
+            oldYVelocity = player.yVelocity();
+        }
+
 
         int newXVelocity = 0;
-        int newYVelocity = player.yVelocity();
-        var pressedControls = new HashSet<>(event.pressedControls());
+        int newYVelocity = oldYVelocity;
+        var pressedControls = new HashSet<>(event.getPressedControlsList());
 
         // Prioritizes right over left - arbitrary decision
         if (pressedControls.contains(PlayerControl.RIGHT)) {
@@ -89,12 +98,12 @@ public final class PlayerEventHandler {
         boolean isPressingUp = pressedControls.contains(PlayerControl.UP);
         // not great since this allows mid-air jumping
         boolean canJump = (
-            0 <= player.yVelocity()
-            && player.yVelocity() < (2 * GamePlatform.PLATFORM_GRAVITY)
+            0 <= oldYVelocity
+            && oldYVelocity < (2 * GamePlatform.PLATFORM_GRAVITY)
         );
         if (isPressingUp && canJump) {
             newYVelocity = -PLAYER_JUMP_SPEED;
-        } else if (!isPressingUp && player.yVelocity() < 0) {
+        } else if (!isPressingUp && oldYVelocity < 0) {
             newYVelocity = 0;
         }
         return new UpdateVelocity(client, newXVelocity, newYVelocity);
@@ -105,27 +114,33 @@ public final class PlayerEventHandler {
      * if the name is unique.
      * @param client id for client
      * @param event
-     * @param sessions current game state
+     * @param store current game state
      * @return A new player with the name in the event, if the name is unique.
-     *  otherwise, an error
+     *  otherwise, an error.
      */
-    public static CreatePlayer processJoin(
-        String client,
-        JoinEvent event,
-        Map<String, Player> sessions
-    ) {
-        // TODO: put limit on player count
-        if (sessions.containsKey(client)) {
-            // client already has a player
-            return new CreatePlayer(true, null, null);
+    public static PlayerUpdate
+    processJoin(String client, JoinEvent event, GameStore store) {
+        var players = store.players();
+        if (players.size() >= MAX_PLAYER_COUNT) {
+            return ErrorUpdate
+                .fromText("Player limit reached: " + players.size());
         }
-        for (var player : sessions.values()) {
-            if (player.name().equals(event.name())) {
-                // name already taken
-                return new CreatePlayer(true, null, null);
-            }
+        if (players.containsKey(client)) {
+            return ErrorUpdate
+                .fromText("Client is already playing: " + client);
         }
-        var newPlayer = Player.createRandomPlayer(event.name());
-        return new CreatePlayer(false, client, newPlayer);
+
+        String name = event.getName();
+        boolean isUsernameTaken = players
+            .values()
+            .stream()
+            .anyMatch(player -> player.name().equalsIgnoreCase(name));
+        if (isUsernameTaken) {
+            return ErrorUpdate
+                .fromText("Username already in use: " + name);
+        }
+        var isFirstPlayer = players.isEmpty();
+        var newPlayer = PlayerStore.createRandomPlayer(name);
+        return new CreatePlayer(isFirstPlayer, client, newPlayer);
     }
 }

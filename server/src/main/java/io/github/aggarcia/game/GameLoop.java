@@ -2,25 +2,29 @@ package io.github.aggarcia.game;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 
-import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import io.github.aggarcia.generated.SocketMessageOuterClass.SocketMessage;
 import io.github.aggarcia.platforms.GamePlatform;
-import io.github.aggarcia.players.Player;
+import static io.github.aggarcia.game.GameEventHandler.advanceToNextTick;
+import static io.github.aggarcia.game.GameEventHandler.createGamePing;
+import static io.github.aggarcia.shared.Serializer.serialize;
+
 
 /**
  * Interface to hide the thread management logic of running the game loop.
  */
 public class GameLoop {
+    private final GameStore gameStore;
+
      /**
      * Amount of time to wait between each tick.
      */
     private int tickDelayMs = GameConstants.TICK_DELAY_MS;
+
+    private int maxTimeSeconds = GameConstants.MAX_TIME_SECONDS;
 
     /**
      * Thread for the game loop.
@@ -37,8 +41,18 @@ public class GameLoop {
      */
     private Runnable idleTimeoutAction = () -> {};
 
+    public GameLoop(GameStore gameStore) {
+        this.gameStore = gameStore;
+    }
 
     // PUBLIC API //
+
+    /**
+     * @return reference to the store used by the loop
+     */
+    public GameStore gameStore() {
+        return this.gameStore;
+    }
 
     /**
      * Override the default value for the tick delay.
@@ -46,9 +60,28 @@ public class GameLoop {
      * @return reference to the same object
      */
     public GameLoop withTickDelay(int tickDelayMs) {
+        if (this.isRunning()) {
+            throw new RuntimeException(
+                "Cannot change tick delay while loop is running");
+        }
         this.tickDelayMs = tickDelayMs;
         return this;
     }
+
+    /**
+     * Override the default value for the tick delay.
+     * @param maxTimeSeconds - max time the game loop can be active
+     * @return reference to the same object
+     */
+    public GameLoop withMaxTime(int maxTimeSeconds) {
+        if (this.isRunning()) {
+            throw new RuntimeException(
+                "Cannot change max loop time while loop is running");
+        }
+        this.maxTimeSeconds = maxTimeSeconds;
+        return this;
+    }
+
 
     /**
      * Set an action to run after the game loop is inactive for a period of
@@ -84,20 +117,23 @@ public class GameLoop {
     }
 
     /**
-     * Begin the game loop with a reference to the players and open sessions.
-     * @param players - active players
-     * @param sessions - all open client sessions
+     * Start a new thread running the game loop, if none is currently active.
      * @return true if a new loop was started, false if a loop was already
      * running and no new loop was created
      */
-    public boolean start(
-        Collection<Player> players,
-        Collection<WebSocketSession> sessions
-    ) {
+    public boolean start() {
         if (this.isRunning()) {
             return false;
         }
-        this.loopThread = new Thread(() -> runGameLoop(players, sessions));
+        if (idleThread.isAlive()) {
+            idleThread.interrupt();
+            try {
+                idleThread.join();
+            } catch (InterruptedException e) {
+                System.err.println(e);
+            }
+        }
+        this.loopThread = new Thread(this::runGameLoop);
         this.loopThread.start();
         return true;
     }
@@ -114,43 +150,39 @@ public class GameLoop {
 
     /**
      * Internal thread function for the game loop.
-     * @param players - reference to player list to update
-     * @param sessions - collection of all sessions to broadcast to
      */
-    private void runGameLoop(
-        Collection<Player> players,
-        Collection<WebSocketSession> sessions
-    ) {
-        // TODO: add time limit of one hour to game loop
-        int serverAge = 0;  // in seconds
-        int tickCount = 0;
-        List<GamePlatform> platforms = GameEventHandler.spawnInitPlatforms();
+    private void runGameLoop() {
+        int gameAgeSeconds = 0;
+        final var players = gameStore.players();
+        final var sessions = gameStore.sessions();
+        gameStore.platforms(GameEventHandler.spawnInitPlatforms());
 
         System.out.println("Starting game loop");
         if (idleThread.isAlive()) {
             idleThread.interrupt();
-        }
-        while (players.size() > 0 && sessions.size() > 0) {
-            var response = GameEventHandler
-                .advanceToNextTick(players, platforms, tickCount);
-
-            tickCount = response.nextTickCount();
-            platforms = response.nextPlatformsState();
-            if (GameEventHandler.shouldSpawnPlatform(platforms)) {
-                platforms.add(GamePlatform.generateAtHeight(0));
-            }
-            if (tickCount == 0) {
-                serverAge++;
-            }
-            if (response.isUpdateNeeded()) try {
-                var update = GamePing.fromGameState(
-                    players,
-                    platforms,
-                    serverAge
-                );
-                broadcast(sessions, update);
-            } catch (JsonProcessingException e) {
+            try {
+                idleThread.join();
+            } catch (InterruptedException e) {
                 System.err.println(e);
+            }
+        }
+        while (
+            players.size() > 0
+            && sessions.size() > 0
+            && gameAgeSeconds < this.maxTimeSeconds
+        ) {
+            var response = advanceToNextTick(gameStore);
+            gameStore.tickCount(response.nextTickCount());
+            this.gameStore.platforms(response.nextPlatformsState());
+            if (GameEventHandler.shouldSpawnPlatform(gameStore.platforms())) {
+                gameStore.platforms().add(GamePlatform.generateAtHeight(0));
+            }
+            if (gameStore.tickCount() == 0) {
+                gameAgeSeconds++;
+            }
+            if (response.isUpdateNeeded()) {
+                var update = createGamePing(gameStore, gameAgeSeconds);
+                broadcast(sessions, update);
             }
             try {
                 Thread.sleep(tickDelayMs);
@@ -160,25 +192,33 @@ public class GameLoop {
             }
         }
         System.out.println("Closing game loop");
+        players.clear();
+        for (var session : sessions) {
+            try {
+                session.close();
+            } catch (IOException e) {
+                System.err.println(e);
+            }
+        }
+        sessions.clear();
         idleThread = new Thread(idleTimeoutAction);
         idleThread.start();
     }
 
     /**
      * Send a message to muliple clients at once.
-     * @param message message of a JSON serializable type. Will be stringified
-     * with the Jackson object mapper.
+     * @param message SocketMessage protobuf instance
      */
     private synchronized <T> void broadcast(
         Collection<WebSocketSession> sessions,
-        T message
-    ) throws JsonProcessingException {
-        var stringMessage = new ObjectMapper().writeValueAsString(message);
+        SocketMessage message
+    ) {
+        var binary = new BinaryMessage(serialize(message));
 
         for (WebSocketSession session : sessions) try {
             synchronized (session) {
                 if (!session.isOpen()) continue;
-                session.sendMessage(new TextMessage(stringMessage));
+                session.sendMessage(binary);
             }
         } catch (IOException e) {
             System.err.println(e);

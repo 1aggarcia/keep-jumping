@@ -5,6 +5,8 @@
         "http://www.puppycrawl.com/dtds/suppressions_1_0.dtd">
 
 <suppressions>
+  <suppress checks="[a-zA-Z0-9]*" files=".*/generated/.*" />
+
   <suppress checks="FinalParameters" files="." />
   <suppress checks="JavadocPackage" files="." />
   <suppress checks="JavadocVariable" files="." />

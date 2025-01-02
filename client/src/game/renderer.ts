@@ -1,7 +1,5 @@
 import { Context2D } from "../canvas/types";
-import { GamePing } from "./types/messages";
-import { GamePlatform, PlayerState } from "./types/models";
-import { renderButtons } from "../canvas/button";
+import { BUTTON_HEIGHT, renderButtons } from "../canvas/button";
 import { renderLabel } from "../canvas/label";
 import { AppState } from "../state/appState";
 import {
@@ -10,12 +8,18 @@ import {
     PLAYER_HEIGHT,
     PLAYER_WIDTH
 } from "./constants";
+import { GamePing, Platform, Player } from "../generated/socketMessage";
 
 const RED_HEX = "#ff0000";
 
 const PLATFORM_HEIGHT = 30;
 const PLATFORM_COLOR = "green";
 const LEADERBOARD_LINE_HEIGHT = 35;
+const OFF_SCREEN_PLAYER_HEIGHT = 5;
+
+// give players a smaller width as they go further off-screen
+const offScreenWidth =
+    ({ y }: Player) => Math.max(0, PLAYER_WIDTH - (Math.abs(y) / 7));
 
 /**
  * Does NOT mutate the app state.
@@ -39,6 +43,16 @@ export function renderGame(state: AppState, ping: GamePing) {
     });
     renderLeaderboard(context, ping.players);
     renderButtons(context, buttons);
+    renderMetadata(state);
+}
+
+export function rerender(state: AppState) {
+    if (state.lastPing !== null) {
+        renderGame(state, state.lastPing);
+        return;
+    }
+    clearCanvas(state.context);
+    renderButtons(state.context, state.buttons);
     renderMetadata(state);
 }
 
@@ -73,9 +87,22 @@ export function renderMetadata(state: AppState) {
         textAlign: "center",
         font: "25px Arial"
     });
+
+    const disconnectButtonOffset = BUTTON_HEIGHT + 10;
+    state.errors.forEach((error, index) => {
+        renderLabel(state.context, {
+            text: error,
+            x: GAME_WIDTH - 10,
+            y: disconnectButtonOffset + (index * 40),
+            textAlign: "right",
+            textBaseline: "top",
+            color: RED_HEX,
+            font: "25px Arial"
+        });
+    });
 }
 
-function renderLeaderboard(context: Context2D, players: PlayerState[]) {
+function renderLeaderboard(context: Context2D, players: Player[]) {
     const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
 
     renderLabel(context, {
@@ -96,7 +123,7 @@ function renderLeaderboard(context: Context2D, players: PlayerState[]) {
     }
 }
 
-function renderPlatform(context: Context2D, platform: GamePlatform) {
+function renderPlatform(context: Context2D, platform: Platform) {
     const { x, y, width } = platform;
     if (x > GAME_WIDTH || y > GAME_HEIGHT) {
         console.error(`Sprite position out of bounds: (${x}, ${y})`);
@@ -107,20 +134,33 @@ function renderPlatform(context: Context2D, platform: GamePlatform) {
 }
 
 
-function renderPlayer(context: Context2D, player: PlayerState) {
+function renderPlayer(context: Context2D, player: Player) {
     const { x, y } = player;
     if (x > GAME_WIDTH || y > GAME_HEIGHT) {
         console.error(`Sprite position out of bounds: (${x}, ${y})`);
         return;
     }
+    const isPlayerVisible = player.y > 0;
+
     renderLabel(context, {
         text: player.name,
         x: player.x + (PLAYER_WIDTH / 2),
-        y: player.y - 15,
+        y: isPlayerVisible ? player.y - 15 : 40,
         color: player.color,
         textAlign: "center",
         font: "bold 22px Arial",
     });
     context.fillStyle = player.color;
-    context.fillRect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT);
+    if (isPlayerVisible) {
+        context.fillRect(x, y, PLAYER_WIDTH, PLAYER_HEIGHT);
+    } else {
+        const playerWidth = offScreenWidth(player);
+        const offsetX = x + (PLAYER_WIDTH - playerWidth) / 2;
+        context.fillRect(
+            offsetX,
+            OFF_SCREEN_PLAYER_HEIGHT,
+            playerWidth,
+            OFF_SCREEN_PLAYER_HEIGHT
+        );
+    }
 };

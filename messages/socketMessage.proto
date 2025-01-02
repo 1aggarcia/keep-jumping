@@ -1,0 +1,79 @@
+// Messages sent over the network, which are one of the following types:
+
+// - Ping: from server to client, send at a fixed interval
+// - Event: can be sent both ways, triggered by some event
+// - Reply: optional response to an event
+
+syntax = "proto3";
+
+option java_package = "io.github.aggarcia.generated";
+
+message SocketMessage {
+    oneof payload {
+        GamePing gamePing = 1;
+        ControlChangeEvent controlChangeEvent = 2;
+        JoinEvent joinEvent = 3;
+        GameOverEvent gameOverEvent = 4;
+        ErrorReply errorReply = 5;
+    }
+}
+
+
+// PINGS
+
+// server to client
+message GamePing {
+    uint32 serverAge = 1;
+    repeated Player players = 2;
+    repeated Platform platforms = 3;
+}
+
+
+// EVENTS
+
+// client to server
+message ControlChangeEvent {
+    repeated PlayerControl pressedControls = 1;
+}
+
+// client to server
+message JoinEvent {
+    string name = 1;
+}
+
+// server to client
+message GameOverEvent {
+    string reason = 1;
+}
+
+
+// REPLIES
+
+// server to client
+message ErrorReply {
+    string message = 1;
+}
+
+
+// AUXILARY TYPES
+
+message Player {
+    string name = 1;
+    string color = 2;  // CSS compatible string
+    int32 x = 3;
+    int32 y = 4;
+    uint32 score = 5;
+}
+
+message Platform {
+    int32 x = 1;
+    int32 y = 2;
+    uint32 width = 3;
+}
+
+enum PlayerControl {
+    UP = 0;
+    DOWN = 1;
+    LEFT = 2;
+    RIGHT = 3;
+}

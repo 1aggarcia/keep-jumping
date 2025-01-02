@@ -4,7 +4,7 @@ import { AppState } from "../state/appState";
 import { GAME_HEIGHT, GAME_WIDTH } from "../game/constants";
 
 const BUTTON_WIDTH = 170;
-const BUTTON_HEIGHT = 50;
+export const BUTTON_HEIGHT = 50;
 
 const BORDER_RADIUS = 5;
 

@@ -6,6 +6,7 @@ import java.util.Random;
 
 import io.github.aggarcia.game.GameConstants;
 import io.github.aggarcia.platforms.GamePlatform;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
@@ -13,8 +14,9 @@ import lombok.experimental.Accessors;
 
 @Data
 @Builder
+@AllArgsConstructor  // for the builder
 @Accessors(fluent = true)
-public final class Player {
+public final class PlayerStore {
     public static final int PLAYER_WIDTH = 40;
     public static final int PLAYER_HEIGHT = 40;
     public static final int GRAVITY = 2;
@@ -23,6 +25,9 @@ public final class Player {
         MAX_PLAYER_X = GameConstants.WIDTH - PLAYER_WIDTH;
     public static final int
         MAX_PLAYER_Y = GameConstants.HEIGHT - PLAYER_HEIGHT;
+
+    // players are allowed to jump slighly above the visible space
+    public static final int MIN_PLAYER_Y = -500;
 
     // so that players don't spawn close to the bottom
     protected static final int MAX_SPAWN_HEIGHT = MAX_PLAYER_Y / 3;
@@ -59,7 +64,7 @@ public final class Player {
      * @return new instance of Player, with position in game bounds and as a
      * factor of the player size
      */
-    public static Player createRandomPlayer(String name) {
+    public static PlayerStore createRandomPlayer(String name) {
         Random random = new Random();
 
         StringBuilder color = new StringBuilder("#");
@@ -75,7 +80,7 @@ public final class Player {
         int yPosition = random
             .nextInt(MAX_SPAWN_HEIGHT / PLAYER_HEIGHT) * PLAYER_HEIGHT;
 
-        return Player.builder()
+        return PlayerStore.builder()
             .color(color.toString())
             .name(name)
             .xPosition(xPosition)
@@ -88,9 +93,9 @@ public final class Player {
     }
 
     /**
-     * @see Player#moveToNextTick(Collection)
+     * @see PlayerStore#moveToNextTick(Collection)
      */
-    public Player moveToNextTick() {
+    public PlayerStore moveToNextTick() {
         return this.moveToNextTick(Collections.emptyList());
     }
 
@@ -102,7 +107,8 @@ public final class Player {
      * @param platforms collidable blocks that the player should not touch
      * @return reference to the same object
      */
-    public Player moveToNextTick(Collection<GamePlatform> platforms) {
+    public synchronized PlayerStore
+    moveToNextTick(Collection<GamePlatform> platforms) {
         /*
          * newX = oldX + xVelocity
          * newY = oldY + yVelocity
@@ -132,8 +138,8 @@ public final class Player {
         if (newY > MAX_PLAYER_Y) {
             newY = MAX_PLAYER_Y;
             this.yVelocity = 0;
-        } else if (newY < 0) {
-            newY = 0;
+        } else if (newY < MIN_PLAYER_Y) {
+            newY = MIN_PLAYER_Y;
             this.yVelocity = 0;
         }
 
@@ -158,7 +164,7 @@ public final class Player {
      * @return true if the player rectangle makes contact with the platform,
      *  false otherwise
      */
-    private boolean isTouchingPlatform(GamePlatform platform) {
+    private synchronized boolean isTouchingPlatform(GamePlatform platform) {
         int minY = this.yPosition;
         int maxY = this.yPosition + PLAYER_HEIGHT;
 
@@ -188,27 +194,13 @@ public final class Player {
      * @param points number of points to add
      * @return reference to the same object
      */
-    public Player addToScore(int points) {
+    public synchronized PlayerStore addToScore(int points) {
         this.score += points;
         return this;
     }
 
-    /**
-     * Convert a Player record to a PlayerState record.
-     * @return instance of PlayerState
-     */
-    public PlayerState toPlayerState() {
-        return new PlayerState(
-            this.name(),
-            this.color(),
-            this.xPosition(),
-            this.yPosition(),
-            this.score()
-        );
-    }
-
-    public Player clone() {
-        return Player.builder()
+    public synchronized PlayerStore clone() {
+        return PlayerStore.builder()
             .color(this.color())
             .name(this.name())
             .xPosition(this.xPosition())
