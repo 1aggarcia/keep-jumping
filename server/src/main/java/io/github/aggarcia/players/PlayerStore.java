@@ -6,6 +6,7 @@ import java.util.Random;
 
 import io.github.aggarcia.game.GameConstants;
 import io.github.aggarcia.platforms.GamePlatform;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
@@ -13,6 +14,7 @@ import lombok.experimental.Accessors;
 
 @Data
 @Builder
+@AllArgsConstructor  // for the builder
 @Accessors(fluent = true)
 public final class PlayerStore {
     public static final int PLAYER_WIDTH = 40;

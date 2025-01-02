@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.socket.WebSocketSession;
 
-import io.github.aggarcia.players.Player;
+import io.github.aggarcia.players.PlayerStore;
 
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +41,7 @@ public class GameLoopTest {
     @Test
     void test_isRunning_afterPlayersCleared_returnsFalse() throws Exception {
         var store = new GameStore();
-        store.players().put("", Player.createRandomPlayer(""));
+        store.players().put("", PlayerStore.createRandomPlayer(""));
 
         var loop = new GameLoop(store).withTickDelay(0);
         loop.start();
@@ -126,7 +126,7 @@ public class GameLoopTest {
     @Test
     void test_start_whileTimeoutActionWaiting_cancelsAction() throws Exception {
         var store = GameStore.builder()
-            .players(Map.of("", Player.createRandomPlayer("")))
+            .players(Map.of("", PlayerStore.createRandomPlayer("")))
             .sessions(Set.of(mockSession))
             .build();
 
@@ -201,10 +201,10 @@ public class GameLoopTest {
         return set;
     }
 
-    private Map<String, Player> getPlayers() {
-        var map = new HashMap<String, Player>();
-        map.put("player1", Player.createRandomPlayer("player1"));
-        map.put("player2", Player.createRandomPlayer("player2"));
+    private Map<String, PlayerStore> getPlayers() {
+        var map = new HashMap<String, PlayerStore>();
+        map.put("player1", PlayerStore.createRandomPlayer("player1"));
+        map.put("player2", PlayerStore.createRandomPlayer("player2"));
         return map;
     }
 

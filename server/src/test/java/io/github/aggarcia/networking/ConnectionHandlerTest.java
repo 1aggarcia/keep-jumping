@@ -1,5 +1,6 @@
 package io.github.aggarcia.networking;
 
+import static io.github.aggarcia.shared.Serializer.serialize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -8,14 +9,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
-import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import io.github.aggarcia.game.GameStore;
-import io.github.aggarcia.players.events.JoinEvent;
+import io.github.aggarcia.generated.SocketMessageOuterClass.JoinEvent;
+import io.github.aggarcia.generated.SocketMessageOuterClass.SocketMessage;
 
 // naming convention: test_<unit>_<state>_<expected behavior>
 @SpringBootTest
@@ -68,16 +68,18 @@ public class ConnectionHandlerTest {
     }
 
     @Test
-    void test_handleTextMessage_joinEvent_updatesGameStore() throws Exception {
+    void test_handleBinaryMessage_joinEvent_updatesGameStore() {
         assertNull(gameStore.players().get(mockSession.getId()));
 
-        var event = new JoinEvent("player1");
-        var serialized = new ObjectMapper().writeValueAsString(event);
-        var message = new TextMessage(serialized);
+        var event = JoinEvent.newBuilder().setName("testEvent").build();
+        var wrappedEvent = SocketMessage
+            .newBuilder().setJoinEvent(event).build();
+
+        var message = new BinaryMessage(serialize(wrappedEvent));
 
         // add the session first, or else join isn't allowed
         connectionHandler.afterConnectionEstablished(mockSession);
-        connectionHandler.handleTextMessage(mockSession, message);
+        connectionHandler.handleBinaryMessage(mockSession, message);
         assertNotNull(gameStore.players().get(mockSession.getId()));
     }
 }

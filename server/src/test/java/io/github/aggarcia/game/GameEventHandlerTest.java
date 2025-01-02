@@ -1,12 +1,11 @@
 package io.github.aggarcia.game;
 
+import static io.github.aggarcia.game.GameEventHandler.createGamePing;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,8 +13,13 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 import io.github.aggarcia.game.GameEventHandler.TickResponse;
+import io.github.aggarcia.generated.SocketMessageOuterClass.GamePing;
+import io.github.aggarcia.generated.SocketMessageOuterClass.Platform;
+import io.github.aggarcia.generated.SocketMessageOuterClass.Player;
+import io.github.aggarcia.generated.SocketMessageOuterClass.SocketMessage;
+import io.github.aggarcia.generated.SocketMessageOuterClass.SocketMessage.PayloadCase;
 import io.github.aggarcia.platforms.GamePlatform;
-import io.github.aggarcia.players.Player;
+import io.github.aggarcia.players.PlayerStore;
 
 public class GameEventHandlerTest {
     static final int RANDOM_TRIALS = 1000;
@@ -84,7 +88,7 @@ public class GameEventHandlerTest {
 
     @Test
     void test_advanceToNextTick_onePlayer_advancesPlayer() {
-        var player = Player.createRandomPlayer("");
+        var player = PlayerStore.createRandomPlayer("");
         var expected = player.clone()
             .moveToNextTick()
             .hasChanged(false);
@@ -95,8 +99,8 @@ public class GameEventHandlerTest {
     @Test
     void test_advanceToNextTick_multiplePlayers_advancesEachPlayer() {
         // player 1 should not move
-        Player player1 = Player.createRandomPlayer("");
-        Player player2 = Player.builder()
+        PlayerStore player1 = PlayerStore.createRandomPlayer("");
+        PlayerStore player2 = PlayerStore.builder()
             .xPosition(0)
             .yPosition(0)
             .xPosition(0)
@@ -126,9 +130,9 @@ public class GameEventHandlerTest {
     @Test
     void test_advanceToNextTick_playerTouchingGround_removesPlayer() {
         // must be mutable, List.of creates immutable lists
-        var player1 = Player
+        var player1 = PlayerStore
             .createRandomPlayer("")
-            .yPosition(Player.MAX_PLAYER_Y);
+            .yPosition(PlayerStore.MAX_PLAYER_Y);
         var store = new GameStore();
         store.players().put("", player1);
 
@@ -194,13 +198,13 @@ public class GameEventHandlerTest {
 
     @Test
     void test_advanceToNextTick_playerOnPlatform_playerFallsWithPlatform() {
-        Player testPlayer = Player.builder()
+        PlayerStore testPlayer = PlayerStore.builder()
             .xPosition(50)
             .yPosition(50)
             .xVelocity(50)
             .yVelocity(10)
             .build();
-        var testPlatform = new GamePlatform(200, 0, 50 + Player.PLAYER_HEIGHT);
+        var testPlatform = new GamePlatform(200, 0, 50 + PlayerStore.PLAYER_HEIGHT);
 
         var store = GameStore.builder()
             .players(Map.of("", testPlayer))
@@ -214,6 +218,58 @@ public class GameEventHandlerTest {
         assertEquals(50, testPlayer.xVelocity());
         assertEquals(50 + GamePlatform.PLATFORM_GRAVITY, testPlayer.yPosition());
         assertEquals(GamePlatform.PLATFORM_GRAVITY, testPlayer.yVelocity());
+    }
+
+    @Test
+    void test_createGamePing_minimalStore_returnsPingSocketMessage() {
+        SocketMessage ping = createGamePing(new GameStore(), 0);
+        assertTrue(ping.hasGamePing());
+        assertEquals(PayloadCase.GAMEPING, ping.getPayloadCase());
+    }
+
+    @Test
+    void test_createGamePing_minimalStore_returnsCorrectPing() {
+        var store = new GameStore();
+        GamePing ping = createGamePing(store, 15).getGamePing();
+
+        assertEquals(15, ping.getServerAge());
+        assertEquals(0, ping.getPlayersCount());
+        assertEquals(0, ping.getPlatformsCount());
+    }
+
+    @Test
+    void test_createGamePing_storeWithManyValues_returnsCorrectPing() {
+        var players = createTestPlayers();
+        var platform = GamePlatform.generateAtHeight(0);
+        var store = GameStore.builder()
+            .players(players)
+            .platforms(List.of(platform))
+            .build();
+        
+        GamePing ping = createGamePing(store, 5).getGamePing();
+
+        assertEquals(5, ping.getServerAge());
+
+        List<Player> playersList = players.values().stream()
+            .map(p -> Player.newBuilder()
+                .setColor(p.color())
+                .setName(p.name())
+                .setScore(p.score())
+                .setX(p.xPosition())
+                .setY(p.yPosition())
+                .build()
+            )
+            .toList();
+        assertEquals(playersList, ping.getPlayersList());
+
+        List<Platform> platformsList = List.of(
+            Platform.newBuilder()
+                .setWidth(platform.width())
+                .setX(platform.x())
+                .setY(platform.y())
+                .build()
+        );
+        assertEquals(platformsList, ping.getPlatformsList());
     }
 
     @Test
@@ -241,12 +297,12 @@ public class GameEventHandlerTest {
      * @return map of two players with keys "1", "2".
      *  Players are on the ground and are motionless
      */
-    private Map<String, Player> createTestPlayers() {
-        var player1 = Player.createRandomPlayer("")
+    private Map<String, PlayerStore> createTestPlayers() {
+        var player1 = PlayerStore.createRandomPlayer("")
             .yPosition(0)
             .hasChanged(false);
 
-        var player2 = Player.createRandomPlayer("")
+        var player2 = PlayerStore.createRandomPlayer("")
             .yPosition(0)
             .hasChanged(false);
 
@@ -266,7 +322,7 @@ public class GameEventHandlerTest {
         return GameEventHandler.advanceToNextTick(store);
     }
 
-    private TickResponse advanceTickWithPlayers(Map<String, Player> players) {
+    private TickResponse advanceTickWithPlayers(Map<String, PlayerStore> players) {
         var store = GameStore.builder().players(players).build();
         return GameEventHandler.advanceToNextTick(store);
     }
