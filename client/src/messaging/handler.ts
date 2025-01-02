@@ -1,4 +1,3 @@
-import { sendToServer } from "../networking/handler";
 import { AppState } from "../state/appState";
 import { messagingElements } from "./elements";
 
@@ -14,6 +13,6 @@ export function handleMessageFormSubmit(
 ) {
     const formData = new FormData(event.target);
     const message = formData.get("message");
-    sendToServer(state, String(message));
+    state.server?.send(String(message));
     event.target.reset();
 }

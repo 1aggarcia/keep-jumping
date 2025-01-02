@@ -1,6 +1,6 @@
 /** Utility functions to help format strings and numbers */
 
-import { PingPong } from "../generated/pingPong";
+import { SocketMessage } from "../generated/socketMessage";
 
 const KB_SIZE = 1 << 10;
 const MB_SIZE = 1 << 20;
@@ -30,6 +30,7 @@ export function formatBytesString(bytes: number) {
     return `${bytes} B`;
 }
 
+// currently unused
 /**
  * Format a JSON string message with pretty indentation
  */
@@ -47,7 +48,7 @@ export function getPrettyMessage(message: unknown) {
 /**
  * Convert a protobuf message to a binary array
  */
-export function serialize(message: PingPong): Uint8Array {
+export function serialize(message: SocketMessage): Uint8Array {
     return message.serialize();
 }
 
@@ -55,9 +56,9 @@ export function serialize(message: PingPong): Uint8Array {
  * Convert a binary array to a protobuf message
  * @returns `PingPong` instance if the data can by deserialized, null otherwise
  */
-export function deserialize(bytes: Uint8Array): PingPong | null {
+export function deserialize(bytes: Uint8Array): SocketMessage | null {
     try {
-        return PingPong.deserialize(bytes);
+        return SocketMessage.deserialize(bytes);
     } catch (e) {
         console.error(e);
         return null;

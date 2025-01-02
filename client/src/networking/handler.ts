@@ -9,31 +9,25 @@ import {
     rerender
 } from "../game/renderer";
 import { Button, subscribeButtonsToCursor } from "../canvas/button";
-import { JoinEvent, SocketMessage } from "../game/types/messages";
 import {
     serialize,
     deserialize,
     formatBytesString,
-    getPrettyMessage,
 } from "./formatters";
-import { PingPong } from "../generated/pingPong";
+import { SocketMessage } from "../generated/socketMessage";
 
 const MAX_HISTORY_LEN = 25;
 const ERROR_DISPLAY_TIME = 5000;
 
-export function sendToServer<T>(state: AppState, message: T) {
+// type to represent SocketMessages with object literals
+type SocketMessageObject = Parameters<typeof SocketMessage.fromObject>[0];
+
+export function sendToServer(state: AppState, message: SocketMessageObject) {
     if (state.server === null) {
         throw new ReferenceError(`Message sent to null server: ${message}`);
     }
-    let encoded: string;
-    if (typeof message === "string") {
-        encoded = message;
-    } else if (typeof message === "object") {
-        encoded = JSON.stringify(message);
-    } else {
-        throw new TypeError(`Cannot serialize message type: ${message}`);
-    }
-    state.server.send(encoded);
+    const wrappedMessage = SocketMessage.fromObject(message);
+    state.server.send(serialize(wrappedMessage));
     state.messagesOut++;
     renderMessageStats(state);
 }
@@ -51,10 +45,10 @@ export function connectToServer(state: AppState, username: string) {
     state.server = server;
 
     server.onopen = () => {
-        sendPing(server);
-        sendToServer<JoinEvent>(state, {
-            type: "JoinEvent",
-            name: username
+        sendToServer(state, {
+            joinEvent: {
+                name: username
+            }
         });
         clearCanvas(state.context);
         state.connectedStatus = "OPEN";
@@ -75,63 +69,41 @@ export function connectToServer(state: AppState, username: string) {
         state.connectedStatus = "ERROR";
         networkElements.errorBox.append("<p>Connection error</p>");
     };
-    server.onmessage = (event) => {
+    server.onmessage = async ({ data }) => {
         state.messagesIn++;
 
-        const message = event.data;
-        // this is probably not accurate, but a suitable estimation
-        const byteCount = new Blob([message]).size;
-        state.bytesIn += byteCount;
-
-        if (message instanceof Blob) {
-            handlePong(message);
-            return;
+        if (!(data instanceof Blob)) {
+            throw new TypeError(`unexpected message type: ${data}`);
+        }
+        state.bytesIn += data.size;
+        const buffer = await data.arrayBuffer();
+        const message = deserialize(new Uint8Array(buffer));
+        if (message === null) {
+            throw new SyntaxError(`unable to deserialize: ${data}`);
         }
 
-        const prettyMessage = getPrettyMessage(message);
         // garbage collect old messages
         if (state.messagesIn > MAX_HISTORY_LEN) {
             networkElements.messagesBox.find("pre:last").remove();
         }
+        const prettyMessage = JSON.stringify(message.toObject(), undefined, 2);
         networkElements.messagesBox.prepend(`<pre>${prettyMessage}</pre>`);
         renderMessageStats(state);
         handleServerMessage(message, state);
     };
 }
 
-function sendPing(server: WebSocket) {
-    const ping = PingPong.fromObject({
-        ping: {
-            request: "hola mundo"
-        }
-    });
-    server.send(serialize(ping));
-}
 
-async function handlePong(messageBlob: Blob) {
-    const arrayBuffer = await messageBlob.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    const message = deserialize(bytes);
-    if (message === null) {
-        throw new Error("deserialization error");
-    }
-    if (message.payload !== "pong") {
-        throw new Error("bad message type: " + message.payload);
-    }
-    console.log(message.pong.toObject());
-}
-
-function handleServerMessage(message: string, state: AppState) {
-    const json: SocketMessage = JSON.parse(message);
-    if (json.type === "GamePing") {
-        state.lastPing = json;
-        renderGame(state, json);
-    } else if (json.type === "GameOverEvent") {
-        renderGameOver(state.context, json.reason);
-    } else if (json.type === "ErrorReply") {
-        addErrorNotification(state, json.message);
+function handleServerMessage(message: SocketMessage, state: AppState) {
+    if (message.payload === "gamePing") {
+        state.lastPing = message.gamePing;
+        renderGame(state, message.gamePing);
+    } else if (message.payload === "gameOverEvent") {
+        renderGameOver(state.context, message.gameOverEvent.reason);
+    } else if (message.payload === "errorReply") {
+        addErrorNotification(state, message.errorReply.message);
     } else {
-        throw new Error(`Unknown message type: ${message}`);
+        throw new Error(`Unsupported message type: ${message.payload}`);
     }
 }
 

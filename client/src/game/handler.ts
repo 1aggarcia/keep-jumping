@@ -1,8 +1,7 @@
-import { ControlChangeEvent } from "./types/messages";
 import { AppState } from "../state/appState";
 import { sendToServer } from "../networking/handler";
 import { GAME_HEIGHT, GAME_WIDTH } from "./constants";
-import { PlayerControl } from "./types/models";
+import { PlayerControl } from "../generated/socketMessage";
 
 const GAME_ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
 
@@ -15,9 +14,10 @@ export function handleKeyDown(keyCode: string, state: AppState) {
     if (state.pressedControls.has(control)) return;
 
     state.pressedControls.add(control);
-    sendToServer<ControlChangeEvent>(state, {
-        type: "ControlChangeEvent",
-        pressedControls: Array.from(state.pressedControls),
+    sendToServer(state, {
+        controlChangeEvent: {
+            pressedControls: Array.from(state.pressedControls),
+        },
     });
 }
 
@@ -27,9 +27,10 @@ export function handleKeyUp(keyCode: string, state: AppState) {
     if (state.server === null) return;
 
     state.pressedControls.delete(control);
-    sendToServer<ControlChangeEvent>(state, {
-        type: "ControlChangeEvent",
-        pressedControls: Array.from(state.pressedControls),
+    sendToServer(state, {
+        controlChangeEvent: {
+            pressedControls: Array.from(state.pressedControls),
+        }
     });
 }
 
@@ -55,21 +56,20 @@ export function fitCanvasToWindow(canvas: JQuery<HTMLCanvasElement>) {
         .css("height", GAME_HEIGHT * scaleFactor);
 }
 
-
 function keyCodeToPlayerControl(code: string): PlayerControl | null {
     switch(code) {
         case "ArrowLeft":
         case "KeyA":
-            return "Left";
+            return PlayerControl.LEFT;
         case "ArrowUp":
         case "KeyW":
-            return "Up";
+            return PlayerControl.UP;
         case "ArrowRight":
         case "KeyD":
-            return "Right";
+            return PlayerControl.RIGHT;
         case "ArrowDown":
         case "KeyS":
-            return "Down";
+            return PlayerControl.DOWN;
         default:
            return null;
     }

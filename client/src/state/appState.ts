@@ -1,7 +1,6 @@
 import { Context2D } from "../canvas/types";
 import { Button } from "../canvas/button";
-import { PlayerControl } from "../game/types/models";
-import { GamePing } from "../game/types/messages";
+import { GamePing, PlayerControl } from "../generated/socketMessage";
 
 export type AppState = {
     server: WebSocket | null,
