@@ -13,12 +13,13 @@
 - [x] Java linter
 
 ## Server
-- [ ] Don't send redundant information (old platforms) to reduce ping size (current avg 300 B)
-- [ ] Always spawn players on or above a platform
+- [ ] Increase speed with time
+- [ ] Don't send redundant information (old platforms) to reduce ping size (current avg 90 B)
 - [ ] Detect player passing through platforms between two frames
 - [ ] Add persistent storage for user scores
 - [ ] Re-add support for game over
 - [*] Include more intelligent platform generation, based on location of nearby platforms
+- [x] Always spawn players on or above a platform
 - [x] Migrate string JSON messages to binary Protobuf messages
 - [x] Allow players to jump off screen
 - [x] Use `JsonTypeInfo` and `JsonSubTypes` from Jackson for deserializing JSON union types (maybe use Protobuf instead?)

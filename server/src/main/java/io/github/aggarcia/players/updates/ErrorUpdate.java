@@ -10,7 +10,7 @@ import static io.github.aggarcia.shared.Serializer.serialize;
 
 public record ErrorUpdate(
     byte[] data
-) implements PlayerUpdate {
+) implements GameUpdate {
 
     /**
      * Factory function to serialize a text message as a JSON ErorReply.

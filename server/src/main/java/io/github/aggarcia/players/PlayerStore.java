@@ -21,6 +21,9 @@ public final class PlayerStore {
     public static final int PLAYER_HEIGHT = 40;
     public static final int GRAVITY = 2;
 
+    // how much extra height to give above a platform
+    public static final int SPAWN_HEIGHT = PLAYER_HEIGHT + 100;
+
     public static final int
         MAX_PLAYER_X = GameConstants.WIDTH - PLAYER_WIDTH;
     public static final int
@@ -58,6 +61,7 @@ public final class PlayerStore {
      */
     private boolean hasChanged;
 
+    // TODO: only used by tests, try to remove
     /**
      * Factory function to create a new player with a random color and position.
      * @param name unique name
@@ -79,6 +83,39 @@ public final class PlayerStore {
             .nextInt(GameConstants.WIDTH / PLAYER_WIDTH) * PLAYER_WIDTH;
         int yPosition = random
             .nextInt(MAX_SPAWN_HEIGHT / PLAYER_HEIGHT) * PLAYER_HEIGHT;
+
+        return PlayerStore.builder()
+            .color(color.toString())
+            .name(name)
+            .xPosition(xPosition)
+            .yPosition(yPosition)
+            .xVelocity(0)
+            .yVelocity(0)
+            .score(0)
+            .hasChanged(true)
+            .build();
+    }
+
+    /**
+     * Factory function to create a new player with a random color above a
+     * platform.
+     * @param name unique name
+     * @param platforms platforms to consider for spawning the player
+     * @return new PlayerStore instance
+     */
+    public static PlayerStore
+    createAbovePlatform(String name, GamePlatform platform) {
+        Random random = new Random();
+
+        StringBuilder color = new StringBuilder("#");
+        for (int i = 0; i < HEX_STRING_LEN; i++) {
+            String hex = Integer.toHexString(random.nextInt(16));
+            color.append(hex);
+        }
+
+        // center the player vertically on the platform
+        int xPosition = platform.x() + ((platform.width() - PLAYER_WIDTH) / 2);
+        int yPosition = platform.y() - SPAWN_HEIGHT;
 
         return PlayerStore.builder()
             .color(color.toString())
@@ -188,7 +225,6 @@ public final class PlayerStore {
         // player must either be behind or ahead
         return !isPlayerBehind && !isPlayerAhead;
     }
-
 
     /**
      * @param points number of points to add

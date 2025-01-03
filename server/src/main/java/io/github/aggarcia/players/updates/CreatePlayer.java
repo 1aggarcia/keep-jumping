@@ -6,10 +6,9 @@ import io.github.aggarcia.game.GameStore;
 import io.github.aggarcia.players.PlayerStore;
 
 public record CreatePlayer(
-    boolean isFirstPlayer,
     String client,
     PlayerStore player
-) implements PlayerUpdate {
+) implements GameUpdate {
     @Override
     public Optional<byte[]> reply() {
         return Optional.empty();
@@ -21,8 +20,5 @@ public record CreatePlayer(
     @Override
     public void applyTo(GameStore store) {
         store.players().put(client, player);
-        if (isFirstPlayer) {
-            store.tiggerStartEvent();
-        }
     }
 }

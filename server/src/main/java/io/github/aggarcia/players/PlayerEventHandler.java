@@ -1,16 +1,20 @@
 package io.github.aggarcia.players;
 
 import java.util.HashSet;
+import java.util.List;
 
+import io.github.aggarcia.game.GameConstants;
+import io.github.aggarcia.game.GameEventHandler;
 import io.github.aggarcia.game.GameStore;
 import io.github.aggarcia.generated.SocketMessageOuterClass.ControlChangeEvent;
 import io.github.aggarcia.generated.SocketMessageOuterClass.JoinEvent;
 import io.github.aggarcia.generated.SocketMessageOuterClass.PlayerControl;
 import io.github.aggarcia.generated.SocketMessageOuterClass.SocketMessage;
 import io.github.aggarcia.platforms.GamePlatform;
+import io.github.aggarcia.players.updates.CreateFirstPlayer;
 import io.github.aggarcia.players.updates.CreatePlayer;
 import io.github.aggarcia.players.updates.ErrorUpdate;
-import io.github.aggarcia.players.updates.PlayerUpdate;
+import io.github.aggarcia.players.updates.GameUpdate;
 import io.github.aggarcia.players.updates.UpdateVelocity;
 
 /**
@@ -34,7 +38,7 @@ public final class PlayerEventHandler {
      *  Treated as read only
      * @return response, either PlayerVelocity or an empty Object
      */
-    public static PlayerUpdate processEvent(
+    public static GameUpdate processEvent(
         String client,
         SocketMessage event,
         GameStore store
@@ -66,7 +70,7 @@ public final class PlayerEventHandler {
      *  conflicting keys are pressed in the incoming message, e.g.
      *  "Right" and "Left".
      */
-    public static PlayerUpdate
+    public static GameUpdate
     processControlChange(
         String client,
         ControlChangeEvent event,
@@ -119,7 +123,7 @@ public final class PlayerEventHandler {
      * @return A new player with the name in the event, if the name is unique.
      *  otherwise, an error.
      */
-    public static PlayerUpdate
+    public static GameUpdate
     processJoin(String client, JoinEvent event, GameStore store) {
         String name = event.getName();
         if (name.isEmpty()) {
@@ -138,7 +142,6 @@ public final class PlayerEventHandler {
             return ErrorUpdate
                 .fromText("Client is already playing: " + client);
         }
-
         boolean isUsernameTaken = players
             .values()
             .stream()
@@ -147,8 +150,43 @@ public final class PlayerEventHandler {
             return ErrorUpdate
                 .fromText("Username already in use: " + name);
         }
-        var isFirstPlayer = players.isEmpty();
-        var newPlayer = PlayerStore.createRandomPlayer(name);
-        return new CreatePlayer(isFirstPlayer, client, newPlayer);
+
+        // validation complete
+        var choicePlatforms = store.platforms().isEmpty()
+            ? GameEventHandler.spawnInitPlatforms()
+            : store.platforms();
+        var choicePlatform = choosePlatformForPlayer(choicePlatforms);
+        var newPlayer = PlayerStore.createAbovePlatform(name, choicePlatform);
+
+        if (players.isEmpty()) {
+            return new CreateFirstPlayer(client, newPlayer, choicePlatforms);
+        }
+        return new CreatePlayer(client, newPlayer);
+    }
+
+    /**
+     * Choose the platform that is closest to the center of the game.
+     * @param platforms there must be at least one platform
+     * @return platform closest to <code>GameConstants.HEIGHT / 2</code>
+     */
+    private static GamePlatform choosePlatformForPlayer(
+        List<GamePlatform> platforms
+    ) {
+        if (platforms.isEmpty()) {
+            throw new IllegalArgumentException("No platforms to choose from");
+        }
+        int idealYPosition = GameConstants.HEIGHT / 2;
+
+        GamePlatform choice = platforms.get(0);
+        // minimize by absolute difference to the center
+        for (var platform : platforms) {
+            if (
+                Math.abs(platform.y() - idealYPosition)
+                < Math.abs(choice.y() - idealYPosition)
+            ) {
+                choice = platform;
+            }
+        }
+        return choice;
     }
 }

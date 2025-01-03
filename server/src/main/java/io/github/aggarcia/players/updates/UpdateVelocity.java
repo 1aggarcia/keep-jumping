@@ -8,7 +8,7 @@ public record UpdateVelocity(
     String clientId,
     int xVelocity,
     int yVelocity
-) implements PlayerUpdate {
+) implements GameUpdate {
     @Override
     public Optional<byte[]> reply() {
         return Optional.empty();

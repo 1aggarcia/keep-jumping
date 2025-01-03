@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import io.github.aggarcia.game.GameStore;
 
-public interface PlayerUpdate {
+public interface GameUpdate {
     /**
      * Optional reply to send back to the client. It should already
      * be encoded into binary

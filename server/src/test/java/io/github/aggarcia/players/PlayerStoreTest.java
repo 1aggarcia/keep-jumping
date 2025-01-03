@@ -83,6 +83,25 @@ public class PlayerStoreTest {
     }
 
     @Test
+    void test_createAbovePlatform_placesPlayerAbovePlatform() {
+        var platform = GamePlatform.generateAtHeight(100);
+        var player = PlayerStore.createAbovePlatform("", platform);
+
+        assertEquals(
+            platform.y() - PlayerStore.SPAWN_HEIGHT,
+            player.yPosition(),
+            "Player is above platform"
+        );
+
+        int middleOfPlatform = 
+            platform.x() + ((platform.width() - PlayerStore.PLAYER_WIDTH) / 2);
+        assertEquals(
+            middleOfPlatform, player.xPosition(),
+            "Player is in the middle of the platform"
+        );
+    }
+
+    @Test
     void test_moveToNextTick_noXVelocity_doesNotChangeXPhysics() {
         var testPlayer = PlayerStore.createRandomPlayer("");
         var expectedX = testPlayer.xPosition();

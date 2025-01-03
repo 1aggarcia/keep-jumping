@@ -155,7 +155,6 @@ public class GameLoop {
         int gameAgeSeconds = 0;
         final var players = gameStore.players();
         final var sessions = gameStore.sessions();
-        gameStore.platforms(GameEventHandler.spawnInitPlatforms());
 
         System.out.println("Starting game loop");
         if (idleThread.isAlive()) {

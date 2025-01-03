@@ -1,20 +1,23 @@
 package io.github.aggarcia.players;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
+import io.github.aggarcia.game.GameConstants;
 import io.github.aggarcia.game.GameStore;
 import io.github.aggarcia.generated.SocketMessageOuterClass.ControlChangeEvent;
 import io.github.aggarcia.generated.SocketMessageOuterClass.JoinEvent;
 import io.github.aggarcia.generated.SocketMessageOuterClass.PlayerControl;
 import io.github.aggarcia.generated.SocketMessageOuterClass.SocketMessage;
 import io.github.aggarcia.platforms.GamePlatform;
+import io.github.aggarcia.players.updates.CreateFirstPlayer;
 import io.github.aggarcia.players.updates.CreatePlayer;
 import io.github.aggarcia.players.updates.ErrorUpdate;
 import io.github.aggarcia.players.updates.UpdateVelocity;
@@ -34,13 +37,13 @@ public class PlayerEventHandlerTest {
         var wrappedEvent = SocketMessage.newBuilder()
             .setJoinEvent(event).build();
 
-        CreatePlayer result = (CreatePlayer) processEvent(
+        CreateFirstPlayer result = (CreateFirstPlayer) processEvent(
             "client1",
             wrappedEvent,
             new GameStore()
         );
 
-        assertTrue(result instanceof CreatePlayer);
+        assertTrue(result instanceof CreateFirstPlayer);
         assertEquals("client1", result.client());
         assertEquals("testName", result.player().name());
     }
@@ -187,16 +190,25 @@ public class PlayerEventHandlerTest {
     }
 
     @Test
-    void test_processJoin_firstPlayer_returnsIsFirstPlayerTrue() {
-        var event = joinEvent("~");
+    void test_processJoin_firstPlayer_returnsCreateFirstPlayerWithCorrectPlayer() {
+        var event = joinEvent("player1");
         var createUpdate =
-            (CreatePlayer) processJoin("", event, new GameStore());
-        assertTrue(createUpdate.isFirstPlayer());
+            (CreateFirstPlayer) processJoin("client1", event, new GameStore());
+        assertEquals("client1", createUpdate.client());
+        assertEquals("player1", createUpdate.player().name());
     }
 
     @Test
-    void test_processJoin_manyPlayers_returnsIsFirstPlayerFalse() {
-        var event = joinEvent("~");
+    void test_processJoin_firstPlayer_returnsMultiplePlatforms() {
+        var event = joinEvent("player1");
+        var createUpdate =
+            (CreateFirstPlayer) processJoin("client1", event, new GameStore());
+        assertTrue(createUpdate.platforms().size() > 1);
+    }
+
+    @Test
+    void test_processJoin_manyPlayers_returnsCreatePlayerWithCorrectName() {
+        var event = joinEvent("unique player");
 
         Map<String, PlayerStore> players = new HashMap<>();
         // create one less than the limit, so there's room for one more player
@@ -206,8 +218,10 @@ public class PlayerEventHandlerTest {
         }
 
         var store = GameStore.builder().players(players).build();
-        var createUpdate = (CreatePlayer) processJoin("", event, store);
-        assertFalse(createUpdate.isFirstPlayer());
+        var createUpdate =
+            (CreatePlayer) processJoin("unique client", event, store);
+        assertEquals("unique client", createUpdate.client());
+        assertEquals("unique player", createUpdate.player().name());
     }
 
     @Test
@@ -223,15 +237,6 @@ public class PlayerEventHandlerTest {
         var store = GameStore.builder().players(players).build();
         var update = processJoin("", event, store);
         assertTrue(update instanceof ErrorUpdate);
-    }
-
-    @Test
-    void test_processJoin_uniquePlayer_returnsPlayerWithCorrectName() {
-        var event = joinEvent("player1");
-        var createUpdate =
-            (CreatePlayer) processJoin("client1", event, new GameStore());
-        assertEquals("client1", createUpdate.client());
-        assertEquals("player1", createUpdate.player().name());
     }
 
     @Test
@@ -278,6 +283,52 @@ public class PlayerEventHandlerTest {
 
         var update = processJoin("", event, new GameStore());
         assertTrue(update instanceof ErrorUpdate);
+    }
+
+    void assertAbovePlatform(PlayerStore player, GamePlatform platform) {
+        assertEquals(
+            platform.y() - PlayerStore.SPAWN_HEIGHT,
+            player.yPosition(),
+            "Player is above platform"
+        );
+
+        int middleOfPlatform = 
+            platform.x() + ((platform.width() - PlayerStore.PLAYER_WIDTH) / 2);
+        assertEquals(
+            middleOfPlatform, player.xPosition(),
+            "Player is in the middle of the platform"
+        );
+    }
+
+    @Test
+    void test_processJoin_onePlatform_spawnsPlayerAbovePlatform() {
+        var platform = GamePlatform.generateAtHeight(100);
+        var store = GameStore.builder()
+            .platforms(List.of(platform)).build();
+ 
+        var update = processJoin("", joinEvent("~"), store);
+        var player = ((CreateFirstPlayer) update).player();
+
+        assertAbovePlatform(player, platform);
+    }
+
+    @Test
+    void test_processJoin_manyPlatforms_choosesCentermostPlatform() {
+        int middleHeight = GameConstants.HEIGHT / 2;
+        int buffer = new Random().nextInt(-50, 50);
+
+        var goalPlatform = GamePlatform.generateAtHeight(middleHeight + buffer);
+        var platforms = List.of(
+            GamePlatform.generateAtHeight(middleHeight - 223),
+            goalPlatform,
+            GamePlatform.generateAtHeight(middleHeight + 329)
+        );
+        var store = new GameStore().platforms(platforms);
+
+        var update = processJoin("", joinEvent("~"), store);
+        var player = ((CreateFirstPlayer) update).player();
+
+        assertAbovePlatform(player, goalPlatform);
     }
 
     private GameStore testStateWithPlayer(PlayerStore player) {

@@ -9,7 +9,7 @@ import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
 import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.game.GameStore;
-import io.github.aggarcia.players.updates.PlayerUpdate;
+import io.github.aggarcia.players.updates.GameUpdate;
 
 import static io.github.aggarcia.players.PlayerEventHandler.processEvent;
 import static io.github.aggarcia.shared.Serializer.deserialize;
@@ -87,7 +87,7 @@ public class ConnectionHandler extends AbstractWebSocketHandler {
             return;
         }
         var event = message.get();
-        PlayerUpdate update = processEvent(client.getId(), event, gameStore);
+        GameUpdate update = processEvent(client.getId(), event, gameStore);
 
         update.applyTo(gameStore);
         if (!update.reply().isPresent()) {
