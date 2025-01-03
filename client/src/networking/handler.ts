@@ -16,6 +16,7 @@ import {
 } from "./formatters";
 import { SocketMessage } from "../generated/socketMessage";
 
+const MAX_NAME_LENGTH = 25;
 const MAX_HISTORY_LEN = 25;
 const ERROR_DISPLAY_TIME = 5000;
 
@@ -33,6 +34,11 @@ export function sendToServer(state: AppState, message: SocketMessageObject) {
 }
 
 export function connectToServer(state: AppState, username: string) {
+    if (username.length > MAX_NAME_LENGTH) {
+        addErrorNotification(state, "Username is too long");
+        return;
+    }
+
     clearCanvas(state.context);
     state.bytesIn = 0;
     state.messagesIn = 0;

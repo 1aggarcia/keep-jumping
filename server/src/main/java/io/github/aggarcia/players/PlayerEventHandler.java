@@ -21,6 +21,7 @@ public final class PlayerEventHandler {
     private static final int PLAYER_MOVE_SPEED = 20;
     protected static final int PLAYER_JUMP_SPEED = 40;
     protected static final int MAX_PLAYER_COUNT = 15;
+    protected static final int MAX_NAME_LENGTH = 25;
 
     private PlayerEventHandler() {}
 
@@ -120,6 +121,14 @@ public final class PlayerEventHandler {
      */
     public static PlayerUpdate
     processJoin(String client, JoinEvent event, GameStore store) {
+        String name = event.getName();
+        if (name.isEmpty()) {
+            return ErrorUpdate.fromText("Username cannot be blank");
+        }
+        if (name.length() > MAX_NAME_LENGTH) {
+            return ErrorUpdate.fromText("Username is too long");
+        }
+
         var players = store.players();
         if (players.size() >= MAX_PLAYER_COUNT) {
             return ErrorUpdate
@@ -130,7 +139,6 @@ public final class PlayerEventHandler {
                 .fromText("Client is already playing: " + client);
         }
 
-        String name = event.getName();
         boolean isUsernameTaken = players
             .values()
             .stream()

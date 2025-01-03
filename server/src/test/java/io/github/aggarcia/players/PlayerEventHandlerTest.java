@@ -21,6 +21,7 @@ import io.github.aggarcia.players.updates.UpdateVelocity;
 
 import static io.github.aggarcia.players.PlayerEventHandler.processEvent;
 import static io.github.aggarcia.players.PlayerEventHandler.processJoin;
+import static io.github.aggarcia.players.PlayerEventHandler.MAX_NAME_LENGTH;
 import static io.github.aggarcia.players.PlayerEventHandler.processControlChange;;
 
 public class PlayerEventHandlerTest {
@@ -187,7 +188,7 @@ public class PlayerEventHandlerTest {
 
     @Test
     void test_processJoin_firstPlayer_returnsIsFirstPlayerTrue() {
-        var event = joinEvent("");
+        var event = joinEvent("~");
         var createUpdate =
             (CreatePlayer) processJoin("", event, new GameStore());
         assertTrue(createUpdate.isFirstPlayer());
@@ -195,7 +196,7 @@ public class PlayerEventHandlerTest {
 
     @Test
     void test_processJoin_manyPlayers_returnsIsFirstPlayerFalse() {
-        var event = joinEvent("");
+        var event = joinEvent("~");
 
         Map<String, PlayerStore> players = new HashMap<>();
         // create one less than the limit, so there's room for one more player
@@ -260,6 +261,22 @@ public class PlayerEventHandlerTest {
         var store = testStateWithPlayer(player);
 
         var update = processJoin("", event, store);
+        assertTrue(update instanceof ErrorUpdate);
+    }
+
+    @Test
+    void test_processJoin_emptyName_returnsError() {
+        var event = joinEvent("");
+        var update = processJoin("client", event, new GameStore());
+        assertTrue(update instanceof ErrorUpdate);
+    }
+
+    @Test
+    void test_processJoin_nameTooLong_returnsError() {
+        String longName = "*".repeat(MAX_NAME_LENGTH + 1);
+        var event = joinEvent(longName);
+
+        var update = processJoin("", event, new GameStore());
         assertTrue(update instanceof ErrorUpdate);
     }
 
