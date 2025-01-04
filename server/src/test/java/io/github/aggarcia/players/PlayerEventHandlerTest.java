@@ -6,11 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.aggarcia.game.GameConstants;
 import io.github.aggarcia.game.GameStore;
 import io.github.aggarcia.generated.SocketMessageOuterClass.ControlChangeEvent;
 import io.github.aggarcia.generated.SocketMessageOuterClass.JoinEvent;
@@ -24,6 +22,7 @@ import io.github.aggarcia.players.updates.UpdateVelocity;
 
 import static io.github.aggarcia.players.PlayerEventHandler.processEvent;
 import static io.github.aggarcia.players.PlayerEventHandler.processJoin;
+import static io.github.aggarcia.players.PlayerStore.SPAWN_HEIGHT;
 import static io.github.aggarcia.players.PlayerEventHandler.MAX_NAME_LENGTH;
 import static io.github.aggarcia.players.PlayerEventHandler.processControlChange;;
 
@@ -285,15 +284,29 @@ public class PlayerEventHandlerTest {
         assertTrue(update instanceof ErrorUpdate);
     }
 
-    void assertAbovePlatform(PlayerStore player, GamePlatform platform) {
+    /** 
+     * helper for next 3 tests.
+     * target should be a reference to one of the options
+      */
+    void assertSpawnsPlayerAbovePlatform(
+        List<GamePlatform> options, GamePlatform target
+    ) {
+        if (!options.contains(target)) {
+            throw new IllegalArgumentException(
+                "options list does not contain target");
+        }
+        var store = new GameStore().platforms(options);
+        var update = processJoin("", joinEvent("~"), store);
+        var player = ((CreateFirstPlayer) update).player();
+
         assertEquals(
-            platform.y() - PlayerStore.SPAWN_HEIGHT,
+            target.y() - PlayerStore.SPAWN_HEIGHT,
             player.yPosition(),
             "Player is above platform"
         );
 
         int middleOfPlatform = 
-            platform.x() + ((platform.width() - PlayerStore.PLAYER_WIDTH) / 2);
+            target.x() + ((target.width() - PlayerStore.PLAYER_WIDTH) / 2);
         assertEquals(
             middleOfPlatform, player.xPosition(),
             "Player is in the middle of the platform"
@@ -303,32 +316,31 @@ public class PlayerEventHandlerTest {
     @Test
     void test_processJoin_onePlatform_spawnsPlayerAbovePlatform() {
         var platform = GamePlatform.generateAtHeight(100);
-        var store = GameStore.builder()
-            .platforms(List.of(platform)).build();
- 
-        var update = processJoin("", joinEvent("~"), store);
-        var player = ((CreateFirstPlayer) update).player();
-
-        assertAbovePlatform(player, platform);
+        assertSpawnsPlayerAbovePlatform(List.of(platform), platform);
     }
 
     @Test
-    void test_processJoin_manyPlatforms_choosesCentermostPlatform() {
-        int middleHeight = GameConstants.HEIGHT / 2;
-        int buffer = new Random().nextInt(-50, 50);
-
-        var goalPlatform = GamePlatform.generateAtHeight(middleHeight + buffer);
+    void test_processJoin_manyPlatforms_choosesHighPlatform() {
+        var goalPlatform = GamePlatform.generateAtHeight(SPAWN_HEIGHT);
         var platforms = List.of(
-            GamePlatform.generateAtHeight(middleHeight - 223),
+            GamePlatform.generateAtHeight(500),
             goalPlatform,
-            GamePlatform.generateAtHeight(middleHeight + 329)
+            GamePlatform.generateAtHeight(300)
         );
-        var store = new GameStore().platforms(platforms);
+        assertSpawnsPlayerAbovePlatform(platforms, goalPlatform);
+    }
 
-        var update = processJoin("", joinEvent("~"), store);
-        var player = ((CreateFirstPlayer) update).player();
-
-        assertAbovePlatform(player, goalPlatform);
+    @Test
+    void test_processJoin_platformAtScreenHeight_choosesPlatformBelowScreen() {
+        var goalPlatform = GamePlatform.generateAtHeight(400);
+        var platforms = List.of(
+            goalPlatform,
+            GamePlatform.generateAtHeight(500),
+            // these platforms are too high to spawn a player
+            GamePlatform.generateAtHeight(SPAWN_HEIGHT - 1),
+            GamePlatform.generateAtHeight(0)
+        );
+        assertSpawnsPlayerAbovePlatform(platforms, goalPlatform);
     }
 
     private GameStore testStateWithPlayer(PlayerStore player) {

@@ -3,7 +3,6 @@ package io.github.aggarcia.players;
 import java.util.HashSet;
 import java.util.List;
 
-import io.github.aggarcia.game.GameConstants;
 import io.github.aggarcia.game.GameEventHandler;
 import io.github.aggarcia.game.GameStore;
 import io.github.aggarcia.generated.SocketMessageOuterClass.ControlChangeEvent;
@@ -16,6 +15,7 @@ import io.github.aggarcia.players.updates.CreatePlayer;
 import io.github.aggarcia.players.updates.ErrorUpdate;
 import io.github.aggarcia.players.updates.GameUpdate;
 import io.github.aggarcia.players.updates.UpdateVelocity;
+import static io.github.aggarcia.players.PlayerStore.SPAWN_HEIGHT;
 
 /**
  * Collection of (static) pure functions which determine how to update game
@@ -165,9 +165,10 @@ public final class PlayerEventHandler {
     }
 
     /**
-     * Choose the platform that is closest to the center of the game.
+     * Choose the platform that is closest to the top of the screen, but
+     * leaving some room above to spawn a player.
      * @param platforms there must be at least one platform
-     * @return platform closest to <code>GameConstants.HEIGHT / 2</code>
+     * @return platform with y closest to but not smaller than SPAWN_HEIGHT
      */
     private static GamePlatform choosePlatformForPlayer(
         List<GamePlatform> platforms
@@ -175,18 +176,18 @@ public final class PlayerEventHandler {
         if (platforms.isEmpty()) {
             throw new IllegalArgumentException("No platforms to choose from");
         }
-        int idealYPosition = GameConstants.HEIGHT / 2;
-
-        GamePlatform choice = platforms.get(0);
-        // minimize by absolute difference to the center
-        for (var platform : platforms) {
-            if (
-                Math.abs(platform.y() - idealYPosition)
-                < Math.abs(choice.y() - idealYPosition)
-            ) {
-                choice = platform;
-            }
-        }
-        return choice;
+        // minimize by y with lower bound of SPAWN_HEIGHT
+        return platforms
+            .stream()
+            .reduce((old, curr) -> {
+                if (old.y() <= curr.y()) {
+                    return old;
+                }
+                if (curr.y() < SPAWN_HEIGHT) {
+                    return old;
+                }
+                return curr;
+            })
+            .get();
     }
 }

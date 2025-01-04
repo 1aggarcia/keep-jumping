@@ -127,9 +127,7 @@ function onServerClose(state: AppState) {
     state.connectedStatus = "CLOSED";
     networkElements.messagesBox.empty();
     networkElements.connectedBox.hide();
-    networkElements.joinForm
-        .trigger("reset")
-        .show();
+    networkElements.joinForm.show();
 
     subscribeButtonsToCursor(state, []);
     rerender(state);
