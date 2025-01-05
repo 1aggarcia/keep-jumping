@@ -6,7 +6,8 @@
 
 syntax = "proto3";
 
-option java_package = "io.github.aggarcia.generated";
+option java_package = "io.github.aggarcia.messages";
+option java_outer_classname = "Generated";
 
 message SocketMessage {
     oneof payload {

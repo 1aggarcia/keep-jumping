@@ -8,9 +8,9 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
-import io.github.aggarcia.game.GameLoop;
-import io.github.aggarcia.game.GameStore;
-import io.github.aggarcia.networking.ConnectionHandler;
+import io.github.aggarcia.clients.ClientHandler;
+import io.github.aggarcia.engine.GameLoop;
+import io.github.aggarcia.models.GameStore;
 
 @SpringBootApplication
 @EnableWebSocket
@@ -30,8 +30,8 @@ public class App implements WebSocketConfigurer {
     }
 
     @Bean
-    public ConnectionHandler connectionHandler() {
-        return new ConnectionHandler(store);
+    public ClientHandler connectionHandler() {
+        return new ClientHandler(store);
     }
 
     @Bean
