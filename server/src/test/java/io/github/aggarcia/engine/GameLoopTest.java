@@ -1,5 +1,6 @@
 package io.github.aggarcia.engine;
 
+import static io.github.aggarcia.engine.GameConstants.INIT_PLATFORM_GRAVITY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -11,7 +12,7 @@ import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.socket.WebSocketSession;
 
-import io.github.aggarcia.engine.GameLoop;
+import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.models.GameStore;
 import io.github.aggarcia.models.PlayerStore;
 
@@ -195,6 +196,29 @@ public class GameLoopTest {
         gameLoop.start();
         gameLoop.forceQuit();
         assertEquals(0, store.sessions().size());
+    }
+
+    @Test
+    void test_start_secondTime_resetsTimeAndPlatformGravity() throws Exception {
+        var store = new GameStore();
+        var loop = new GameLoop(store);
+
+        loop.start();
+        loop.forceQuit();
+
+        // Simulate long running game
+        store.tickCount(1 + RandomUtil.getPositiveInt());
+        store.gameAgeSeconds(1 + RandomUtil.getPositiveInt());
+        store.platformGravity(
+            INIT_PLATFORM_GRAVITY + RandomUtil.getPositiveInt());
+
+        loop.start();
+        loop.forceQuit();
+
+        assertEquals(0, store.tickCount());
+        assertEquals(0, store.gameAgeSeconds());
+        assertEquals(INIT_PLATFORM_GRAVITY, store.platformGravity());
+
     }
 
     private Set<WebSocketSession> getSessions() {

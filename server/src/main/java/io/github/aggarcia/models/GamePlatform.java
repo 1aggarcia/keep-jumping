@@ -13,7 +13,6 @@ public record GamePlatform(
     int y
 ) {
     // public for Player access
-    public static final int PLATFORM_GRAVITY = 5;
     protected static final int MIN_WIDTH = 300;
     protected static final int MAX_WIDTH = 600;
 
@@ -34,9 +33,9 @@ public record GamePlatform(
     }
 
     /**
-     * @return a new platform moved downwards a constant amount
+     * @return a new platform moved downwards by <code>gravity</code>
      */
-    public GamePlatform toNextTick() {
-        return new GamePlatform(this.width, this.x, this.y + PLATFORM_GRAVITY);
+    public GamePlatform toNextTick(int gravity) {
+        return new GamePlatform(this.width, this.x, this.y + gravity);
     }
 }

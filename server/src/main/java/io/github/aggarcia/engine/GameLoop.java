@@ -10,6 +10,7 @@ import io.github.aggarcia.messages.Generated.SocketMessage;
 import io.github.aggarcia.models.GamePlatform;
 import io.github.aggarcia.models.GameStore;
 
+import static io.github.aggarcia.engine.GameConstants.INIT_PLATFORM_GRAVITY;
 import static io.github.aggarcia.engine.TickProcessor.advanceToNextTick;
 import static io.github.aggarcia.engine.TickProcessor.createGamePing;
 import static io.github.aggarcia.messages.Serializer.serialize;
@@ -154,7 +155,9 @@ public class GameLoop {
      * Internal thread function for the game loop.
      */
     private void runGameLoop() {
-        int gameAgeSeconds = 0;
+        gameStore.tickCount(0);
+        gameStore.gameAgeSeconds(0);
+        gameStore.platformGravity(INIT_PLATFORM_GRAVITY);
         final var players = gameStore.players();
         final var sessions = gameStore.sessions();
 
@@ -170,19 +173,15 @@ public class GameLoop {
         while (
             players.size() > 0
             && sessions.size() > 0
-            && gameAgeSeconds < this.maxTimeSeconds
+            && gameStore.gameAgeSeconds() < this.maxTimeSeconds
         ) {
             var response = advanceToNextTick(gameStore);
-            gameStore.tickCount(response.nextTickCount());
             this.gameStore.platforms(response.nextPlatformsState());
             if (TickProcessor.shouldSpawnPlatform(gameStore.platforms())) {
                 gameStore.platforms().add(GamePlatform.generateAtHeight(0));
             }
-            if (gameStore.tickCount() == 0) {
-                gameAgeSeconds++;
-            }
             if (response.isUpdateNeeded()) {
-                var update = createGamePing(gameStore, gameAgeSeconds);
+                var update = createGamePing(gameStore);
                 broadcast(sessions, update);
             }
             try {

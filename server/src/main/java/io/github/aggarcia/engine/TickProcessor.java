@@ -1,5 +1,8 @@
 package io.github.aggarcia.engine;
 
+import static io.github.aggarcia.engine.GameConstants.LEVELUP_PLATFORM_GRAVITY;
+import static io.github.aggarcia.engine.GameConstants.PLATFORM_SPEEDUP_INTERVAL;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,45 +22,45 @@ public final class TickProcessor {
 
     protected static final int MIN_PLATFORM_SPACING = 100;
     protected static final int MAX_PLATFORM_SPACING = 350;
-    // protected static final int INIT_PLATFORM_SPACING = 175;
 
     /** Response produced by advancing the game tick. */
     public record TickResponse(
         boolean isUpdateNeeded,
-        List<GamePlatform> nextPlatformsState,
-        int nextTickCount
+        List<GamePlatform> nextPlatformsState
     ) {}
 
     private TickProcessor() {}
 
     /**
-     * Move all players to thier position in the next tick.
-     * @param store
-     * @returns response with isUpdatedNeeded flag and nextTickCount
+     * Move all players and platforms to their position in the next tick.
+     * Update the tickCount and gameAgeSeconds fields in the GameStore
+     * @param store to be updated
+     * @returns response with isUpdatedNeeded flag and nextPlatformsState.
      */
     public static TickResponse advanceToNextTick(GameStore store) {
-        boolean isUpdateNeeded = true;
+        // handle time
         int nextTickCount = (store.tickCount() + 1) % TICKS_PER_SECOND;
-        List<GamePlatform> nextPlatformsState = new ArrayList<>();
-        // TODO: consider removing `isUpdateNeeded`
-        // given that platforms always move, `isUpdateNeeded` is always true
+        store.tickCount(nextTickCount);
+        if (nextTickCount == 0) {
+            addOneSecond(store);
+        }
 
-        //if (nextTickCount == 0) {
-        //    isUpdateNeeded = true;  // update needed to refresh the server age
-        //}
+        // handle platforms
+        List<GamePlatform> nextPlatformsState = new ArrayList<>();
         for (GamePlatform platform : store.platforms()) {
-            var nextPlatform = platform.toNextTick();
+            var nextPlatform = platform.toNextTick(store.platformGravity());
             // to "delete" platforms that fall below the ground
             if (nextPlatform.y() <= GameConstants.HEIGHT) {
                 nextPlatformsState.add(nextPlatform);
             }
         }
+
+        // handle players
         // make a copy since we are modifying the original
         var playersCopy = new ArrayList<PlayerStore>(store.players().values());
         for (PlayerStore player : playersCopy) {
-            player.moveToNextTick(nextPlatformsState);
+            player.moveToNextTick(nextPlatformsState, store.platformGravity());
             if (player.hasChanged()) {
-                // isUpdateNeeded = true;
                 player.hasChanged(false);
             }
             if (
@@ -73,20 +76,30 @@ public final class TickProcessor {
             }
         }
 
-        return new TickResponse(
-            isUpdateNeeded,
-            nextPlatformsState,
-            nextTickCount
-        );
+        // TODO: remove boolean arg
+        return new TickResponse(true, nextPlatformsState);
+    }
+
+    /**
+     * Add one second to the game store, update platform gravity if necessary.
+     * @param store
+     */
+    private static void addOneSecond(GameStore store) {
+        int newAge = store.gameAgeSeconds() + 1;
+        store.gameAgeSeconds(newAge);
+        if (newAge % PLATFORM_SPEEDUP_INTERVAL == 0) {
+            System.out.println("Advancing to next level");
+            store.platformGravity(
+                store.platformGravity() + LEVELUP_PLATFORM_GRAVITY);
+        }
     }
 
      /**
      * Create a GamePing message based on the current state of the GameStore.
      * @param store
-     * @param gameAge game loop age in seconds
      * @return GamePing message
      */
-    public static SocketMessage createGamePing(GameStore store, int gameAge) {
+    public static SocketMessage createGamePing(GameStore store) {
         List<Player> players = store.players().values()
             .stream()
             .map(p -> Player.newBuilder()
@@ -110,7 +123,7 @@ public final class TickProcessor {
             .toList();
 
         var ping = GamePing.newBuilder()
-            .setServerAge(gameAge)
+            .setServerAge(store.gameAgeSeconds())
             .addAllPlayers(players)
             .addAllPlatforms(platforms)
             .build();

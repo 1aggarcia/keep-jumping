@@ -12,6 +12,7 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
+import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.engine.TickProcessor.TickResponse;
 import io.github.aggarcia.messages.Generated.GamePing;
 import io.github.aggarcia.messages.Generated.Platform;
@@ -21,6 +22,11 @@ import io.github.aggarcia.messages.Generated.SocketMessage.PayloadCase;
 import io.github.aggarcia.models.GamePlatform;
 import io.github.aggarcia.models.GameStore;
 import io.github.aggarcia.models.PlayerStore;
+import static io.github.aggarcia.engine.GameConstants.INIT_PLATFORM_GRAVITY;
+import static io.github.aggarcia.engine.GameConstants.LEVELUP_PLATFORM_GRAVITY;
+import static io.github.aggarcia.engine.GameConstants.PLATFORM_SPEEDUP_INTERVAL;
+import static io.github.aggarcia.engine.TickProcessor.TICKS_PER_SECOND;
+import static io.github.aggarcia.engine.TickProcessor.advanceToNextTick;
 
 public class TickProcessorTest {
     static final int RANDOM_TRIALS = 1000;
@@ -29,9 +35,10 @@ public class TickProcessorTest {
     // no purpose (for now)
 
     @Test
-    void test_advanceToNextTick_tickCountZero_returnsTickCountOne() {
-        var response = advanceTickWithTickCount(0);
-        assertEquals(1, response.nextTickCount());
+    void test_advanceToNextTick_tickCountZero_setTickCountToOne() {
+        var store = new GameStore().tickCount(0);
+        advanceToNextTick(store);
+        assertEquals(1, store.tickCount());
     }
 
     // @Test
@@ -41,11 +48,47 @@ public class TickProcessorTest {
     // }
 
     @Test
-    void test_advanceToNextTick_maxTickCount_returnsZeroTickCount() {
-        var response = advanceTickWithTickCount(
-            TickProcessor.TICKS_PER_SECOND - 1
+    void test_advanceToNextTick_maxTickCount_setsTickCountToZero() {
+        var store = new GameStore()
+            .tickCount(TickProcessor.TICKS_PER_SECOND - 1);
+        advanceToNextTick(store);
+        assertEquals(0, store.tickCount());
+    }
+
+    @Test
+    void test_advanceToNextTick_maxTickCount_incrementsAge() {
+        var store = new GameStore()
+            .tickCount(TICKS_PER_SECOND - 1)
+            .gameAgeSeconds(0);
+        advanceToNextTick(store);
+        assertEquals(1, store.gameAgeSeconds());
+    }
+
+    @Test
+    void test_advanceToNextTick_gameAgeAtNextLevel_increasesPlatformGravity() {
+        int initGravity = RandomUtil.getPositiveInt();
+        var store = new GameStore()
+            .tickCount(TICKS_PER_SECOND - 1)
+            .gameAgeSeconds(PLATFORM_SPEEDUP_INTERVAL - 1)
+            .platformGravity(initGravity);
+
+        advanceToNextTick(store);
+        assertEquals(
+            store.platformGravity(),
+            initGravity + LEVELUP_PLATFORM_GRAVITY
         );
-        assertEquals(0, response.nextTickCount());
+    }
+
+    @Test
+    void test_advanceToNextTick_ticksNotAtNextLevel_doesNotChangeGraivty() {
+        int initGravity = RandomUtil.getPositiveInt();
+        var store = new GameStore()
+            .tickCount(TICKS_PER_SECOND - 2)
+            .gameAgeSeconds(PLATFORM_SPEEDUP_INTERVAL - 1)
+            .platformGravity(initGravity);
+
+        advanceToNextTick(store);
+        assertEquals(store.platformGravity(), initGravity);
     }
 
     // @Test
@@ -137,7 +180,7 @@ public class TickProcessorTest {
         var store = new GameStore();
         store.players().put("", player1);
 
-        TickProcessor.advanceToNextTick(store);
+        advanceToNextTick(store);
         assertTrue(store.players().isEmpty());
     }
 
@@ -146,7 +189,7 @@ public class TickProcessorTest {
         List<GamePlatform> platforms = new ArrayList<>();
         platforms.add(new GamePlatform(0, 0, 0));
 
-        var expected = platforms.get(0).toNextTick();
+        var expected = platforms.get(0).toNextTick(INIT_PLATFORM_GRAVITY);
         var nextPlatformsState = advanceTickWithPlatforms(platforms).nextPlatformsState();
         assertEquals(1, nextPlatformsState.size());
         assertEquals(expected, nextPlatformsState.get(0));
@@ -172,8 +215,8 @@ public class TickProcessorTest {
             .tickCount(-1)
             .build();
 
-        var result = TickProcessor.advanceToNextTick(store);
-        assertEquals(0, result.nextTickCount());
+        advanceToNextTick(store);
+        assertEquals(0, store.tickCount());
         assertEquals(
             TickProcessor.SCORE_PER_SECOND, players.get("1").score());
         assertEquals(
@@ -191,8 +234,8 @@ public class TickProcessorTest {
             .tickCount(0)
             .build();
 
-        var result = TickProcessor.advanceToNextTick(store);
-        assertEquals(1, result.nextTickCount());
+        advanceToNextTick(store);
+        assertEquals(1, store.tickCount());
         assertEquals(0, players.get("1").score());
         assertEquals(0, players.get("2").score());
     }
@@ -213,17 +256,17 @@ public class TickProcessorTest {
             .build();
 
         // modifies player
-        TickProcessor.advanceToNextTick(store);
+        advanceToNextTick(store);
 
         assertEquals(100, testPlayer.xPosition());
         assertEquals(50, testPlayer.xVelocity());
-        assertEquals(50 + GamePlatform.PLATFORM_GRAVITY, testPlayer.yPosition());
-        assertEquals(GamePlatform.PLATFORM_GRAVITY, testPlayer.yVelocity());
+        assertEquals(50 + INIT_PLATFORM_GRAVITY, testPlayer.yPosition());
+        assertEquals(INIT_PLATFORM_GRAVITY, testPlayer.yVelocity());
     }
 
     @Test
     void test_createGamePing_minimalStore_returnsPingSocketMessage() {
-        SocketMessage ping = createGamePing(new GameStore(), 0);
+        SocketMessage ping = createGamePing(new GameStore());
         assertTrue(ping.hasGamePing());
         assertEquals(PayloadCase.GAMEPING, ping.getPayloadCase());
     }
@@ -231,9 +274,9 @@ public class TickProcessorTest {
     @Test
     void test_createGamePing_minimalStore_returnsCorrectPing() {
         var store = new GameStore();
-        GamePing ping = createGamePing(store, 15).getGamePing();
+        GamePing ping = createGamePing(store).getGamePing();
 
-        assertEquals(15, ping.getServerAge());
+        assertEquals(0, ping.getServerAge());
         assertEquals(0, ping.getPlayersCount());
         assertEquals(0, ping.getPlatformsCount());
     }
@@ -242,14 +285,15 @@ public class TickProcessorTest {
     void test_createGamePing_storeWithManyValues_returnsCorrectPing() {
         var players = createTestPlayers();
         var platform = GamePlatform.generateAtHeight(0);
+        int age = RandomUtil.getPositiveInt();
         var store = GameStore.builder()
+            .gameAgeSeconds(age)
             .players(players)
             .platforms(List.of(platform))
             .build();
         
-        GamePing ping = createGamePing(store, 5).getGamePing();
-
-        assertEquals(5, ping.getServerAge());
+        GamePing ping = createGamePing(store).getGamePing();
+        assertEquals(age, ping.getServerAge());
 
         List<Player> playersList = players.values().stream()
             .map(p -> Player.newBuilder()
@@ -317,19 +361,15 @@ public class TickProcessorTest {
 
 
     // Helpers for common test patterns
-
-    private TickResponse advanceTickWithTickCount(int tickCount) {
-        var store = new GameStore().tickCount(tickCount);
-        return TickProcessor.advanceToNextTick(store);
-    }
-
     private TickResponse advanceTickWithPlayers(Map<String, PlayerStore> players) {
         var store = GameStore.builder().players(players).build();
-        return TickProcessor.advanceToNextTick(store);
+        return advanceToNextTick(store);
     }
 
     private TickResponse advanceTickWithPlatforms(List<GamePlatform> platforms) {
-        var store = new GameStore().platforms(platforms);
-        return TickProcessor.advanceToNextTick(store);
+        var store = new GameStore()
+            .platforms(platforms)
+            .platformGravity(GameConstants.INIT_PLATFORM_GRAVITY);
+        return advanceToNextTick(store);
     }
 }

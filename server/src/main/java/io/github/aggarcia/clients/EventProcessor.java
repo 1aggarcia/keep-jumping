@@ -108,7 +108,7 @@ public final class EventProcessor {
         // not great since this allows mid-air jumping
         boolean canJump = (
             0 <= oldYVelocity
-            && oldYVelocity < (2 * GamePlatform.PLATFORM_GRAVITY)
+            && oldYVelocity < (2 * store.platformGravity())
         );
         if (isPressingUp && canJump) {
             newYVelocity = -PLAYER_JUMP_SPEED;

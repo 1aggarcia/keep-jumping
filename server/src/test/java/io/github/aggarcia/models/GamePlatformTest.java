@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.engine.GameConstants;
 
 @SpringBootTest
@@ -49,11 +50,12 @@ public class GamePlatformTest {
     }
 
     @Test
-    void test_toNextTick_zeroedValues_onlyChangesY() {
+    void test_toNextTick_zeroedValues_changesYByGravity() {
         var origin = new GamePlatform(0, 0, 0);
-        var nextPlatform = origin.toNextTick();
+        int gravity = RandomUtil.getPositiveInt();
+        var nextPlatform = origin.toNextTick(gravity);
         
-        var expected = new GamePlatform(0, 0, GamePlatform.PLATFORM_GRAVITY);
+        var expected = new GamePlatform(0, 0, gravity);
         assertEquals(expected, nextPlatform);
     }
 }

@@ -25,11 +25,12 @@ import static io.github.aggarcia.clients.EventProcessor.MAX_NAME_LENGTH;
 import static io.github.aggarcia.clients.EventProcessor.processControlChange;
 import static io.github.aggarcia.clients.EventProcessor.processEvent;
 import static io.github.aggarcia.clients.EventProcessor.processJoin;
+import static io.github.aggarcia.engine.GameConstants.INIT_PLATFORM_GRAVITY;
 import static io.github.aggarcia.models.PlayerStore.SPAWN_HEIGHT;;
 
 public class EventProcessorTest {
     // players cannot jump if they are falling faster than this speed
-    static final int Y_VELOCITY_JUMP_CUTOFF = (2 * GamePlatform.PLATFORM_GRAVITY) - 1;
+    static final int Y_VELOCITY_JUMP_CUTOFF = (2 * INIT_PLATFORM_GRAVITY) - 1;
 
     @Test
     void test_processEvent_playerJoinUpdate_returnsName() {
@@ -350,6 +351,7 @@ public class EventProcessorTest {
 
         return GameStore.builder()
             .players(players)
+            .platformGravity(INIT_PLATFORM_GRAVITY)
             .build();
     }
 

@@ -10,6 +10,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.engine.GameConstants;
 
 @SpringBootTest
@@ -237,14 +238,16 @@ public class PlayerStoreTest {
     }
 
     @Test
-    void test_moveToNextTick_onTopOfPlatform_doesNothing() {
+    void test_moveToNextTick_onTopOfPlatform_setsYToPlatformGravity() {
+        int platformGravity = RandomUtil.getPositiveInt();
         PlayerStore testPlayer = testCollisionPlayer.clone();
-        testPlayer.moveToNextTick(List.of(testCollisionPlatform));
-
+        testPlayer.moveToNextTick(
+            List.of(testCollisionPlatform), platformGravity
+        );
         assertEquals(200, testPlayer.xPosition());
         assertEquals(200, testPlayer.yPosition());
         assertEquals(0, testPlayer.xVelocity());
-        assertEquals(GamePlatform.PLATFORM_GRAVITY, testPlayer.yVelocity());
+        assertEquals(platformGravity, testPlayer.yVelocity());
         assertTrue(testPlayer.hasChanged());
     }
 
@@ -253,8 +256,9 @@ public class PlayerStoreTest {
         PlayerStore testPlayer = testCollisionPlayer.clone(); 
 
         // crosses the player on the X axis but not the Y axis
-        testPlayer.moveToNextTick(List.of(testCollisionPlatformX));
-
+        testPlayer.moveToNextTick(
+            List.of(testCollisionPlatformX), RandomUtil.getPositiveInt()
+        );
         assertEquals(200, testPlayer.xPosition());
         assertEquals(200 + PlayerStore.GRAVITY, testPlayer.yPosition());
         assertEquals(0, testPlayer.xVelocity());
@@ -266,8 +270,9 @@ public class PlayerStoreTest {
         PlayerStore testPlayer = testCollisionPlayer.clone();
 
         // crosses the player on the Y axis but not the X axis
-        testPlayer.moveToNextTick(List.of(testCollisionPlatformY));
-
+        testPlayer.moveToNextTick(
+            List.of(testCollisionPlatformY), RandomUtil.getPositiveInt()
+        );
         assertEquals(200, testPlayer.xPosition());
         assertEquals(200 + PlayerStore.GRAVITY, testPlayer.yPosition());
         assertEquals(0, testPlayer.xVelocity());
@@ -283,7 +288,7 @@ public class PlayerStoreTest {
             testCollisionPlatformY,
             testCollisionPlatformX
         );
-        testPlayer.moveToNextTick(platforms);
+        testPlayer.moveToNextTick(platforms, RandomUtil.getPositiveInt());
 
         assertEquals(200, testPlayer.xPosition());
         assertEquals(200 + PlayerStore.GRAVITY, testPlayer.yPosition());
@@ -300,12 +305,13 @@ public class PlayerStoreTest {
             testCollisionPlatformY,
             testCollisionPlatform
         );
-        testPlayer.moveToNextTick(platforms);
+        int gravity = RandomUtil.getPositiveInt();
+        testPlayer.moveToNextTick(platforms, gravity);
 
         assertEquals(200, testPlayer.xPosition());
         assertEquals(200, testPlayer.yPosition());
         assertEquals(0, testPlayer.xVelocity());
-        assertEquals(GamePlatform.PLATFORM_GRAVITY, testPlayer.yVelocity());
+        assertEquals(gravity, testPlayer.yVelocity());
     }
 
     @Test

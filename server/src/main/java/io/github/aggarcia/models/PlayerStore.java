@@ -132,7 +132,7 @@ public final class PlayerStore {
      * @see PlayerStore#moveToNextTick(Collection)
      */
     public PlayerStore moveToNextTick() {
-        return this.moveToNextTick(Collections.emptyList());
+        return this.moveToNextTick(Collections.emptyList(), 0);
     }
 
     /**
@@ -141,10 +141,13 @@ public final class PlayerStore {
      * touching the ground.
      *
      * @param platforms collidable blocks that the player should not touch
+     * @param platformGravity gravity to apply to the platforms
      * @return reference to the same object
      */
-    public synchronized PlayerStore
-    moveToNextTick(Collection<GamePlatform> platforms) {
+    public synchronized PlayerStore moveToNextTick(
+        Collection<GamePlatform> platforms,
+        int platformGravity
+    ) {
         /*
          * newX = oldX + xVelocity
          * newY = oldY + yVelocity
@@ -188,7 +191,7 @@ public final class PlayerStore {
         for (var platform : platforms) {
             if (isTouchingPlatform(platform) && this.yVelocity > 0) {
                 this.yPosition = platform.y() - PLAYER_HEIGHT;
-                this.yVelocity = GamePlatform.PLATFORM_GRAVITY;
+                this.yVelocity = platformGravity;
             }
         }
         return this;

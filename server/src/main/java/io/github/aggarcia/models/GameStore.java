@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.springframework.web.socket.WebSocketSession;
 
+import io.github.aggarcia.engine.GameConstants;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -41,7 +42,13 @@ public class GameStore {
         Collections.synchronizedList(new ArrayList<>());
 
     @Builder.Default
+    private int gameAgeSeconds = 0;
+
+    @Builder.Default
     private int tickCount = 0;
+
+    @Builder.Default
+    private int platformGravity = GameConstants.INIT_PLATFORM_GRAVITY;
 
     /**
      * Callback function to run when the game is started.
