@@ -12,11 +12,16 @@
     </canvas>
 
     <section id="game-overlay">
-      <form onsubmit="return false" id="join-form">
+      <form onsubmit="return false" id="join-form" class="inactive-overlay">
         <input type="text" name="name" placeholder="Enter username" />
         <button type="submit">Connect</button>
       </form>
-      <p id="vite-mode" class="secondary-text"></p>
+      <div style="bottom: 0; position: fixed; text-align: center;">
+        <a class="inactive-overlay" href="https://github.com/1aggarcia/websocket-game">
+          Source Code
+        </a>
+        <p id="vite-mode" class="secondary-text"></p>
+      </div>
     </section>
 
     <!-- should only be shown if connection is open-->

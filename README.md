@@ -14,7 +14,7 @@ Developed with [pnpm](https://pnpm.io/) but should work fine with npm, which com
 
 ### Server:
 
-You should be able to run the server in your IDE, but this is possible from the command line:
+ It is easiest to run the project from your IDE, but it can be run from the command line:
 
 `cd java-server`
 

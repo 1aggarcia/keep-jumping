@@ -61,7 +61,7 @@ export function connectToServer(state: AppState, username: string) {
         renderMetadata(state);
         networkElements.errorBox.empty();
         networkElements.connectedBox.show();
-        networkElements.joinForm.hide();
+        networkElements.inactiveOverlay.hide();
 
         const disconnectButton = new Button("Disconnect")
             .positionRight()
@@ -127,7 +127,7 @@ function onServerClose(state: AppState) {
     state.connectedStatus = "CLOSED";
     networkElements.messagesBox.empty();
     networkElements.connectedBox.hide();
-    networkElements.joinForm.show();
+    networkElements.inactiveOverlay.show();
 
     subscribeButtonsToCursor(state, []);
     rerender(state);

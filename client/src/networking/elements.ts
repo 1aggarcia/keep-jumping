@@ -7,4 +7,5 @@ export const networkElements = {
     messagesBox: $("#messages-box"),
     viteMode: $("#vite-mode"),
     joinForm: $<HTMLFormElement>("#join-form"),
+    inactiveOverlay: $(".inactive-overlay"),
 };
