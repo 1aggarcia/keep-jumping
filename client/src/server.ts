@@ -99,6 +99,7 @@ export function connectToServer(state: AppState, username: string) {
 
 function onServerClose(state: AppState) {
     state.serverId = null;
+    state.server = null;
     state.connectedStatus = "CLOSED";
     gameElements.messagesBox.empty();
     gameElements.connectedBox.hide();

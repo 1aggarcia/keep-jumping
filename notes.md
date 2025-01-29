@@ -41,10 +41,10 @@
 - [x] Add gravity
 
 ## Client
-- [ ] Reduce errors for closed servers
 - [ ] Add dark mode
 - [*] Process disconnect requests / other errors
 - [*] Move all graphics inside the canvas
+- [x] Reduce errors for closed servers
 - [x] Show errors to user
 - [x] Add leaderboard rendering
 - [x] Deprecate "GameJoinUpdate" message
