@@ -535,6 +535,73 @@ export class GameOverEvent extends pb_1.Message {
         return GameOverEvent.deserialize(bytes);
     }
 }
+export class JoinReply extends pb_1.Message {
+    #one_of_decls: number[][] = [];
+    constructor(data?: any[] | {
+        serverId?: string;
+    }) {
+        super();
+        pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+        if (!Array.isArray(data) && typeof data == "object") {
+            if ("serverId" in data && data.serverId != undefined) {
+                this.serverId = data.serverId;
+            }
+        }
+    }
+    get serverId() {
+        return pb_1.Message.getFieldWithDefault(this, 1, "") as string;
+    }
+    set serverId(value: string) {
+        pb_1.Message.setField(this, 1, value);
+    }
+    static fromObject(data: {
+        serverId?: string;
+    }): JoinReply {
+        const message = new JoinReply({});
+        if (data.serverId != null) {
+            message.serverId = data.serverId;
+        }
+        return message;
+    }
+    toObject() {
+        const data: {
+            serverId?: string;
+        } = {};
+        if (this.serverId != null) {
+            data.serverId = this.serverId;
+        }
+        return data;
+    }
+    serialize(): Uint8Array;
+    serialize(w: pb_1.BinaryWriter): void;
+    serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+        const writer = w || new pb_1.BinaryWriter();
+        if (this.serverId.length)
+            writer.writeString(1, this.serverId);
+        if (!w)
+            return writer.getResultBuffer();
+    }
+    static deserialize(bytes: Uint8Array | pb_1.BinaryReader): JoinReply {
+        const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new JoinReply();
+        while (reader.nextField()) {
+            if (reader.isEndGroup())
+                break;
+            switch (reader.getFieldNumber()) {
+                case 1:
+                    message.serverId = reader.readString();
+                    break;
+                default: reader.skipField();
+            }
+        }
+        return message;
+    }
+    serializeBinary(): Uint8Array {
+        return this.serialize();
+    }
+    static deserializeBinary(bytes: Uint8Array): JoinReply {
+        return JoinReply.deserialize(bytes);
+    }
+}
 export class ErrorReply extends pb_1.Message {
     #one_of_decls: number[][] = [];
     constructor(data?: any[] | {

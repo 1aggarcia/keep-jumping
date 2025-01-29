@@ -51,6 +51,11 @@ message GameOverEvent {
 // REPLIES
 
 // server to client
+message JoinReply {
+    string serverId = 1;
+}
+
+// server to client
 message ErrorReply {
     string message = 1;
 }

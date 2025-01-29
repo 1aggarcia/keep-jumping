@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Run from the `messages` directory
+
 # Generate protobuf classes in TypeScript and Java, put them in the correct
 # places in the /client and /server directories
 

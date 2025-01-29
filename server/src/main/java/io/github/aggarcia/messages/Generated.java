@@ -4778,6 +4778,563 @@ public final class Generated {
 
   }
 
+  public interface JoinReplyOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:JoinReply)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>string serverId = 1;</code>
+     * @return The serverId.
+     */
+    java.lang.String getServerId();
+    /**
+     * <code>string serverId = 1;</code>
+     * @return The bytes for serverId.
+     */
+    com.google.protobuf.ByteString
+        getServerIdBytes();
+  }
+  /**
+   * <pre>
+   * server to client
+   * </pre>
+   *
+   * Protobuf type {@code JoinReply}
+   */
+  public static final class JoinReply extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:JoinReply)
+      JoinReplyOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use JoinReply.newBuilder() to construct.
+    private JoinReply(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private JoinReply() {
+      serverId_ = "";
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new JoinReply();
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return io.github.aggarcia.messages.Generated.internal_static_JoinReply_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return io.github.aggarcia.messages.Generated.internal_static_JoinReply_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              io.github.aggarcia.messages.Generated.JoinReply.class, io.github.aggarcia.messages.Generated.JoinReply.Builder.class);
+    }
+
+    public static final int SERVERID_FIELD_NUMBER = 1;
+    private volatile java.lang.Object serverId_;
+    /**
+     * <code>string serverId = 1;</code>
+     * @return The serverId.
+     */
+    @java.lang.Override
+    public java.lang.String getServerId() {
+      java.lang.Object ref = serverId_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        serverId_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string serverId = 1;</code>
+     * @return The bytes for serverId.
+     */
+    @java.lang.Override
+    public com.google.protobuf.ByteString
+        getServerIdBytes() {
+      java.lang.Object ref = serverId_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        serverId_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(serverId_)) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, serverId_);
+      }
+      getUnknownFields().writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!com.google.protobuf.GeneratedMessageV3.isStringEmpty(serverId_)) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, serverId_);
+      }
+      size += getUnknownFields().getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof io.github.aggarcia.messages.Generated.JoinReply)) {
+        return super.equals(obj);
+      }
+      io.github.aggarcia.messages.Generated.JoinReply other = (io.github.aggarcia.messages.Generated.JoinReply) obj;
+
+      if (!getServerId()
+          .equals(other.getServerId())) return false;
+      if (!getUnknownFields().equals(other.getUnknownFields())) return false;
+      return true;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + SERVERID_FIELD_NUMBER;
+      hash = (53 * hash) + getServerId().hashCode();
+      hash = (29 * hash) + getUnknownFields().hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static io.github.aggarcia.messages.Generated.JoinReply parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.github.aggarcia.messages.Generated.JoinReply parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.github.aggarcia.messages.Generated.JoinReply parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.github.aggarcia.messages.Generated.JoinReply parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.github.aggarcia.messages.Generated.JoinReply parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.github.aggarcia.messages.Generated.JoinReply parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static io.github.aggarcia.messages.Generated.JoinReply parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.github.aggarcia.messages.Generated.JoinReply parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.github.aggarcia.messages.Generated.JoinReply parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static io.github.aggarcia.messages.Generated.JoinReply parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static io.github.aggarcia.messages.Generated.JoinReply parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static io.github.aggarcia.messages.Generated.JoinReply parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(io.github.aggarcia.messages.Generated.JoinReply prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * <pre>
+     * server to client
+     * </pre>
+     *
+     * Protobuf type {@code JoinReply}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:JoinReply)
+        io.github.aggarcia.messages.Generated.JoinReplyOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return io.github.aggarcia.messages.Generated.internal_static_JoinReply_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return io.github.aggarcia.messages.Generated.internal_static_JoinReply_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                io.github.aggarcia.messages.Generated.JoinReply.class, io.github.aggarcia.messages.Generated.JoinReply.Builder.class);
+      }
+
+      // Construct using io.github.aggarcia.messages.Generated.JoinReply.newBuilder()
+      private Builder() {
+
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        serverId_ = "";
+
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return io.github.aggarcia.messages.Generated.internal_static_JoinReply_descriptor;
+      }
+
+      @java.lang.Override
+      public io.github.aggarcia.messages.Generated.JoinReply getDefaultInstanceForType() {
+        return io.github.aggarcia.messages.Generated.JoinReply.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public io.github.aggarcia.messages.Generated.JoinReply build() {
+        io.github.aggarcia.messages.Generated.JoinReply result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public io.github.aggarcia.messages.Generated.JoinReply buildPartial() {
+        io.github.aggarcia.messages.Generated.JoinReply result = new io.github.aggarcia.messages.Generated.JoinReply(this);
+        result.serverId_ = serverId_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof io.github.aggarcia.messages.Generated.JoinReply) {
+          return mergeFrom((io.github.aggarcia.messages.Generated.JoinReply)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(io.github.aggarcia.messages.Generated.JoinReply other) {
+        if (other == io.github.aggarcia.messages.Generated.JoinReply.getDefaultInstance()) return this;
+        if (!other.getServerId().isEmpty()) {
+          serverId_ = other.serverId_;
+          onChanged();
+        }
+        this.mergeUnknownFields(other.getUnknownFields());
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        if (extensionRegistry == null) {
+          throw new java.lang.NullPointerException();
+        }
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              case 10: {
+                serverId_ = input.readStringRequireUtf8();
+
+                break;
+              } // case 10
+              default: {
+                if (!super.parseUnknownField(input, extensionRegistry, tag)) {
+                  done = true; // was an endgroup tag
+                }
+                break;
+              } // default:
+            } // switch (tag)
+          } // while (!done)
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.unwrapIOException();
+        } finally {
+          onChanged();
+        } // finally
+        return this;
+      }
+
+      private java.lang.Object serverId_ = "";
+      /**
+       * <code>string serverId = 1;</code>
+       * @return The serverId.
+       */
+      public java.lang.String getServerId() {
+        java.lang.Object ref = serverId_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          serverId_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string serverId = 1;</code>
+       * @return The bytes for serverId.
+       */
+      public com.google.protobuf.ByteString
+          getServerIdBytes() {
+        java.lang.Object ref = serverId_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          serverId_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string serverId = 1;</code>
+       * @param value The serverId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setServerId(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        serverId_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string serverId = 1;</code>
+       * @return This builder for chaining.
+       */
+      public Builder clearServerId() {
+        
+        serverId_ = getDefaultInstance().getServerId();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string serverId = 1;</code>
+       * @param value The bytes for serverId to set.
+       * @return This builder for chaining.
+       */
+      public Builder setServerIdBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        serverId_ = value;
+        onChanged();
+        return this;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFields(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:JoinReply)
+    }
+
+    // @@protoc_insertion_point(class_scope:JoinReply)
+    private static final io.github.aggarcia.messages.Generated.JoinReply DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new io.github.aggarcia.messages.Generated.JoinReply();
+    }
+
+    public static io.github.aggarcia.messages.Generated.JoinReply getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<JoinReply>
+        PARSER = new com.google.protobuf.AbstractParser<JoinReply>() {
+      @java.lang.Override
+      public JoinReply parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        Builder builder = newBuilder();
+        try {
+          builder.mergeFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(builder.buildPartial());
+        } catch (com.google.protobuf.UninitializedMessageException e) {
+          throw e.asInvalidProtocolBufferException().setUnfinishedMessage(builder.buildPartial());
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(e)
+              .setUnfinishedMessage(builder.buildPartial());
+        }
+        return builder.buildPartial();
+      }
+    };
+
+    public static com.google.protobuf.Parser<JoinReply> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<JoinReply> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public io.github.aggarcia.messages.Generated.JoinReply getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface ErrorReplyOrBuilder extends
       // @@protoc_insertion_point(interface_extends:ErrorReply)
       com.google.protobuf.MessageOrBuilder {
@@ -6915,6 +7472,11 @@ public final class Generated {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_GameOverEvent_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_JoinReply_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_JoinReply_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_ErrorReply_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -6949,13 +7511,14 @@ public final class Generated {
       "Platform\"=\n\022ControlChangeEvent\022\'\n\017presse" +
       "dControls\030\001 \003(\0162\016.PlayerControl\"\031\n\tJoinE" +
       "vent\022\014\n\004name\030\001 \001(\t\"\037\n\rGameOverEvent\022\016\n\006r" +
-      "eason\030\001 \001(\t\"\035\n\nErrorReply\022\017\n\007message\030\001 \001" +
-      "(\t\"J\n\006Player\022\014\n\004name\030\001 \001(\t\022\r\n\005color\030\002 \001(" +
-      "\t\022\t\n\001x\030\003 \001(\005\022\t\n\001y\030\004 \001(\005\022\r\n\005score\030\005 \001(\r\"/" +
-      "\n\010Platform\022\t\n\001x\030\001 \001(\005\022\t\n\001y\030\002 \001(\005\022\r\n\005widt" +
-      "h\030\003 \001(\r*6\n\rPlayerControl\022\006\n\002UP\020\000\022\010\n\004DOWN" +
-      "\020\001\022\010\n\004LEFT\020\002\022\t\n\005RIGHT\020\003B(\n\033io.github.agg" +
-      "arcia.messagesB\tGeneratedb\006proto3"
+      "eason\030\001 \001(\t\"\035\n\tJoinReply\022\020\n\010serverId\030\001 \001" +
+      "(\t\"\035\n\nErrorReply\022\017\n\007message\030\001 \001(\t\"J\n\006Pla" +
+      "yer\022\014\n\004name\030\001 \001(\t\022\r\n\005color\030\002 \001(\t\022\t\n\001x\030\003 " +
+      "\001(\005\022\t\n\001y\030\004 \001(\005\022\r\n\005score\030\005 \001(\r\"/\n\010Platfor" +
+      "m\022\t\n\001x\030\001 \001(\005\022\t\n\001y\030\002 \001(\005\022\r\n\005width\030\003 \001(\r*6" +
+      "\n\rPlayerControl\022\006\n\002UP\020\000\022\010\n\004DOWN\020\001\022\010\n\004LEF" +
+      "T\020\002\022\t\n\005RIGHT\020\003B(\n\033io.github.aggarcia.mes" +
+      "sagesB\tGeneratedb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -6991,20 +7554,26 @@ public final class Generated {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_GameOverEvent_descriptor,
         new java.lang.String[] { "Reason", });
-    internal_static_ErrorReply_descriptor =
+    internal_static_JoinReply_descriptor =
       getDescriptor().getMessageTypes().get(5);
+    internal_static_JoinReply_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_JoinReply_descriptor,
+        new java.lang.String[] { "ServerId", });
+    internal_static_ErrorReply_descriptor =
+      getDescriptor().getMessageTypes().get(6);
     internal_static_ErrorReply_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_ErrorReply_descriptor,
         new java.lang.String[] { "Message", });
     internal_static_Player_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_Player_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Player_descriptor,
         new java.lang.String[] { "Name", "Color", "X", "Y", "Score", });
     internal_static_Platform_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_Platform_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_Platform_descriptor,
