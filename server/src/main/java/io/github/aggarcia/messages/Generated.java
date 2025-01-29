@@ -219,6 +219,21 @@ public final class Generated {
      */
     io.github.aggarcia.messages.Generated.ErrorReplyOrBuilder getErrorReplyOrBuilder();
 
+    /**
+     * <code>.JoinReply joinReply = 6;</code>
+     * @return Whether the joinReply field is set.
+     */
+    boolean hasJoinReply();
+    /**
+     * <code>.JoinReply joinReply = 6;</code>
+     * @return The joinReply.
+     */
+    io.github.aggarcia.messages.Generated.JoinReply getJoinReply();
+    /**
+     * <code>.JoinReply joinReply = 6;</code>
+     */
+    io.github.aggarcia.messages.Generated.JoinReplyOrBuilder getJoinReplyOrBuilder();
+
     public io.github.aggarcia.messages.Generated.SocketMessage.PayloadCase getPayloadCase();
   }
   /**
@@ -271,6 +286,7 @@ public final class Generated {
       JOINEVENT(3),
       GAMEOVEREVENT(4),
       ERRORREPLY(5),
+      JOINREPLY(6),
       PAYLOAD_NOT_SET(0);
       private final int value;
       private PayloadCase(int value) {
@@ -293,6 +309,7 @@ public final class Generated {
           case 3: return JOINEVENT;
           case 4: return GAMEOVEREVENT;
           case 5: return ERRORREPLY;
+          case 6: return JOINREPLY;
           case 0: return PAYLOAD_NOT_SET;
           default: return null;
         }
@@ -463,6 +480,37 @@ public final class Generated {
       return io.github.aggarcia.messages.Generated.ErrorReply.getDefaultInstance();
     }
 
+    public static final int JOINREPLY_FIELD_NUMBER = 6;
+    /**
+     * <code>.JoinReply joinReply = 6;</code>
+     * @return Whether the joinReply field is set.
+     */
+    @java.lang.Override
+    public boolean hasJoinReply() {
+      return payloadCase_ == 6;
+    }
+    /**
+     * <code>.JoinReply joinReply = 6;</code>
+     * @return The joinReply.
+     */
+    @java.lang.Override
+    public io.github.aggarcia.messages.Generated.JoinReply getJoinReply() {
+      if (payloadCase_ == 6) {
+         return (io.github.aggarcia.messages.Generated.JoinReply) payload_;
+      }
+      return io.github.aggarcia.messages.Generated.JoinReply.getDefaultInstance();
+    }
+    /**
+     * <code>.JoinReply joinReply = 6;</code>
+     */
+    @java.lang.Override
+    public io.github.aggarcia.messages.Generated.JoinReplyOrBuilder getJoinReplyOrBuilder() {
+      if (payloadCase_ == 6) {
+         return (io.github.aggarcia.messages.Generated.JoinReply) payload_;
+      }
+      return io.github.aggarcia.messages.Generated.JoinReply.getDefaultInstance();
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -492,6 +540,9 @@ public final class Generated {
       if (payloadCase_ == 5) {
         output.writeMessage(5, (io.github.aggarcia.messages.Generated.ErrorReply) payload_);
       }
+      if (payloadCase_ == 6) {
+        output.writeMessage(6, (io.github.aggarcia.messages.Generated.JoinReply) payload_);
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -520,6 +571,10 @@ public final class Generated {
       if (payloadCase_ == 5) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(5, (io.github.aggarcia.messages.Generated.ErrorReply) payload_);
+      }
+      if (payloadCase_ == 6) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(6, (io.github.aggarcia.messages.Generated.JoinReply) payload_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSize = size;
@@ -558,6 +613,10 @@ public final class Generated {
           if (!getErrorReply()
               .equals(other.getErrorReply())) return false;
           break;
+        case 6:
+          if (!getJoinReply()
+              .equals(other.getJoinReply())) return false;
+          break;
         case 0:
         default:
       }
@@ -592,6 +651,10 @@ public final class Generated {
         case 5:
           hash = (37 * hash) + ERRORREPLY_FIELD_NUMBER;
           hash = (53 * hash) + getErrorReply().hashCode();
+          break;
+        case 6:
+          hash = (37 * hash) + JOINREPLY_FIELD_NUMBER;
+          hash = (53 * hash) + getJoinReply().hashCode();
           break;
         case 0:
         default:
@@ -739,6 +802,9 @@ public final class Generated {
         if (errorReplyBuilder_ != null) {
           errorReplyBuilder_.clear();
         }
+        if (joinReplyBuilder_ != null) {
+          joinReplyBuilder_.clear();
+        }
         payloadCase_ = 0;
         payload_ = null;
         return this;
@@ -800,6 +866,13 @@ public final class Generated {
             result.payload_ = payload_;
           } else {
             result.payload_ = errorReplyBuilder_.build();
+          }
+        }
+        if (payloadCase_ == 6) {
+          if (joinReplyBuilder_ == null) {
+            result.payload_ = payload_;
+          } else {
+            result.payload_ = joinReplyBuilder_.build();
           }
         }
         result.payloadCase_ = payloadCase_;
@@ -872,6 +945,10 @@ public final class Generated {
             mergeErrorReply(other.getErrorReply());
             break;
           }
+          case JOINREPLY: {
+            mergeJoinReply(other.getJoinReply());
+            break;
+          }
           case PAYLOAD_NOT_SET: {
             break;
           }
@@ -937,6 +1014,13 @@ public final class Generated {
                 payloadCase_ = 5;
                 break;
               } // case 42
+              case 50: {
+                input.readMessage(
+                    getJoinReplyFieldBuilder().getBuilder(),
+                    extensionRegistry);
+                payloadCase_ = 6;
+                break;
+              } // case 50
               default: {
                 if (!super.parseUnknownField(input, extensionRegistry, tag)) {
                   done = true; // was an endgroup tag
@@ -1676,6 +1760,148 @@ public final class Generated {
         payloadCase_ = 5;
         onChanged();;
         return errorReplyBuilder_;
+      }
+
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.github.aggarcia.messages.Generated.JoinReply, io.github.aggarcia.messages.Generated.JoinReply.Builder, io.github.aggarcia.messages.Generated.JoinReplyOrBuilder> joinReplyBuilder_;
+      /**
+       * <code>.JoinReply joinReply = 6;</code>
+       * @return Whether the joinReply field is set.
+       */
+      @java.lang.Override
+      public boolean hasJoinReply() {
+        return payloadCase_ == 6;
+      }
+      /**
+       * <code>.JoinReply joinReply = 6;</code>
+       * @return The joinReply.
+       */
+      @java.lang.Override
+      public io.github.aggarcia.messages.Generated.JoinReply getJoinReply() {
+        if (joinReplyBuilder_ == null) {
+          if (payloadCase_ == 6) {
+            return (io.github.aggarcia.messages.Generated.JoinReply) payload_;
+          }
+          return io.github.aggarcia.messages.Generated.JoinReply.getDefaultInstance();
+        } else {
+          if (payloadCase_ == 6) {
+            return joinReplyBuilder_.getMessage();
+          }
+          return io.github.aggarcia.messages.Generated.JoinReply.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.JoinReply joinReply = 6;</code>
+       */
+      public Builder setJoinReply(io.github.aggarcia.messages.Generated.JoinReply value) {
+        if (joinReplyBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          payload_ = value;
+          onChanged();
+        } else {
+          joinReplyBuilder_.setMessage(value);
+        }
+        payloadCase_ = 6;
+        return this;
+      }
+      /**
+       * <code>.JoinReply joinReply = 6;</code>
+       */
+      public Builder setJoinReply(
+          io.github.aggarcia.messages.Generated.JoinReply.Builder builderForValue) {
+        if (joinReplyBuilder_ == null) {
+          payload_ = builderForValue.build();
+          onChanged();
+        } else {
+          joinReplyBuilder_.setMessage(builderForValue.build());
+        }
+        payloadCase_ = 6;
+        return this;
+      }
+      /**
+       * <code>.JoinReply joinReply = 6;</code>
+       */
+      public Builder mergeJoinReply(io.github.aggarcia.messages.Generated.JoinReply value) {
+        if (joinReplyBuilder_ == null) {
+          if (payloadCase_ == 6 &&
+              payload_ != io.github.aggarcia.messages.Generated.JoinReply.getDefaultInstance()) {
+            payload_ = io.github.aggarcia.messages.Generated.JoinReply.newBuilder((io.github.aggarcia.messages.Generated.JoinReply) payload_)
+                .mergeFrom(value).buildPartial();
+          } else {
+            payload_ = value;
+          }
+          onChanged();
+        } else {
+          if (payloadCase_ == 6) {
+            joinReplyBuilder_.mergeFrom(value);
+          } else {
+            joinReplyBuilder_.setMessage(value);
+          }
+        }
+        payloadCase_ = 6;
+        return this;
+      }
+      /**
+       * <code>.JoinReply joinReply = 6;</code>
+       */
+      public Builder clearJoinReply() {
+        if (joinReplyBuilder_ == null) {
+          if (payloadCase_ == 6) {
+            payloadCase_ = 0;
+            payload_ = null;
+            onChanged();
+          }
+        } else {
+          if (payloadCase_ == 6) {
+            payloadCase_ = 0;
+            payload_ = null;
+          }
+          joinReplyBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>.JoinReply joinReply = 6;</code>
+       */
+      public io.github.aggarcia.messages.Generated.JoinReply.Builder getJoinReplyBuilder() {
+        return getJoinReplyFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.JoinReply joinReply = 6;</code>
+       */
+      @java.lang.Override
+      public io.github.aggarcia.messages.Generated.JoinReplyOrBuilder getJoinReplyOrBuilder() {
+        if ((payloadCase_ == 6) && (joinReplyBuilder_ != null)) {
+          return joinReplyBuilder_.getMessageOrBuilder();
+        } else {
+          if (payloadCase_ == 6) {
+            return (io.github.aggarcia.messages.Generated.JoinReply) payload_;
+          }
+          return io.github.aggarcia.messages.Generated.JoinReply.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.JoinReply joinReply = 6;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          io.github.aggarcia.messages.Generated.JoinReply, io.github.aggarcia.messages.Generated.JoinReply.Builder, io.github.aggarcia.messages.Generated.JoinReplyOrBuilder> 
+          getJoinReplyFieldBuilder() {
+        if (joinReplyBuilder_ == null) {
+          if (!(payloadCase_ == 6)) {
+            payload_ = io.github.aggarcia.messages.Generated.JoinReply.getDefaultInstance();
+          }
+          joinReplyBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              io.github.aggarcia.messages.Generated.JoinReply, io.github.aggarcia.messages.Generated.JoinReply.Builder, io.github.aggarcia.messages.Generated.JoinReplyOrBuilder>(
+                  (io.github.aggarcia.messages.Generated.JoinReply) payload_,
+                  getParentForChildren(),
+                  isClean());
+          payload_ = null;
+        }
+        payloadCase_ = 6;
+        onChanged();;
+        return joinReplyBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -7500,25 +7726,26 @@ public final class Generated {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\023socketMessage.proto\"\331\001\n\rSocketMessage\022" +
+      "\n\023socketMessage.proto\"\372\001\n\rSocketMessage\022" +
       "\035\n\010gamePing\030\001 \001(\0132\t.GamePingH\000\0221\n\022contro" +
       "lChangeEvent\030\002 \001(\0132\023.ControlChangeEventH" +
       "\000\022\037\n\tjoinEvent\030\003 \001(\0132\n.JoinEventH\000\022\'\n\rga" +
       "meOverEvent\030\004 \001(\0132\016.GameOverEventH\000\022!\n\ne" +
-      "rrorReply\030\005 \001(\0132\013.ErrorReplyH\000B\t\n\007payloa" +
-      "d\"U\n\010GamePing\022\021\n\tserverAge\030\001 \001(\r\022\030\n\007play" +
-      "ers\030\002 \003(\0132\007.Player\022\034\n\tplatforms\030\003 \003(\0132\t." +
-      "Platform\"=\n\022ControlChangeEvent\022\'\n\017presse" +
-      "dControls\030\001 \003(\0162\016.PlayerControl\"\031\n\tJoinE" +
-      "vent\022\014\n\004name\030\001 \001(\t\"\037\n\rGameOverEvent\022\016\n\006r" +
-      "eason\030\001 \001(\t\"\035\n\tJoinReply\022\020\n\010serverId\030\001 \001" +
-      "(\t\"\035\n\nErrorReply\022\017\n\007message\030\001 \001(\t\"J\n\006Pla" +
-      "yer\022\014\n\004name\030\001 \001(\t\022\r\n\005color\030\002 \001(\t\022\t\n\001x\030\003 " +
-      "\001(\005\022\t\n\001y\030\004 \001(\005\022\r\n\005score\030\005 \001(\r\"/\n\010Platfor" +
-      "m\022\t\n\001x\030\001 \001(\005\022\t\n\001y\030\002 \001(\005\022\r\n\005width\030\003 \001(\r*6" +
-      "\n\rPlayerControl\022\006\n\002UP\020\000\022\010\n\004DOWN\020\001\022\010\n\004LEF" +
-      "T\020\002\022\t\n\005RIGHT\020\003B(\n\033io.github.aggarcia.mes" +
-      "sagesB\tGeneratedb\006proto3"
+      "rrorReply\030\005 \001(\0132\013.ErrorReplyH\000\022\037\n\tjoinRe" +
+      "ply\030\006 \001(\0132\n.JoinReplyH\000B\t\n\007payload\"U\n\010Ga" +
+      "mePing\022\021\n\tserverAge\030\001 \001(\r\022\030\n\007players\030\002 \003" +
+      "(\0132\007.Player\022\034\n\tplatforms\030\003 \003(\0132\t.Platfor" +
+      "m\"=\n\022ControlChangeEvent\022\'\n\017pressedContro" +
+      "ls\030\001 \003(\0162\016.PlayerControl\"\031\n\tJoinEvent\022\014\n" +
+      "\004name\030\001 \001(\t\"\037\n\rGameOverEvent\022\016\n\006reason\030\001" +
+      " \001(\t\"\035\n\tJoinReply\022\020\n\010serverId\030\001 \001(\t\"\035\n\nE" +
+      "rrorReply\022\017\n\007message\030\001 \001(\t\"J\n\006Player\022\014\n\004" +
+      "name\030\001 \001(\t\022\r\n\005color\030\002 \001(\t\022\t\n\001x\030\003 \001(\005\022\t\n\001" +
+      "y\030\004 \001(\005\022\r\n\005score\030\005 \001(\r\"/\n\010Platform\022\t\n\001x\030" +
+      "\001 \001(\005\022\t\n\001y\030\002 \001(\005\022\r\n\005width\030\003 \001(\r*6\n\rPlaye" +
+      "rControl\022\006\n\002UP\020\000\022\010\n\004DOWN\020\001\022\010\n\004LEFT\020\002\022\t\n\005" +
+      "RIGHT\020\003B(\n\033io.github.aggarcia.messagesB\t" +
+      "Generatedb\006proto3"
     };
     descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
@@ -7529,7 +7756,7 @@ public final class Generated {
     internal_static_SocketMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_SocketMessage_descriptor,
-        new java.lang.String[] { "GamePing", "ControlChangeEvent", "JoinEvent", "GameOverEvent", "ErrorReply", "Payload", });
+        new java.lang.String[] { "GamePing", "ControlChangeEvent", "JoinEvent", "GameOverEvent", "ErrorReply", "JoinReply", "Payload", });
     internal_static_GamePing_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_GamePing_fieldAccessorTable = new

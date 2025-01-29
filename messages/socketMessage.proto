@@ -16,6 +16,7 @@ message SocketMessage {
         JoinEvent joinEvent = 3;
         GameOverEvent gameOverEvent = 4;
         ErrorReply errorReply = 5;
+        JoinReply joinReply = 6;
     }
 }
 
