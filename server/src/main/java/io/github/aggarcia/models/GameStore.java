@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.springframework.web.socket.WebSocketSession;
 
+import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.engine.GameConstants;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,9 @@ import lombok.experimental.Accessors;
 @AllArgsConstructor  // for the builder
 @Accessors(fluent = true)
 public class GameStore {
+    /** Randomly generated, does not change after construction */
+    private final int instanceId = RandomUtil.getPositiveInt() % 999;
+
     @Builder.Default
     private final Set<WebSocketSession> sessions =
         Collections.synchronizedSet(new HashSet<>());

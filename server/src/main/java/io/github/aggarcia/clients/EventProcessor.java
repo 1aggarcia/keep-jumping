@@ -163,9 +163,10 @@ public final class EventProcessor {
         var newPlayer = PlayerStore.createAbovePlatform(name, choicePlatform);
 
         if (players.isEmpty()) {
-            return new CreateFirstPlayer(client, newPlayer, choicePlatforms);
+            return new CreateFirstPlayer(
+                client, newPlayer, choicePlatforms, "" + store.instanceId());
         }
-        return new CreatePlayer(client, newPlayer);
+        return new CreatePlayer(client, newPlayer, "" + store.instanceId());
     }
 
     /**

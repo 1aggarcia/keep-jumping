@@ -104,11 +104,17 @@ function handleServerMessage(message: SocketMessage, state: AppState) {
     if (message.payload === "gamePing") {
         state.lastPing = message.gamePing;
         renderGame(state, message.gamePing);
-    } else if (message.payload === "gameOverEvent") {
+    }
+    else if (message.payload === "gameOverEvent") {
         renderGameOver(state.context, message.gameOverEvent.reason);
-    } else if (message.payload === "errorReply") {
+    }
+    else if (message.payload === "errorReply") {
         addErrorNotification(state, message.errorReply.message);
-    } else {
+    }
+    else if (message.payload === "joinReply") {
+        state.serverId = message.joinReply.serverId;
+    }
+    else {
         throw new Error(`Unsupported message type: ${message.payload}`);
     }
 }
@@ -124,6 +130,7 @@ function addErrorNotification(state: AppState, error: string) {
 
 
 function onServerClose(state: AppState) {
+    state.serverId = null;
     state.connectedStatus = "CLOSED";
     networkElements.messagesBox.empty();
     networkElements.connectedBox.hide();

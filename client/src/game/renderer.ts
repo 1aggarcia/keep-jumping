@@ -70,11 +70,16 @@ export function clearCanvas(context: Context2D) {
 }
 
 export function renderMetadata(state: AppState) {
+    if (state.serverId === null) {
+        console.error("called renderMetadata without serverId");
+    }
     // this wacky syntax is to mimic a switch expression in JS
     const connectionLabel = (() => {
         switch (state.connectedStatus) {
         case "OPEN":
-            return "Connection Open";
+            return state.serverId
+                ? `Connected to server ${state.serverId}`
+                : "Connected (server ID unknown)";
         case "CONNECTING":
             return "Connecting... (this might take a few seconds)";
         default:

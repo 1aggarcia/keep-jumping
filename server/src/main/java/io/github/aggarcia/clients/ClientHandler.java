@@ -7,7 +7,6 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
-import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.clients.updates.GameUpdate;
 import io.github.aggarcia.models.GameStore;
 
@@ -22,8 +21,6 @@ import java.io.IOException;
  * server to crash.
  */
 public class ClientHandler extends AbstractWebSocketHandler {
-    private static final int INSTANCE_ID = RandomUtil.getPositiveInt() % 999;
-
     private final GameStore gameStore;
 
     public ClientHandler(GameStore gameStore) {
@@ -40,7 +37,7 @@ public class ClientHandler extends AbstractWebSocketHandler {
         // Entire string needs to be printed at once since the console is
         // shared with other threads
         var consoleMessage = new StringBuilder()
-            .append(INSTANCE_ID)
+            .append(gameStore.instanceId())
             .append(" - New connection: ")
             .append(session.getId())
             .toString();
@@ -65,7 +62,7 @@ public class ClientHandler extends AbstractWebSocketHandler {
         // Entire string needs to be printed at once since the console is
         // shared with other threads
         var consoleMessage = new StringBuilder()
-            .append(INSTANCE_ID)
+            .append(gameStore.instanceId())
             .append(" - Player left")
             .append(" (total " + players.size() + ")")
             .toString();

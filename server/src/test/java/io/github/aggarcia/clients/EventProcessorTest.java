@@ -26,6 +26,7 @@ import static io.github.aggarcia.clients.EventProcessor.processControlChange;
 import static io.github.aggarcia.clients.EventProcessor.processEvent;
 import static io.github.aggarcia.clients.EventProcessor.processJoin;
 import static io.github.aggarcia.engine.GameConstants.INIT_PLATFORM_GRAVITY;
+import static io.github.aggarcia.messages.Serializer.deserialize;
 import static io.github.aggarcia.models.PlayerStore.SPAWN_HEIGHT;;
 
 public class EventProcessorTest {
@@ -284,6 +285,30 @@ public class EventProcessorTest {
 
         var update = processJoin("", event, new GameStore());
         assertTrue(update instanceof ErrorUpdate);
+    }
+
+    @Test
+    void test_processJoin_firstPlayer_returnsJoinReplyWithInstanceId() {
+        var store = new GameStore();
+        var event = joinEvent("-");
+        var update = (CreateFirstPlayer) processJoin("", event, store);
+
+        assertTrue(update.reply().isPresent());
+        var reply = deserialize(update.reply().get()).get().getJoinReply();
+        assertEquals("" + store.instanceId(), reply.getServerId());
+    }
+
+    @Test
+    void test_processJoin_secondPlayer_returnsJoinReplyWithInstanceId() {
+        var store = new GameStore();
+        store.players().put("client1", PlayerStore.createRandomPlayer("1"));
+
+        var event = joinEvent("2");
+        var update = (CreatePlayer) processJoin("client2", event, store);
+
+        assertTrue(update.reply().isPresent());
+        var reply = deserialize(update.reply().get()).get().getJoinReply();
+        assertEquals("" + store.instanceId(), reply.getServerId());
     }
 
     /** 

@@ -10,6 +10,7 @@ export type AppState = {
     errors: string[];
     context: Context2D;
     buttons: Button[];
+    serverId: string | null;
 
     // non-essential stats
     bytesIn: number;
