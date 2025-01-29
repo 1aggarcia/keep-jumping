@@ -1,7 +1,6 @@
-import { Context2D } from "./types";
-import { gameElements } from "../game/elements";
-import { AppState } from "../state/appState";
-import { GAME_HEIGHT, GAME_WIDTH } from "../game/constants";
+import { gameElements } from "./dom";
+import { AppState, Context2D } from "../types";
+import { GAME_HEIGHT, GAME_WIDTH } from "./gameConstants";
 
 const BUTTON_WIDTH = 170;
 export const BUTTON_HEIGHT = 50;

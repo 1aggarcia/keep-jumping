@@ -13,12 +13,12 @@
 - [x] Java linter
 
 ## Server
-- [ ] Send server ID to client on join
 - [ ] Don't send redundant information (old platforms) to reduce ping size (current avg 90 B)
 - [ ] Detect player passing through platforms between two frames
 - [ ] Add persistent storage for user scores
 - [ ] Re-add support for game over
 - [*] Include more intelligent platform generation, based on location of nearby platforms
+- [x] Send server ID to client on join
 - [x] Increase speed with time
 - [x] Always spawn players on or above a platform
 - [x] Migrate string JSON messages to binary Protobuf messages
@@ -41,6 +41,7 @@
 - [x] Add gravity
 
 ## Client
+- [ ] Reduce errors for closed servers
 - [ ] Add dark mode
 - [*] Process disconnect requests / other errors
 - [*] Move all graphics inside the canvas

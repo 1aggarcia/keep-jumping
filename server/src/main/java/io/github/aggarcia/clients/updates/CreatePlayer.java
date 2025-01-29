@@ -17,7 +17,8 @@ public record CreatePlayer(
     @Override
     public Optional<byte[]> reply() {
         var reply = JoinReply.newBuilder().setServerId(serverId);
-        var wrappedReply = SocketMessage.newBuilder().setJoinReply(reply).build();
+        var wrappedReply =
+            SocketMessage.newBuilder().setJoinReply(reply).build();
         return Optional.of(serialize(wrappedReply));
     }
 

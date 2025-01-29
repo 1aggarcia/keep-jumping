@@ -1,15 +1,14 @@
-import { Context2D } from "../canvas/types";
-import { BUTTON_HEIGHT, renderButtons } from "../canvas/button";
-import { renderLabel } from "../canvas/label";
-import { AppState } from "../state/appState";
+import { BUTTON_HEIGHT, renderButtons } from "./button";
+import { AppState, Context2D } from "../types";
 import {
     GAME_HEIGHT,
     GAME_WIDTH,
     PLAYER_HEIGHT,
     PLAYER_WIDTH
-} from "./constants";
+} from "./gameConstants";
 import { GamePing, Platform, Player } from "../generated/socketMessage";
 
+const BLACK_HEX = "#000000";
 const RED_HEX = "#ff0000";
 
 const PLATFORM_HEIGHT = 30;
@@ -29,36 +28,36 @@ const offScreenWidth =
  * @param state app state including the context to draw to
  * @param ping game state received from the server
  */
-export function renderGame(state: AppState, ping: GamePing) {
+export function drawGame(state: AppState, ping: GamePing) {
     const { context, buttons } = state;
 
     clearCanvas(context);
-    ping.platforms.forEach(platform => renderPlatform(context, platform));
-    ping.players.forEach(player => renderPlayer(context, player));
+    ping.platforms.forEach(platform => drawPlatform(context, platform));
+    ping.players.forEach(player => drawPlayer(context, player));
     renderLabel(context, {
         text: `Time: ${ping.serverAge}`,
         x: 10,
         y: GAME_HEIGHT - 20,
         font: "27px Arial",
     });
-    renderLeaderboard(context, ping.players);
+    drawLeaderboard(context, ping.players);
     renderButtons(context, buttons);
-    renderMetadata(state);
+    drawMetadata(state);
 }
 
-export function rerender(state: AppState) {
+export function redrawGame(state: AppState) {
     if (state.lastPing !== null) {
-        renderGame(state, state.lastPing);
+        drawGame(state, state.lastPing);
         return;
     }
     clearCanvas(state.context);
     renderButtons(state.context, state.buttons);
-    renderMetadata(state);
+    drawMetadata(state);
 }
 
 // TODO: change server to send game over update, then change this to use the
 // `renderLabel` helper
-export function renderGameOver(context: Context2D, reason: string) {
+export function drawGameOver(context: Context2D, reason: string) {
     context.fillStyle = RED_HEX;
     context.font = "bold 30px Arial";
     context.textAlign = "center";
@@ -69,9 +68,9 @@ export function clearCanvas(context: Context2D) {
     context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 }
 
-export function renderMetadata(state: AppState) {
+export function drawMetadata(state: AppState) {
     if (state.serverId === null) {
-        console.error("called renderMetadata without serverId");
+        console.error("called drawMetadata without serverId");
     }
     // this wacky syntax is to mimic a switch expression in JS
     const connectionLabel = (() => {
@@ -107,7 +106,7 @@ export function renderMetadata(state: AppState) {
     });
 }
 
-function renderLeaderboard(context: Context2D, players: Player[]) {
+function drawLeaderboard(context: Context2D, players: Player[]) {
     const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
 
     renderLabel(context, {
@@ -128,7 +127,7 @@ function renderLeaderboard(context: Context2D, players: Player[]) {
     }
 }
 
-function renderPlatform(context: Context2D, platform: Platform) {
+function drawPlatform(context: Context2D, platform: Platform) {
     const { x, y, width } = platform;
     if (x > GAME_WIDTH || y > GAME_HEIGHT) {
         console.error(`Sprite position out of bounds: (${x}, ${y})`);
@@ -139,7 +138,7 @@ function renderPlatform(context: Context2D, platform: Platform) {
 }
 
 
-function renderPlayer(context: Context2D, player: Player) {
+function drawPlayer(context: Context2D, player: Player) {
     const { x, y } = player;
     if (x > GAME_WIDTH || y > GAME_HEIGHT) {
         console.error(`Sprite position out of bounds: (${x}, ${y})`);
@@ -169,3 +168,19 @@ function renderPlayer(context: Context2D, player: Player) {
         );
     }
 };
+
+function renderLabel(context: Context2D, options: {
+    text: string;
+    x: number;
+    y: number;
+    textAlign?: CanvasTextAlign;
+    textBaseline?: CanvasTextBaseline;
+    font?: string;
+    color?: string;
+}) {
+    context.font = options.font ?? "15px Arial";
+    context.textAlign = options.textAlign ?? "left";
+    context.textBaseline = options.textBaseline ?? "alphabetic";
+    context.fillStyle = options.color ?? BLACK_HEX;
+    context.fillText(options.text, options.x, options.y);
+}

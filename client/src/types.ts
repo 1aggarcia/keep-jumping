@@ -1,6 +1,7 @@
-import { Context2D } from "../canvas/types";
-import { Button } from "../canvas/button";
-import { GamePing, PlayerControl } from "../generated/socketMessage";
+import { Button } from "./ui/button";
+import { GamePing, PlayerControl } from "./generated/socketMessage";
+
+export type Context2D = CanvasRenderingContext2D;
 
 export type AppState = {
     server: WebSocket | null,

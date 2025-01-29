@@ -1,20 +1,14 @@
-import { getServerEndpoint } from "./config";
-import { AppState } from "../state/appState";
-import { networkElements } from "./elements";
+import { SocketMessage } from "./generated/socketMessage";
+import { AppState } from "./types";
+import { Button, subscribeButtonsToCursor } from "./ui/button";
+import { gameElements, renderMessageStats } from "./ui/dom";
 import {
     clearCanvas,
-    renderGame,
-    renderGameOver,
-    renderMetadata,
-    rerender
-} from "../game/renderer";
-import { Button, subscribeButtonsToCursor } from "../canvas/button";
-import {
-    serialize,
-    deserialize,
-    formatBytesString,
-} from "./formatters";
-import { SocketMessage } from "../generated/socketMessage";
+    drawGame,
+    drawGameOver,
+    drawMetadata,
+    redrawGame,
+} from "./ui/graphics";
 
 const MAX_NAME_LENGTH = 25;
 const MAX_HISTORY_LEN = 25;
@@ -23,6 +17,10 @@ const ERROR_DISPLAY_TIME = 5000;
 // type to represent SocketMessages with object literals
 type SocketMessageObject = Parameters<typeof SocketMessage.fromObject>[0];
 
+/**
+ * Serializes and sends `message` to the server in state, assuming a connection
+ * is open. Counts the message in state for analytics.
+ */
 export function sendToServer(state: AppState, message: SocketMessageObject) {
     if (state.server === null) {
         throw new ReferenceError(`Message sent to null server: ${message}`);
@@ -44,7 +42,7 @@ export function connectToServer(state: AppState, username: string) {
     state.messagesIn = 0;
     state.messagesOut = 0;
     state.connectedStatus = "CONNECTING";
-    renderMetadata(state);
+    drawMetadata(state);
     subscribeButtonsToCursor(state, []);  // to remove any buttons on the screen
 
     const server = new WebSocket(getServerEndpoint());
@@ -58,10 +56,10 @@ export function connectToServer(state: AppState, username: string) {
         });
         clearCanvas(state.context);
         state.connectedStatus = "OPEN";
-        renderMetadata(state);
-        networkElements.errorBox.empty();
-        networkElements.connectedBox.show();
-        networkElements.inactiveOverlay.hide();
+        drawMetadata(state);
+        gameElements.errorBox.empty();
+        gameElements.connectedBox.show();
+        gameElements.inactiveOverlay.hide();
 
         const disconnectButton = new Button("Disconnect")
             .positionRight()
@@ -73,7 +71,7 @@ export function connectToServer(state: AppState, username: string) {
         onServerClose(state);
         addErrorNotification(state, "Connection error");
         state.connectedStatus = "ERROR";
-        networkElements.errorBox.append("<p>Connection error</p>");
+        gameElements.errorBox.append("<p>Connection error</p>");
     };
     server.onmessage = async ({ data }) => {
         state.messagesIn++;
@@ -90,23 +88,33 @@ export function connectToServer(state: AppState, username: string) {
 
         // garbage collect old messages
         if (state.messagesIn > MAX_HISTORY_LEN) {
-            networkElements.messagesBox.find("pre:last").remove();
+            gameElements.messagesBox.find("pre:last").remove();
         }
         const prettyMessage = JSON.stringify(message.toObject(), undefined, 2);
-        networkElements.messagesBox.prepend(`<pre>${prettyMessage}</pre>`);
+        gameElements.messagesBox.prepend(`<pre>${prettyMessage}</pre>`);
         renderMessageStats(state);
         handleServerMessage(message, state);
     };
 }
 
+function onServerClose(state: AppState) {
+    state.serverId = null;
+    state.connectedStatus = "CLOSED";
+    gameElements.messagesBox.empty();
+    gameElements.connectedBox.hide();
+    gameElements.inactiveOverlay.show();
+
+    subscribeButtonsToCursor(state, []);
+    redrawGame(state);
+}
 
 function handleServerMessage(message: SocketMessage, state: AppState) {
     if (message.payload === "gamePing") {
         state.lastPing = message.gamePing;
-        renderGame(state, message.gamePing);
+        drawGame(state, message.gamePing);
     }
     else if (message.payload === "gameOverEvent") {
-        renderGameOver(state.context, message.gameOverEvent.reason);
+        drawGameOver(state.context, message.gameOverEvent.reason);
     }
     else if (message.payload === "errorReply") {
         addErrorNotification(state, message.errorReply.message);
@@ -121,23 +129,11 @@ function handleServerMessage(message: SocketMessage, state: AppState) {
 
 function addErrorNotification(state: AppState, error: string) {
     state.errors.unshift(error);  // enqueue at start
-    rerender(state);
+    redrawGame(state);
     setTimeout(() => {
         state.errors.pop();  // dequeue from end
-        rerender(state);
+        redrawGame(state);
     }, ERROR_DISPLAY_TIME);
-}
-
-
-function onServerClose(state: AppState) {
-    state.serverId = null;
-    state.connectedStatus = "CLOSED";
-    networkElements.messagesBox.empty();
-    networkElements.connectedBox.hide();
-    networkElements.inactiveOverlay.show();
-
-    subscribeButtonsToCursor(state, []);
-    rerender(state);
 }
 
 function disconnectFromServer(state: AppState) {
@@ -148,14 +144,31 @@ function disconnectFromServer(state: AppState) {
     server.close();
 }
 
-function renderMessageStats(state: AppState) {
-    const outText = `Sent: ${state.messagesOut}`;
-    const inText = `Received: ${state.messagesIn}`;
-    const bytesText = `Data in: ${formatBytesString(state.bytesIn)}`;
+function getServerEndpoint() {
+    const { VITE_SERVER_ENDPOINT } = import.meta.env;
+    if (VITE_SERVER_ENDPOINT === undefined) {
+        console.warn("environment variable 'VITE_SERVER_ENDPOINT' is not set");
+        return "ws://localhost:8081";
+    }
+    return VITE_SERVER_ENDPOINT;
+}
 
-    const meanPingSize = Math.floor(state.bytesIn / state.messagesIn);
-    const meanText = `Mean ping size: ${formatBytesString(meanPingSize)}`;
+/**
+ * Convert a protobuf message to a binary array
+ */
+function serialize(message: SocketMessage): Uint8Array {
+    return message.serialize();
+}
 
-    networkElements.messagesStats
-        .text(outText + " | " + inText + " | " + bytesText + " | " + meanText);
+/**
+ * Convert a binary array to a protobuf message
+ * @returns `PingPong` instance if the data can by deserialized, null otherwise
+ */
+function deserialize(bytes: Uint8Array): SocketMessage | null {
+    try {
+        return SocketMessage.deserialize(bytes);
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
 }

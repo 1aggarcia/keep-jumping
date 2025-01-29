@@ -1,7 +1,5 @@
 /** Utility functions to help format strings and numbers */
 
-import { SocketMessage } from "../generated/socketMessage";
-
 const KB_SIZE = 1 << 10;
 const MB_SIZE = 1 << 20;
 const GB_SIZE = 1 << 30;
@@ -42,25 +40,5 @@ export function getPrettyMessage(message: unknown) {
         return JSON.stringify(JSON.parse(message), undefined, 2);
     } catch {
         return message;
-    }
-}
-
-/**
- * Convert a protobuf message to a binary array
- */
-export function serialize(message: SocketMessage): Uint8Array {
-    return message.serialize();
-}
-
-/**
- * Convert a binary array to a protobuf message
- * @returns `PingPong` instance if the data can by deserialized, null otherwise
- */
-export function deserialize(bytes: Uint8Array): SocketMessage | null {
-    try {
-        return SocketMessage.deserialize(bytes);
-    } catch (e) {
-        console.error(e);
-        return null;
     }
 }

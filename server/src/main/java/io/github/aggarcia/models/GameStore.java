@@ -30,7 +30,7 @@ import lombok.experimental.Accessors;
 @AllArgsConstructor  // for the builder
 @Accessors(fluent = true)
 public class GameStore {
-    /** Randomly generated, does not change after construction */
+    /** Randomly generated, does not change after construction. */
     private final int instanceId = RandomUtil.getPositiveInt() % 999;
 
     @Builder.Default
