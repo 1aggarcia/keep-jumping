@@ -84,11 +84,6 @@ pre {
   align-items: center;
 }
 
-#vite-mode {
-  position: fixed;
-  bottom: 0%;
-}
-
 #messages-box {
   overflow: auto;
   border: 1px solid black;

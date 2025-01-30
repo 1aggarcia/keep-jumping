@@ -6,7 +6,8 @@
 
 syntax = "proto3";
 
-option java_package = "io.github.aggarcia.generated";
+option java_package = "io.github.aggarcia.messages";
+option java_outer_classname = "Generated";
 
 message SocketMessage {
     oneof payload {
@@ -15,6 +16,7 @@ message SocketMessage {
         JoinEvent joinEvent = 3;
         GameOverEvent gameOverEvent = 4;
         ErrorReply errorReply = 5;
+        JoinReply joinReply = 6;
     }
 }
 
@@ -48,6 +50,11 @@ message GameOverEvent {
 
 
 // REPLIES
+
+// server to client
+message JoinReply {
+    string serverId = 1;
+}
 
 // server to client
 message ErrorReply {

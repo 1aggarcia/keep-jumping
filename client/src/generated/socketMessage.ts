@@ -11,37 +11,49 @@ export enum PlayerControl {
     RIGHT = 3
 }
 export class SocketMessage extends pb_1.Message {
-    #one_of_decls: number[][] = [[1, 2, 3, 4, 5]];
+    #one_of_decls: number[][] = [[1, 2, 3, 4, 5, 6]];
     constructor(data?: any[] | ({} & (({
         gamePing?: GamePing;
         controlChangeEvent?: never;
         joinEvent?: never;
         gameOverEvent?: never;
         errorReply?: never;
+        joinReply?: never;
     } | {
         gamePing?: never;
         controlChangeEvent?: ControlChangeEvent;
         joinEvent?: never;
         gameOverEvent?: never;
         errorReply?: never;
+        joinReply?: never;
     } | {
         gamePing?: never;
         controlChangeEvent?: never;
         joinEvent?: JoinEvent;
         gameOverEvent?: never;
         errorReply?: never;
+        joinReply?: never;
     } | {
         gamePing?: never;
         controlChangeEvent?: never;
         joinEvent?: never;
         gameOverEvent?: GameOverEvent;
         errorReply?: never;
+        joinReply?: never;
     } | {
         gamePing?: never;
         controlChangeEvent?: never;
         joinEvent?: never;
         gameOverEvent?: never;
         errorReply?: ErrorReply;
+        joinReply?: never;
+    } | {
+        gamePing?: never;
+        controlChangeEvent?: never;
+        joinEvent?: never;
+        gameOverEvent?: never;
+        errorReply?: never;
+        joinReply?: JoinReply;
     })))) {
         super();
         pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
@@ -60,6 +72,9 @@ export class SocketMessage extends pb_1.Message {
             }
             if ("errorReply" in data && data.errorReply != undefined) {
                 this.errorReply = data.errorReply;
+            }
+            if ("joinReply" in data && data.joinReply != undefined) {
+                this.joinReply = data.joinReply;
             }
         }
     }
@@ -108,18 +123,28 @@ export class SocketMessage extends pb_1.Message {
     get has_errorReply() {
         return pb_1.Message.getField(this, 5) != null;
     }
+    get joinReply() {
+        return pb_1.Message.getWrapperField(this, JoinReply, 6) as JoinReply;
+    }
+    set joinReply(value: JoinReply) {
+        pb_1.Message.setOneofWrapperField(this, 6, this.#one_of_decls[0], value);
+    }
+    get has_joinReply() {
+        return pb_1.Message.getField(this, 6) != null;
+    }
     get payload() {
         const cases: {
-            [index: number]: "none" | "gamePing" | "controlChangeEvent" | "joinEvent" | "gameOverEvent" | "errorReply";
+            [index: number]: "none" | "gamePing" | "controlChangeEvent" | "joinEvent" | "gameOverEvent" | "errorReply" | "joinReply";
         } = {
             0: "none",
             1: "gamePing",
             2: "controlChangeEvent",
             3: "joinEvent",
             4: "gameOverEvent",
-            5: "errorReply"
+            5: "errorReply",
+            6: "joinReply"
         };
-        return cases[pb_1.Message.computeOneofCase(this, [1, 2, 3, 4, 5])];
+        return cases[pb_1.Message.computeOneofCase(this, [1, 2, 3, 4, 5, 6])];
     }
     static fromObject(data: {
         gamePing?: ReturnType<typeof GamePing.prototype.toObject>;
@@ -127,6 +152,7 @@ export class SocketMessage extends pb_1.Message {
         joinEvent?: ReturnType<typeof JoinEvent.prototype.toObject>;
         gameOverEvent?: ReturnType<typeof GameOverEvent.prototype.toObject>;
         errorReply?: ReturnType<typeof ErrorReply.prototype.toObject>;
+        joinReply?: ReturnType<typeof JoinReply.prototype.toObject>;
     }): SocketMessage {
         const message = new SocketMessage({});
         if (data.gamePing != null) {
@@ -144,6 +170,9 @@ export class SocketMessage extends pb_1.Message {
         if (data.errorReply != null) {
             message.errorReply = ErrorReply.fromObject(data.errorReply);
         }
+        if (data.joinReply != null) {
+            message.joinReply = JoinReply.fromObject(data.joinReply);
+        }
         return message;
     }
     toObject() {
@@ -153,6 +182,7 @@ export class SocketMessage extends pb_1.Message {
             joinEvent?: ReturnType<typeof JoinEvent.prototype.toObject>;
             gameOverEvent?: ReturnType<typeof GameOverEvent.prototype.toObject>;
             errorReply?: ReturnType<typeof ErrorReply.prototype.toObject>;
+            joinReply?: ReturnType<typeof JoinReply.prototype.toObject>;
         } = {};
         if (this.gamePing != null) {
             data.gamePing = this.gamePing.toObject();
@@ -168,6 +198,9 @@ export class SocketMessage extends pb_1.Message {
         }
         if (this.errorReply != null) {
             data.errorReply = this.errorReply.toObject();
+        }
+        if (this.joinReply != null) {
+            data.joinReply = this.joinReply.toObject();
         }
         return data;
     }
@@ -185,6 +218,8 @@ export class SocketMessage extends pb_1.Message {
             writer.writeMessage(4, this.gameOverEvent, () => this.gameOverEvent.serialize(writer));
         if (this.has_errorReply)
             writer.writeMessage(5, this.errorReply, () => this.errorReply.serialize(writer));
+        if (this.has_joinReply)
+            writer.writeMessage(6, this.joinReply, () => this.joinReply.serialize(writer));
         if (!w)
             return writer.getResultBuffer();
     }
@@ -208,6 +243,9 @@ export class SocketMessage extends pb_1.Message {
                     break;
                 case 5:
                     reader.readMessage(message.errorReply, () => message.errorReply = ErrorReply.deserialize(reader));
+                    break;
+                case 6:
+                    reader.readMessage(message.joinReply, () => message.joinReply = JoinReply.deserialize(reader));
                     break;
                 default: reader.skipField();
             }
@@ -533,6 +571,73 @@ export class GameOverEvent extends pb_1.Message {
     }
     static deserializeBinary(bytes: Uint8Array): GameOverEvent {
         return GameOverEvent.deserialize(bytes);
+    }
+}
+export class JoinReply extends pb_1.Message {
+    #one_of_decls: number[][] = [];
+    constructor(data?: any[] | {
+        serverId?: string;
+    }) {
+        super();
+        pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
+        if (!Array.isArray(data) && typeof data == "object") {
+            if ("serverId" in data && data.serverId != undefined) {
+                this.serverId = data.serverId;
+            }
+        }
+    }
+    get serverId() {
+        return pb_1.Message.getFieldWithDefault(this, 1, "") as string;
+    }
+    set serverId(value: string) {
+        pb_1.Message.setField(this, 1, value);
+    }
+    static fromObject(data: {
+        serverId?: string;
+    }): JoinReply {
+        const message = new JoinReply({});
+        if (data.serverId != null) {
+            message.serverId = data.serverId;
+        }
+        return message;
+    }
+    toObject() {
+        const data: {
+            serverId?: string;
+        } = {};
+        if (this.serverId != null) {
+            data.serverId = this.serverId;
+        }
+        return data;
+    }
+    serialize(): Uint8Array;
+    serialize(w: pb_1.BinaryWriter): void;
+    serialize(w?: pb_1.BinaryWriter): Uint8Array | void {
+        const writer = w || new pb_1.BinaryWriter();
+        if (this.serverId.length)
+            writer.writeString(1, this.serverId);
+        if (!w)
+            return writer.getResultBuffer();
+    }
+    static deserialize(bytes: Uint8Array | pb_1.BinaryReader): JoinReply {
+        const reader = bytes instanceof pb_1.BinaryReader ? bytes : new pb_1.BinaryReader(bytes), message = new JoinReply();
+        while (reader.nextField()) {
+            if (reader.isEndGroup())
+                break;
+            switch (reader.getFieldNumber()) {
+                case 1:
+                    message.serverId = reader.readString();
+                    break;
+                default: reader.skipField();
+            }
+        }
+        return message;
+    }
+    serializeBinary(): Uint8Array {
+        return this.serialize();
+    }
+    static deserializeBinary(bytes: Uint8Array): JoinReply {
+        return JoinReply.deserialize(bytes);
     }
 }
 export class ErrorReply extends pb_1.Message {
