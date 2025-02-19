@@ -16,8 +16,9 @@ Developed with [pnpm](https://pnpm.io/) but should work fine with npm, which com
 
  It is easiest to run the project from your IDE, but it can be run from the command line:
 
-`cd java-server`
+`cd server`
 
+*(For windows, use a backslash `\` instead of a forward slash `/` for the below commands)*
 - Run: `./mvnw clean install && java -jar target/game-0.0.1-SNAPSHOT.jar`
 - Build: `./mvnw package`
 - Test: `./mvnw test`
