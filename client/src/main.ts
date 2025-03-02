@@ -5,6 +5,7 @@ import { handleJoinSubmit, handleKeyDown, handleKeyUp } from "./domHandler";
 import { drawMetadata } from "./ui/graphics";
 import { enableDevTools } from "./devTools";
 import { AppState } from "./types";
+import { verifyServerHealth } from "./server";
 
 const JUMP_KEYCODE = "ArrowUp";
 
@@ -46,5 +47,6 @@ jQuery(function main() {
         .on("mousedown",() => handleKeyDown(JUMP_KEYCODE, appState))
         .on("mouseup", () => handleKeyUp(JUMP_KEYCODE, appState));
 
+    verifyServerHealth();
     enableDevTools(appState);
 });

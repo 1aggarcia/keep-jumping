@@ -14,6 +14,7 @@ export const gameElements = {
     viteMode: $("#vite-mode"),
     joinForm: $<HTMLFormElement>("#join-form"),
     inactiveOverlay: $(".inactive-overlay"),
+    serverUnavaliableBox: $("#server-unavaliable-box"),
 };
 
 const gameContext = gameElements.canvas[0].getContext("2d");

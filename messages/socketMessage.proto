@@ -1,6 +1,6 @@
 // Messages sent over the network, which are one of the following types:
 
-// - Ping: from server to client, send at a fixed interval
+// - Ping: from server to client, sent at a fixed interval
 // - Event: can be sent both ways, triggered by some event
 // - Reply: optional response to an event
 
