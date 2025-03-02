@@ -47,7 +47,6 @@ jQuery(function main() {
         .on("mousedown",() => handleKeyDown(JUMP_KEYCODE, appState))
         .on("mouseup", () => handleKeyUp(JUMP_KEYCODE, appState));
 
+    verifyServerHealth();
     enableDevTools(appState);
-
-    verifyServerHealth(appState);
 });
