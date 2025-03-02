@@ -13,6 +13,7 @@ import {
 const MAX_NAME_LENGTH = 25;
 const MAX_HISTORY_LEN = 25;
 const ERROR_DISPLAY_TIME = 5000;
+const DEFAULT_SERVER_ENDPOINT = "ws://localhost:8081";
 
 // type to represent SocketMessages with object literals
 type SocketMessageObject = Parameters<typeof SocketMessage.fromObject>[0];
@@ -148,8 +149,11 @@ function disconnectFromServer(state: AppState) {
 function getServerEndpoint() {
     const { VITE_SERVER_ENDPOINT } = import.meta.env;
     if (VITE_SERVER_ENDPOINT === undefined) {
-        console.warn("environment variable 'VITE_SERVER_ENDPOINT' is not set");
-        return "ws://localhost:8081";
+        console.warn(
+            "environment variable 'VITE_SERVER_ENDPOINT' is not set."
+            + ` Using default '${DEFAULT_SERVER_ENDPOINT}'`
+        );
+        return DEFAULT_SERVER_ENDPOINT;
     }
     return VITE_SERVER_ENDPOINT;
 }
