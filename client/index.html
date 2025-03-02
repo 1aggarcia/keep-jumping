@@ -12,10 +12,16 @@
     </canvas>
 
     <section id="game-overlay">
+      <div id="server-unavaliable-box" style="text-align: center; display: none;">
+        <h1>Sorry</h1>
+        <p>The game server is currently not avaliable.</p>
+      </div>
+
       <form onsubmit="return false" id="join-form" class="inactive-overlay">
         <input type="text" name="name" placeholder="Enter username" />
         <button type="submit">Connect</button>
       </form>
+
       <div style="bottom: 0; position: fixed; text-align: center;">
         <a class="inactive-overlay" href="https://github.com/1aggarcia/websocket-game">
           Source Code

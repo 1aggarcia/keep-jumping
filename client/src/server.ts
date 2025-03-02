@@ -19,6 +19,18 @@ const DEFAULT_SERVER_ENDPOINT = "ws://localhost:8081";
 type SocketMessageObject = Parameters<typeof SocketMessage.fromObject>[0];
 
 /**
+ * Try to connect to the server, show an error message if connection fails.
+ */
+export async function verifyServerHealth() {
+    const server = new WebSocket(getServerEndpoint());
+    server.onopen = () => server.close();
+    server.onerror = () => {
+        gameElements.joinForm.hide();
+        gameElements.serverUnavaliableBox.show();
+    };
+}
+
+/**
  * Serializes and sends `message` to the server in state, assuming a connection
  * is open. Counts the message in state for analytics.
  */
