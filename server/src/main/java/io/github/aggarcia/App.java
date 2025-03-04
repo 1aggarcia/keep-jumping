@@ -1,9 +1,18 @@
 package io.github.aggarcia;
 
+import java.sql.Timestamp;
+import java.util.List;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.ResponseEntity;
 import org.springframework.lang.NonNull;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
@@ -11,8 +20,11 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import io.github.aggarcia.clients.ClientHandler;
 import io.github.aggarcia.engine.GameLoop;
 import io.github.aggarcia.models.GameStore;
+import io.github.aggarcia.models.LeaderboardEntry;
 
 @SpringBootApplication
+@CrossOrigin
+@RestController
 @EnableWebSocket
 public class App implements WebSocketConfigurer {
     private static final int IDLE_TIMEOUT_SECONDS = 15 * 60;  // 15 minutes
@@ -47,5 +59,22 @@ public class App implements WebSocketConfigurer {
 
         store.onStartEvent(loop::start);
         return loop;
+    }
+
+    @GetMapping("/api/leaderboard")
+    List<LeaderboardEntry> getLeaderboard() {
+        // TODO
+        return List.of(
+            new LeaderboardEntry("test player", 1000, new Timestamp(0))
+        );
+    }
+
+    @PostMapping("/api/leaderboard/{player}")
+    ResponseEntity<String> postLeaderboardEntry(
+        @PathVariable("player") String player,
+        LeaderboardEntry entry
+    ) {
+        // TODO
+        return ResponseEntity.internalServerError().body("method unavaliable");
     }
 }
