@@ -17,7 +17,7 @@ public class LeaderboardService {
      */
     public List<LeaderboardEntry> getTop10() throws DataAccessException {
         return jdbcTemplate.query(
-            "SELECT * FROM Leaderboard ORDER BY score",
+            "SELECT * FROM Leaderboard ORDER BY score DESC LIMIT 10",
             (row, i) -> new LeaderboardEntry(
                 row.getString("player"),
                 row.getInt("score"),
