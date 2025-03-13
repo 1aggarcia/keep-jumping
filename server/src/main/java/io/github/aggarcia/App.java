@@ -1,11 +1,14 @@
 package io.github.aggarcia;
 
-import java.sql.Timestamp;
-import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,8 +19,8 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 
 import io.github.aggarcia.clients.ClientHandler;
 import io.github.aggarcia.engine.GameLoop;
+import io.github.aggarcia.leaderboard.LeaderboardService;
 import io.github.aggarcia.models.GameStore;
-import io.github.aggarcia.models.LeaderboardEntry;
 
 @SpringBootApplication
 @CrossOrigin
@@ -28,6 +31,9 @@ public class App implements WebSocketConfigurer {
 
     private final GameStore store = new GameStore();
 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
     }
@@ -36,6 +42,11 @@ public class App implements WebSocketConfigurer {
     public void
     registerWebSocketHandlers(@NonNull WebSocketHandlerRegistry registry) {
         registry.addHandler(connectionHandler(), "/").setAllowedOrigins("*");
+    }
+
+    @Bean
+    public LeaderboardService leaderboardService() {
+        return new LeaderboardService(jdbcTemplate);
     }
 
     @Bean
@@ -59,10 +70,14 @@ public class App implements WebSocketConfigurer {
     }
 
     @GetMapping("/api/leaderboard")
-    List<LeaderboardEntry> getLeaderboard() {
-        // TODO
-        return List.of(
-            new LeaderboardEntry("test player", 1000, new Timestamp(0))
-        );
+    ResponseEntity<?> getLeaderboard() {
+        try {
+            var top10 = leaderboardService().getTop10();
+            return new ResponseEntity<>(top10, HttpStatus.OK);
+        } catch (DataAccessException e) {
+            System.err.println(e);
+            return new ResponseEntity<>(
+                e.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

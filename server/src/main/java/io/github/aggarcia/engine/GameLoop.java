@@ -222,7 +222,7 @@ public class GameLoop {
     /**
      * Procedure to run on a seperate thread, waiting for players to leave
      * and updating the leaderboard in the database.
-     * 
+     *
      * Runs forever until the thread is interrupted.
      * @param loserQueue
      */
@@ -231,7 +231,8 @@ public class GameLoop {
             try {
                 PlayerStore next = loserQueue.take();
                 System.out.println("processing " + next);
-                // TODO: update leaderboard with player, disconnect player session
+                // TODO: update leaderboard with player
+                // disconnect player session
             } catch (InterruptedException e) {
                 System.out.println("Database worker thread closing");
                 break;

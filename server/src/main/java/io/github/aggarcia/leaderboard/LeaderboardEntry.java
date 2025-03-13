@@ -1,4 +1,4 @@
-package io.github.aggarcia.models;
+package io.github.aggarcia.leaderboard;
 
 import java.sql.Timestamp;
 
