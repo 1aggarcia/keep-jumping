@@ -16,6 +16,7 @@ import org.springframework.web.socket.WebSocketSession;
 import io.github.aggarcia.messages.Generated.JoinEvent;
 import io.github.aggarcia.messages.Generated.SocketMessage;
 import io.github.aggarcia.models.GameStore;
+import io.github.aggarcia.models.PlayerStore;
 
 // naming convention: test_<unit>_<state>_<expected behavior>
 @SpringBootTest
@@ -58,6 +59,17 @@ public class ClientHandlerTest {
 
         connectionHandler.afterConnectionClosed(mockSession, CloseStatus.NORMAL);
         assertEquals(gameStore.sessions().size(), 0);
+    }
+
+    @Test
+    void test_afterConnectionClosed_oneSession_addsPlayerToLoserQueue()
+    throws Exception {
+        var testPlayer = PlayerStore.createRandomPlayer("test");
+        gameStore.players().put(mockSession.getId(), testPlayer);
+
+        connectionHandler.afterConnectionClosed(mockSession, CloseStatus.NORMAL);
+        assertEquals(gameStore.unprocessedLosers().size(), 1);
+        assertEquals(gameStore.unprocessedLosers().take(), testPlayer);
     }
 
     @Test

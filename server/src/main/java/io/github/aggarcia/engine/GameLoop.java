@@ -3,7 +3,6 @@ package io.github.aggarcia.engine;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -172,10 +171,6 @@ public class GameLoop {
         final var players = gameStore.players();
         final var sessions = gameStore.sessions();
 
-        var loserQueue = new LinkedBlockingQueue<PlayerStore>();
-        var loserWorkerThread = new Thread(() -> processLosers(loserQueue));
-        loserWorkerThread.start();
-
         System.out.println("Starting game loop");
         while (
             players.size() > 0
@@ -189,7 +184,7 @@ public class GameLoop {
             }
             for (var playerId : response.playersToRemove()) {
                 var player = players.get(playerId);
-                loserQueue.add(player);
+                gameStore.unprocessedLosers().add(player);
                 players.remove(playerId);
             }
             if (response.isUpdateNeeded()) {
@@ -205,7 +200,7 @@ public class GameLoop {
         }
 
         System.out.println("Closing game loop");
-        loserWorkerThread.interrupt();
+        gameStore.unprocessedLosers().addAll(players.values());
         players.clear();
         for (var session : sessions) {
             try {

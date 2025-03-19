@@ -199,6 +199,45 @@ public class GameLoopTest {
     }
 
     @Test
+    void test_start_playerDies_addsPlayerToLoserQueue() throws Exception {
+        var testPlayer = PlayerStore
+            .createRandomPlayer("test")
+            // spawn a player on lower Y limit so that they immediately die
+            .yPosition(GameConstants.HEIGHT);
+        
+        var store = new GameStore();
+        store.players().put("test", testPlayer);
+        store.sessions().add(mockSession);  // required for the loop to stay open
+
+        var gameLoop = new GameLoop(store).withTickDelay(1);
+
+        gameLoop.start();
+        Thread.sleep(10);  // plenty of time for the player to die
+        gameLoop.forceQuit();
+
+        assertEquals(store.unprocessedLosers().size(), 1);
+        assertEquals(store.unprocessedLosers().take(), testPlayer);
+    }
+
+    @Test
+    void test_start_loopClosesWithPlayersPlaying_addsPlayerToLoserQueue()
+    throws Exception {
+        var testPlayer = PlayerStore.createRandomPlayer("test");
+        var store = new GameStore();
+        store.players().put("test", testPlayer);
+
+        var gameLoop = new GameLoop(store).withTickDelay(1);
+
+        // loop will immediately close since there are no sessions
+        gameLoop.start();
+        Thread.sleep(10);
+        gameLoop.forceQuit();
+
+        assertEquals(store.unprocessedLosers().size(), 1);
+        assertEquals(store.unprocessedLosers().take(), testPlayer);
+    }
+
+    @Test
     void test_start_secondTime_resetsTimeAndPlatformGravity() throws Exception {
         var store = new GameStore();
         var loop = new GameLoop(store);

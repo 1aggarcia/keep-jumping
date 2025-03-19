@@ -53,9 +53,15 @@ public class ClientHandler extends AbstractWebSocketHandler {
         @NonNull WebSocketSession session, @NonNull CloseStatus status
     ) {
         var players = gameStore.players();
-        if (players.remove(session.getId()) == null) {
+
+        String sessionId = session.getId();
+        var player = players.get(sessionId);
+        if (player == null) {
             System.err.println(
-                "No player was saved for session " + session.getId());
+                "No player was saved for session " + sessionId);
+        } else {
+            players.remove(sessionId);
+            gameStore.unprocessedLosers().add(player);
         }
         gameStore.sessions().remove(session);
 
