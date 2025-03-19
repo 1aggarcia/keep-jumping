@@ -49,7 +49,7 @@ public class App implements WebSocketConfigurer {
     @Override
     public void
     registerWebSocketHandlers(@NonNull WebSocketHandlerRegistry registry) {
-        registry.addHandler(connectionHandler(), "/").setAllowedOrigins("*");
+        registry.addHandler(clientHandler(), "/").setAllowedOrigins("*");
     }
 
     @Bean
@@ -58,7 +58,7 @@ public class App implements WebSocketConfigurer {
     }
 
     @Bean
-    public ClientHandler connectionHandler() {
+    public ClientHandler clientHandler() {
         return new ClientHandler(store);
     }
 
