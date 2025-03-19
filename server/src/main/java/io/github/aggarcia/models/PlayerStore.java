@@ -1,10 +1,12 @@
 package io.github.aggarcia.models;
 
+import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Random;
 
 import io.github.aggarcia.engine.GameConstants;
+import io.github.aggarcia.leaderboard.LeaderboardEntry;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -247,5 +249,10 @@ public final class PlayerStore {
             .score(this.score)
             .hasChanged(this.hasChanged())
             .build();
+    }
+
+    public synchronized LeaderboardEntry createLeaderboardEntry() {
+        var now = new Timestamp(System.currentTimeMillis());
+        return new LeaderboardEntry(this.name(), this.score(), now);
     }
 }

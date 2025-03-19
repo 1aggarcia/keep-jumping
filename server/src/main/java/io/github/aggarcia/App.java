@@ -21,6 +21,8 @@ import io.github.aggarcia.clients.ClientHandler;
 import io.github.aggarcia.engine.GameLoop;
 import io.github.aggarcia.leaderboard.LeaderboardService;
 import io.github.aggarcia.models.GameStore;
+import io.github.aggarcia.models.PlayerStore;
+import jakarta.annotation.PostConstruct;
 
 @SpringBootApplication
 @CrossOrigin
@@ -36,6 +38,12 @@ public class App implements WebSocketConfigurer {
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
+    }
+
+    @PostConstruct
+    void init() {
+        // I hate java sometimes
+        new Thread(this::processLosers).start();
     }
 
     @Override
@@ -67,6 +75,25 @@ public class App implements WebSocketConfigurer {
 
         store.onStartEvent(loop::start);
         return loop;
+    }
+
+    /**
+     * Should be run on a seperate thread. Consumes players from the loser
+     * queue and saves their stats.
+     */
+    void processLosers() {
+        while (true) {
+            try {
+                PlayerStore nextLoser = store.unprocessedLosers().take();
+                var entry = nextLoser.createLeaderboardEntry();
+                leaderboardService().update(entry);
+            } catch (DataAccessException e) {
+                System.err.println(e);
+            } catch (InterruptedException e) {
+                System.err.println("Loser worker thread interrupted");
+                break;
+            }
+        }
     }
 
     @GetMapping("/api/leaderboard")
