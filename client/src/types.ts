@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 import { Button } from "./ui/button";
 import { GamePing, PlayerControl } from "./generated/socketMessage";
 
@@ -19,8 +21,10 @@ export type AppState = {
     messagesOut: number;
 };
 
-export type LeaderboardEntry = {
-    player: string;
-    score: number;
-    timestamp: string;
-}
+export const LeaderboardEntryParser = z.object({
+    player: z.string(),
+    score: z.number(),
+    timestamp: z.string(),
+});
+
+export type LeaderboardEntry = z.infer<typeof LeaderboardEntryParser>;

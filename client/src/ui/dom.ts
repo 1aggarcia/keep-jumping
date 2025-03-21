@@ -68,7 +68,7 @@ export function buildLeaderboardRows() {
     gameElements.leaderboardBody.empty();
 
     for (let i = 1; i <= LEADERBOARD_ROWS; i++) {
-        const row = $("<tr>")
+        const row = $("<tr>");
         const rank = $("<td>").text(i);
         row.append(rank)
             .append("<td>")

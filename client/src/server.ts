@@ -1,5 +1,7 @@
+import { z } from "zod";
+
 import { SocketMessage } from "./generated/socketMessage";
-import { AppState, LeaderboardEntry } from "./types";
+import { AppState, LeaderboardEntryParser } from "./types";
 import { Button, subscribeButtonsToCursor } from "./ui/button";
 import { fillLeaderboard, gameElements, renderMessageStats } from "./ui/dom";
 import {
@@ -36,16 +38,21 @@ export async function updateLeaderboard() {
     try {
         const response = await fetch(getHttpEndpoint() + "/api/leaderboard");
         if (!response.ok) {
-            console.error(await response.text());
+            throw new Error(await response.text());
+        }
+
+        const entries: unknown = await response.json();
+        const parsedEntries = z.array(
+            LeaderboardEntryParser).safeParse(entries);
+
+        if (!parsedEntries.success) {
+            console.error(parsedEntries.error);
             gameElements.leaderboardStatus
-                .text("Failed to refresh leaderboard");
+                .text("Bad leaderboard data received from server");
             return;
         }
 
-        // TODO: check types with zod?
-        const entries: LeaderboardEntry[] = await response.json();
-
-        fillLeaderboard(entries);
+        fillLeaderboard(parsedEntries.data);
         gameElements.leaderboardStatus.text("");
     } catch (err) {
         console.error(err);
