@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.springframework.web.socket.WebSocketSession;
 
@@ -32,6 +34,12 @@ import lombok.experimental.Accessors;
 public class GameStore {
     /** Randomly generated, does not change after construction. */
     private final int instanceId = RandomUtil.getPositiveInt() % 999;
+
+    /**
+     * Players that are no longer in the game whose scores need to be saved.
+     */
+    private final BlockingQueue<PlayerStore> unprocessedLosers =
+        new LinkedBlockingQueue<>();
 
     @Builder.Default
     private final Set<WebSocketSession> sessions =

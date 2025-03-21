@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import ch.qos.logback.core.testUtil.RandomUtil;
 import io.github.aggarcia.engine.GameConstants;
+import io.github.aggarcia.leaderboard.LeaderboardEntry;
 
 @SpringBootTest
 public class PlayerStoreTest {
@@ -322,5 +323,17 @@ public class PlayerStoreTest {
         assertEquals(35, testPlayer.score());
         testPlayer.addToScore(9234);
         assertEquals(35 + 9234, testPlayer.score());
+    }
+
+    @Test
+    void test_createLeaderboardEntry_storesCorrectData() {
+        int randomScore = RandomUtil.getPositiveInt();
+        var testPlayer = PlayerStore
+            .createRandomPlayer("test")
+            .score(randomScore);
+
+        LeaderboardEntry entry = testPlayer.createLeaderboardEntry();
+        assertEquals(entry.player(), testPlayer.name());
+        assertEquals(entry.score(), randomScore);
     }
 }

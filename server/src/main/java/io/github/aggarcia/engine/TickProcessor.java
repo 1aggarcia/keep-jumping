@@ -26,7 +26,8 @@ public final class TickProcessor {
     /** Response produced by advancing the game tick. */
     public record TickResponse(
         boolean isUpdateNeeded,
-        List<GamePlatform> nextPlatformsState
+        List<GamePlatform> nextPlatformsState,
+        List<String> playersToRemove
     ) {}
 
     private TickProcessor() {}
@@ -56,9 +57,9 @@ public final class TickProcessor {
         }
 
         // handle players
-        // make a copy since we are modifying the original
-        var playersCopy = new ArrayList<PlayerStore>(store.players().values());
-        for (PlayerStore player : playersCopy) {
+        List<String> playersToRemove = new ArrayList<>();
+        for (var playerEntry : store.players().entrySet()) {
+            PlayerStore player = playerEntry.getValue();
             player.moveToNextTick(nextPlatformsState, store.platformGravity());
             if (player.hasChanged()) {
                 player.hasChanged(false);
@@ -67,17 +68,14 @@ public final class TickProcessor {
                 player.yPosition()
                 >= GameConstants.HEIGHT - PlayerStore.PLAYER_HEIGHT
             ) {
-                // game over for player
-                // TODO: close associated client session
-                store.players().values().remove(player);
-                // TODO send event to player
+                playersToRemove.add(playerEntry.getKey());
             } else if (nextTickCount == 0) {
                 player.addToScore(SCORE_PER_SECOND);
             }
         }
 
         // TODO: remove boolean arg
-        return new TickResponse(true, nextPlatformsState);
+        return new TickResponse(true, nextPlatformsState, playersToRemove);
     }
 
     /**

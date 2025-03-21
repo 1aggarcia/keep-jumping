@@ -172,16 +172,14 @@ public class TickProcessorTest {
     }
 
     @Test
-    void test_advanceToNextTick_playerTouchingGround_removesPlayer() {
-        // must be mutable, List.of creates immutable lists
+    void test_advanceToNextTick_playerTouchingGround_removesPlayerInResponse() {
         var player1 = PlayerStore
             .createRandomPlayer("")
             .yPosition(PlayerStore.MAX_PLAYER_Y);
-        var store = new GameStore();
-        store.players().put("", player1);
-
-        advanceToNextTick(store);
-        assertTrue(store.players().isEmpty());
+        var players = Map.of("player1", player1);
+        var response = advanceTickWithPlayers(players);
+    
+        assertEquals(List.of("player1"), response.playersToRemove());
     }
 
     @Test

@@ -4,6 +4,8 @@
   --button-disabled: gray;
   --link: blue;
   --input-border: #545454;
+  --leaderboard-border: #e3e3e3;
+  --leaderboard-opacity: 0.7;
 }
 
 body {
@@ -88,4 +90,38 @@ pre {
   overflow: auto;
   border: 1px solid black;
   height: 50vh;
+}
+
+#leaderboard {
+  margin-top: 20px;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 0.9em;
+  min-width: 500px;
+  border-radius: 7px 7px 0 0;
+  overflow: hidden;
+}
+
+#leaderboard thead {
+  color: white;
+  background-color: var(--button-color);
+}
+
+#leaderboard th, td {
+  padding: 10px;
+}
+
+#leaderboard tbody tr {
+  border-bottom: 1px solid var(--leaderboard-border);
+  background-color: rgba(255, 255, 255, var(--leaderboard-opacity));
+}
+
+#leaderboard tbody tr:nth-of-type(even) {
+  background-color: var(--secondary-bg);
+  background-color: rgba(244, 244, 244, var(--leaderboard-opacity));
+}
+
+/* Make the "Rank" column bold */
+#leaderboard tbody td:nth-of-type(1) {
+  font-weight: bold;
 }

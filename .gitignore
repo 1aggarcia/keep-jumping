@@ -3,3 +3,4 @@
 .idea
 /build
 legacy-ts-server
+env.properties

@@ -1,9 +1,10 @@
 import $ from "jquery";
 import { GAME_HEIGHT, GAME_WIDTH } from "./gameConstants";
-import { AppState } from "../types";
+import { AppState, LeaderboardEntry } from "../types";
 import { formatBytesString } from "./formatters";
 
 const GAME_ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
+const LEADERBOARD_ROWS = 10;
 
 export const gameElements = {
     canvas: $<HTMLCanvasElement>("#game-box"),
@@ -15,6 +16,9 @@ export const gameElements = {
     joinForm: $<HTMLFormElement>("#join-form"),
     inactiveOverlay: $(".inactive-overlay"),
     serverUnavaliableBox: $("#server-unavaliable-box"),
+    leaderboard: $("#leaderboard"),
+    leaderboardBody: $("#leaderboard tbody"),
+    leaderboardStatus: $("#leaderboard-status"),
 };
 
 const gameContext = gameElements.canvas[0].getContext("2d");
@@ -58,4 +62,51 @@ export function renderMessageStats(state: AppState) {
 
     gameElements.messagesStats
         .text(outText + " | " + inText + " | " + bytesText + " | " + meanText);
+}
+
+export function buildLeaderboardRows() {
+    gameElements.leaderboardBody.empty();
+
+    for (let i = 1; i <= LEADERBOARD_ROWS; i++) {
+        const row = $("<tr>");
+        const rank = $("<td>").text(i);
+        row.append(rank)
+            .append("<td>")
+            .append("<td>")
+            .append("<td>");
+
+        gameElements.leaderboardBody.append(row);
+    }
+}
+
+export function fillLeaderboard(entries: LeaderboardEntry[]) {
+    const entryIterator = entries.values();
+
+    for (const row of gameElements.leaderboardBody.children("tr")) {
+        const [_,
+            playerCell, scoreCell, timestampCell] = row.querySelectorAll("td");
+
+        const nextEntry = entryIterator.next().value;
+        if (nextEntry !== undefined) {
+            playerCell.textContent = nextEntry.player;
+            scoreCell.textContent = String(nextEntry.score);
+            timestampCell.textContent =
+                new Date(nextEntry.timestamp).toLocaleDateString();
+        } else {
+            playerCell.textContent = "";
+            scoreCell.textContent = "";
+            timestampCell.textContent = "";
+        }
+    }
+}
+
+/**
+ * Enable or disable demo features depending on the boolean flag passed in
+ */
+export function enableDemoFeatures(args: { shouldEnable: boolean }) {
+    if (args.shouldEnable) {
+        gameElements.leaderboard.show();
+    } else {
+        gameElements.leaderboard.remove();
+    }
 }

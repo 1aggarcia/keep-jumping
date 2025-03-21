@@ -17,6 +17,9 @@ export default [
             "@stylistic/js/no-trailing-spaces": "error",
             "@stylistic/js/eol-last": ["error", "always"],
             "@stylistic/js/quotes": ["error", "double"],
+            "@typescript-eslint/no-unused-vars": [
+                "error", { "varsIgnorePattern": "_" },
+            ],
         }
     }
 ];

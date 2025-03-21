@@ -2,6 +2,7 @@ package io.github.aggarcia.engine;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.concurrent.BlockingQueue;
 
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -9,6 +10,7 @@ import org.springframework.web.socket.WebSocketSession;
 import io.github.aggarcia.messages.Generated.SocketMessage;
 import io.github.aggarcia.models.GamePlatform;
 import io.github.aggarcia.models.GameStore;
+import io.github.aggarcia.models.PlayerStore;
 
 import static io.github.aggarcia.engine.GameConstants.INIT_PLATFORM_GRAVITY;
 import static io.github.aggarcia.engine.TickProcessor.advanceToNextTick;
@@ -85,7 +87,6 @@ public class GameLoop {
         return this;
     }
 
-
     /**
      * Set an action to run after the game loop is inactive for a period of
      * time. Similar to JavaScripts 'setTimeout' function.
@@ -155,13 +156,6 @@ public class GameLoop {
      * Internal thread function for the game loop.
      */
     private void runGameLoop() {
-        gameStore.tickCount(0);
-        gameStore.gameAgeSeconds(0);
-        gameStore.platformGravity(INIT_PLATFORM_GRAVITY);
-        final var players = gameStore.players();
-        final var sessions = gameStore.sessions();
-
-        System.out.println("Starting game loop");
         if (idleThread.isAlive()) {
             idleThread.interrupt();
             try {
@@ -170,6 +164,14 @@ public class GameLoop {
                 System.err.println(e);
             }
         }
+
+        gameStore.tickCount(0);
+        gameStore.gameAgeSeconds(0);
+        gameStore.platformGravity(INIT_PLATFORM_GRAVITY);
+        final var players = gameStore.players();
+        final var sessions = gameStore.sessions();
+
+        System.out.println("Starting game loop");
         while (
             players.size() > 0
             && sessions.size() > 0
@@ -179,6 +181,11 @@ public class GameLoop {
             this.gameStore.platforms(response.nextPlatformsState());
             if (TickProcessor.shouldSpawnPlatform(gameStore.platforms())) {
                 gameStore.platforms().add(GamePlatform.generateAtHeight(0));
+            }
+            for (var playerId : response.playersToRemove()) {
+                var player = players.get(playerId);
+                gameStore.unprocessedLosers().add(player);
+                players.remove(playerId);
             }
             if (response.isUpdateNeeded()) {
                 var update = createGamePing(gameStore);
@@ -191,7 +198,9 @@ public class GameLoop {
                 break;
             }
         }
+
         System.out.println("Closing game loop");
+        gameStore.unprocessedLosers().addAll(players.values());
         players.clear();
         for (var session : sessions) {
             try {
@@ -203,6 +212,27 @@ public class GameLoop {
         sessions.clear();
         idleThread = new Thread(idleTimeoutAction);
         idleThread.start();
+    }
+
+    /**
+     * Procedure to run on a seperate thread, waiting for players to leave
+     * and updating the leaderboard in the database.
+     *
+     * Runs forever until the thread is interrupted.
+     * @param loserQueue
+     */
+    private void processLosers(BlockingQueue<PlayerStore> loserQueue) {
+        while (true) {
+            try {
+                PlayerStore next = loserQueue.take();
+                System.out.println("processing " + next);
+                // TODO: update leaderboard with player
+                // disconnect player session
+            } catch (InterruptedException e) {
+                System.out.println("Database worker thread closing");
+                break;
+            }
+        }
     }
 
     /**
