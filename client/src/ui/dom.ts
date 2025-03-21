@@ -15,6 +15,7 @@ export const gameElements = {
     joinForm: $<HTMLFormElement>("#join-form"),
     inactiveOverlay: $(".inactive-overlay"),
     serverUnavaliableBox: $("#server-unavaliable-box"),
+    leaderboard: $("#leaderboard"),
 };
 
 const gameContext = gameElements.canvas[0].getContext("2d");
@@ -58,4 +59,15 @@ export function renderMessageStats(state: AppState) {
 
     gameElements.messagesStats
         .text(outText + " | " + inText + " | " + bytesText + " | " + meanText);
+}
+
+/**
+ * Enable or disable demo features depending on the boolean flag passed in
+ */
+export function enableDemoFeatures(args: { shouldEnable: boolean }) {
+    if (args.shouldEnable) {
+        gameElements.leaderboard.show();
+    } else {
+        gameElements.leaderboard.remove();
+    }
 }

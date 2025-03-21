@@ -1,6 +1,11 @@
 import jQuery from "jquery";
 import { GAME_HEIGHT, GAME_WIDTH } from "./ui/gameConstants";
-import { fitCanvasToWindow, gameElements, getGameContext } from "./ui/dom";
+import {
+    enableDemoFeatures,
+    fitCanvasToWindow,
+    gameElements,
+    getGameContext,
+} from "./ui/dom";
 import { handleJoinSubmit, handleKeyDown, handleKeyUp } from "./domHandler";
 import { drawMetadata } from "./ui/graphics";
 import { enableDevTools } from "./devTools";
@@ -49,4 +54,7 @@ jQuery(function main() {
 
     verifyServerHealth();
     enableDevTools(appState);
+
+    // disabled in prod, enabled in dev
+    enableDemoFeatures({ shouldEnable: !import.meta.env.PROD });
 });

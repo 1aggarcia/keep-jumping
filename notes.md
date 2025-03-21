@@ -15,12 +15,12 @@
 
 ## Server
 - [ ] Add seperate dev and prod leaderboards
-- [ ] Create leaderboard ~~Data Access Object~~ service
 - [ ] Don't send redundant information (old platforms) to reduce ping size (current avg 90 B)
 - [ ] Detect player passing through platforms between two frames
 - [ ] Add persistent storage for user scores
 - [ ] Re-add support for game over
 - [*] Include more intelligent platform generation, based on location of nearby platforms
+- [x] Create leaderboard ~~Data Access Object~~ service
 - [x] Create SQL database and connect to service
 - [x] Add REST endpoints for leaderboard
 - [x] Send server ID to client on join
@@ -51,6 +51,7 @@
 - [ ] Add dark mode
 - [*] Process disconnect requests / other errors
 - [*] Move all graphics inside the canvas
+- [x] Design leaderboard UI
 - [x] Reduce errors for closed servers
 - [x] Show errors to user
 - [x] Add leaderboard rendering
