@@ -47,6 +47,7 @@
           </tr>
         </tbody>
       </table>
+      <p class="inactive-overlay" id="leaderboard-status"></p>
 
       <div style="bottom: 0; position: fixed; text-align: center;">
         <a class="inactive-overlay" href="https://github.com/1aggarcia/websocket-game">
@@ -59,7 +60,6 @@
     <!-- should only be shown if connection is open-->
     <section id="connected-box" style="display: none;">
       <a id="open-close-dev-tools">Show Dev Tools</a>
-      
       <div id="dev-tools" style="display: none;">
         <form onsubmit="return false" id="message-form">
           <input type="text" name="message" placeholder="Enter a message" />

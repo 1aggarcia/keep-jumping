@@ -1,6 +1,7 @@
 import jQuery from "jquery";
 import { GAME_HEIGHT, GAME_WIDTH } from "./ui/gameConstants";
 import {
+    buildLeaderboardRows,
     enableDemoFeatures,
     fitCanvasToWindow,
     gameElements,
@@ -10,7 +11,7 @@ import { handleJoinSubmit, handleKeyDown, handleKeyUp } from "./domHandler";
 import { drawMetadata } from "./ui/graphics";
 import { enableDevTools } from "./devTools";
 import { AppState } from "./types";
-import { verifyServerHealth } from "./server";
+import { updateLeaderboard, verifyServerHealth } from "./server";
 
 const JUMP_KEYCODE = "ArrowUp";
 
@@ -41,6 +42,7 @@ jQuery(function main() {
 
     fitCanvasToWindow(gameElements.canvas);
     drawMetadata(appState);
+    buildLeaderboardRows();
 
     // Event listeners
     addEventListener("resize", () => fitCanvasToWindow(gameElements.canvas));
@@ -52,7 +54,7 @@ jQuery(function main() {
         .on("mousedown",() => handleKeyDown(JUMP_KEYCODE, appState))
         .on("mouseup", () => handleKeyUp(JUMP_KEYCODE, appState));
 
-    verifyServerHealth();
+    verifyServerHealth().then(updateLeaderboard);
     enableDevTools(appState);
 
     // disabled in prod, enabled in dev

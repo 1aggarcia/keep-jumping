@@ -46,10 +46,10 @@
 - [x] Add gravity
 
 ## Client
-- [ ] Fetch and show leaderboard when not connected
 - [ ] Keep websocket connection open across games, create "LeaveEvent" to leave a game
 - [ ] Add dark mode
 - [*] Process disconnect requests / other errors
+- [x] Fetch and show leaderboard when not connected
 - [*] Move all graphics inside the canvas
 - [x] Design leaderboard UI
 - [x] Reduce errors for closed servers

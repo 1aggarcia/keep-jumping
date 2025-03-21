@@ -1,7 +1,7 @@
 import { SocketMessage } from "./generated/socketMessage";
-import { AppState } from "./types";
+import { AppState, LeaderboardEntry } from "./types";
 import { Button, subscribeButtonsToCursor } from "./ui/button";
-import { gameElements, renderMessageStats } from "./ui/dom";
+import { fillLeaderboard, gameElements, renderMessageStats } from "./ui/dom";
 import {
     clearCanvas,
     drawGame,
@@ -13,7 +13,7 @@ import {
 const MAX_NAME_LENGTH = 25;
 const MAX_HISTORY_LEN = 25;
 const ERROR_DISPLAY_TIME = 5000;
-const DEFAULT_SERVER_ENDPOINT = "ws://localhost:8081";
+const DEFAULT_SERVER = "localhost:8081";
 
 // type to represent SocketMessages with object literals
 type SocketMessageObject = Parameters<typeof SocketMessage.fromObject>[0];
@@ -22,12 +22,35 @@ type SocketMessageObject = Parameters<typeof SocketMessage.fromObject>[0];
  * Try to connect to the server, show an error message if connection fails.
  */
 export async function verifyServerHealth() {
-    const server = new WebSocket(getServerEndpoint());
+    const server = new WebSocket(getWebsocketEndpoint());
     server.onopen = () => server.close();
     server.onerror = () => {
         gameElements.joinForm.hide();
+        gameElements.leaderboard.hide();
         gameElements.serverUnavaliableBox.show();
     };
+}
+
+export async function updateLeaderboard() {
+    gameElements.leaderboardStatus.text("Updating leaderboard...");
+    try {
+        const response = await fetch(getHttpEndpoint() + "/api/leaderboard");
+        if (!response.ok) {
+            console.error(await response.text());
+            gameElements.leaderboardStatus
+                .text("Failed to refresh leaderboard");
+            return;
+        }
+
+        // TODO: check types with zod?
+        const entries: LeaderboardEntry[] = await response.json();
+
+        fillLeaderboard(entries);
+        gameElements.leaderboardStatus.text("");
+    } catch (err) {
+        console.error(err);
+        gameElements.leaderboardStatus.text("Failed to update leaderboard");
+    }
 }
 
 /**
@@ -58,7 +81,7 @@ export function connectToServer(state: AppState, username: string) {
     drawMetadata(state);
     subscribeButtonsToCursor(state, []);  // to remove any buttons on the screen
 
-    const server = new WebSocket(getServerEndpoint());
+    const server = new WebSocket(getWebsocketEndpoint());
     state.server = server;
 
     server.onopen = () => {
@@ -120,6 +143,7 @@ function onServerClose(state: AppState) {
 
     subscribeButtonsToCursor(state, []);
     redrawGame(state);
+    updateLeaderboard();
 }
 
 function handleServerMessage(message: SocketMessage, state: AppState) {
@@ -158,16 +182,28 @@ function disconnectFromServer(state: AppState) {
     server.close();
 }
 
-function getServerEndpoint() {
-    const { VITE_SERVER_ENDPOINT } = import.meta.env;
-    if (VITE_SERVER_ENDPOINT === undefined) {
+function getWebsocketEndpoint() {
+    const { VITE_WEBSOCKET_ENDPOINT } = import.meta.env;
+    if (VITE_WEBSOCKET_ENDPOINT === undefined) {
         console.warn(
-            "environment variable 'VITE_SERVER_ENDPOINT' is not set."
-            + ` Using default '${DEFAULT_SERVER_ENDPOINT}'`
+            "environment variable 'VITE_WEBSOCKET_ENDPOINT' is not set."
+            + ` Using default '${DEFAULT_SERVER}'`
         );
-        return DEFAULT_SERVER_ENDPOINT;
+        return "ws://" + DEFAULT_SERVER;
     }
-    return VITE_SERVER_ENDPOINT;
+    return VITE_WEBSOCKET_ENDPOINT;
+}
+
+function getHttpEndpoint() {
+    const { VITE_HTTP_ENDPOINT } = import.meta.env;
+    if (VITE_HTTP_ENDPOINT === undefined) {
+        console.warn(
+            "environment variable 'VITE_HTTP_ENDPOINT' is not set."
+            + ` Using default '${DEFAULT_SERVER}'`
+        );
+        return "http://" + DEFAULT_SERVER;
+    }
+    return VITE_HTTP_ENDPOINT;
 }
 
 /**

@@ -18,3 +18,9 @@ export type AppState = {
     messagesIn: number;
     messagesOut: number;
 };
+
+export type LeaderboardEntry = {
+    player: string;
+    score: number;
+    timestamp: string;
+}
