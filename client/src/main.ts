@@ -2,7 +2,6 @@ import jQuery from "jquery";
 import { GAME_HEIGHT, GAME_WIDTH } from "./ui/gameConstants";
 import {
     buildLeaderboardRows,
-    enableDemoFeatures,
     fitCanvasToWindow,
     gameElements,
     getGameContext,
@@ -56,7 +55,4 @@ jQuery(function main() {
 
     verifyServerHealth().then(updateLeaderboard);
     enableDevTools(appState);
-
-    // disabled in prod, enabled in dev
-    enableDemoFeatures({ shouldEnable: !import.meta.env.PROD });
 });
