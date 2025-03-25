@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Websocket Demo</title>
+    <title>Keep Jumping</title>
     <link href="src/style.css" rel="stylesheet" />
     <script type="module" src="/src/main.ts"></script>
   </head>
@@ -22,8 +22,7 @@
         <button type="submit">Connect</button>
       </form>
 
-      <!-- demo table to test styling -->
-      <table class="inactive-overlay" id="leaderboard" style="display: none;">
+      <table class="inactive-overlay" id="leaderboard">
         <thead>
           <tr>
             <th>Rank</th>
@@ -33,24 +32,13 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>1</td>
-            <td>1aggarcia</td>
-            <td>460</td>
-            <td>2025-03-19</td>
-          </tr>
-          <tr>
-            <td>2</td>
-            <td>player12</td>
-            <td>400</td>
-            <td>2025-03-19</td>
-          </tr>
+          <!-- body filled in dynamically when the script loads -->
         </tbody>
       </table>
       <p class="inactive-overlay" id="leaderboard-status"></p>
 
       <div style="bottom: 0; position: fixed; text-align: center;">
-        <a class="inactive-overlay" href="https://github.com/1aggarcia/websocket-game">
+        <a class="inactive-overlay" href="https://github.com/1aggarcia/keep-jumping">
           Source Code
         </a>
         <p id="vite-mode" class="secondary-text"></p>

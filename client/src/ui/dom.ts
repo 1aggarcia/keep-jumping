@@ -103,10 +103,5 @@ export function fillLeaderboard(entries: LeaderboardEntry[]) {
 /**
  * Enable or disable demo features depending on the boolean flag passed in
  */
-export function enableDemoFeatures(args: { shouldEnable: boolean }) {
-    if (args.shouldEnable) {
-        gameElements.leaderboard.show();
-    } else {
-        gameElements.leaderboard.remove();
-    }
-}
+// export function enableDemoFeatures(args: { shouldEnable: boolean }) {
+// }

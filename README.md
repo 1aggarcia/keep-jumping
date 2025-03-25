@@ -1,10 +1,10 @@
-# Websocket Game 
+# Keep Jumping 
 
 Multiplayer platformer game where players compete to stay airborne as long as possible by jumping between falling platforms. [Play here](https://1aggarcia.github.io/websocket-game/).
 
 ![Screenshot of Gameplay](media/screenshot.png)
 
-I'm building this mainly to get experience with real-time WebSocket servers. The server runs with [Spring Boot](https://spring.io/) for Java using [Maven](https://maven.apache.org/what-is-maven.html) as the build tool. The frontend is built in jQuery (just for the memes). Previously the server was written in TypeScript, I rewrote it in Java to get a refresher of the language.
+I'm building this mainly to get experience with real-time WebSocket servers. The server runs with [Spring Boot](https://spring.io/) for Java using [Maven](https://maven.apache.org/what-is-maven.html) as the build tool and a PostgreSQL database on [Supabase](https://supabase.com/) . The frontend is built in jQuery (just for the memes). Previously the server was written in TypeScript, I rewrote it in Java and have found the mature ecosystem to support new features well.
 
 ## Setup & Build
 
@@ -14,7 +14,7 @@ Developed with [pnpm](https://pnpm.io/) but should work fine with npm, which com
 
 ### Server:
 
- It is easiest to run the project from your IDE, but it can be run from the command line:
+It is easiest to run the project from your IDE, but it can be run from the command line:
 
 `cd server`
 
@@ -24,6 +24,8 @@ Developed with [pnpm](https://pnpm.io/) but should work fine with npm, which com
 - Test: `./mvnw test`
 - Lint `./mvnw checkstyle:check`
 
+The server does not need a database connection to run the game, but it does look for one using the `DB_USERNAME` and `DB_PASSWORD` env variables. If you happen to have a Supabase database set up (and a leaderboard table), you could provide your credentials in an `env.properties` file in the root directory (not the server directory) to use your own leaderboard.
+
 ### Frontend
 `cd client`
 
@@ -31,7 +33,7 @@ Developed with [pnpm](https://pnpm.io/) but should work fine with npm, which com
 - Build: `npm run build`
 - Lint: `npm run lint`
 
-The frontend looks for a server running on `localhost` by default. To specify a different server, create a `.env` file inside the `client` folder and set the `VITE_SERVER_ENDPOINT` enviornment variable to the desired server host.
+The frontend looks for a server running on `localhost` by default. To specify a different server, create a `.env` file inside the `client` folder and set the `VITE_WEBSOCKET_ENDPOINT` enviornment variable to the desired server host. You should also set the `VITE_HTTP_ENDPOINT` variable if you plan to use the leaderboard.
 
 ## Design
 
@@ -39,7 +41,7 @@ The frontend looks for a server running on `localhost` by default. To specify a 
 The client is a simple I/O device. It is only responsible for sending controls to the server when the player presses a control, and drawing the game on an HTML canvas when the server sends a ping. It performs no game logic.
 
 ### Server
-The server holds the game state in memory and manages multiple client sessions. The server receives client events and updates the game state accordingly. On a fixed interval, the server advances the game by one tick and broadcasts the game state to all clients.
+The server holds the game state in memory and manages multiple client sessions. The server receives client events and updates the game state accordingly. On a fixed interval, the server advances the game by one tick and broadcasts the game state to all clients. When a player leaves the game, a request is queued to a seperate thread to update their score in the leaderboard, if needed.
 
 #### Events
 Events are messages sent between clients and servers. They are encoded as binary using [Protocol Buffers](https://protobuf.dev/), which although introduce more boilerplate than JSON (the first encoding I used), are between 60-90% smaller than the JSON equivalent for this use case.
@@ -54,3 +56,6 @@ The `process` function has various implementations depending on the event type s
 
 #### Ticks
 The game loop runs on a seperate thread and is more tightly coupled with the game store and the network. Presently there is a function `advanceToNextTick(gameState) -> { nextPlatformState, nextTickCount }`, which is impure since it modifies the player state directly, although it is deterministic and is simple to test.
+
+#### Leaderboard
+There is a worker thread dedicated to processing players having left the game (losers) which interacts with the database to keep the leaderboard up to date. Other threads pass players into a thread-safe queue so that they can continue their own tasks uninterrupted.

@@ -12,7 +12,7 @@
 	<artifactId>game</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>game</name>
-	<description>Websocket Game</description>
+	<description>Keep Jumping</description>
 	<url/>
 	<licenses>
 		<license/>

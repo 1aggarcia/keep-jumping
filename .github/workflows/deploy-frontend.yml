@@ -51,9 +51,9 @@ jobs:
 
       - name: Build
         env:
-          TEST_SECRET: ${{ secrets.TEST_SECRET }}
-          VITE_SERVER_ENDPOINT: ${{ secrets.VITE_SERVER_ENDPOINT }}
-        run: pnpm run build && echo $TEST_SECRET
+          VITE_WEBSOCKET_ENDPOINT: ${{ secrets.VITE_WEBSOCKET_ENDPOINT }}
+          VITE_HTTP_ENDPOINT: ${{ secrets.VITE_HTTP_ENDPOINT }}
+        run: pnpm run build
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

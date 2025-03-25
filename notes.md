@@ -1,6 +1,7 @@
 # TODO
 
 ## Devops
+- [ ] Switch from fly.io to Google Cloud Run to host server
 - [ ] Reduce redundant checks on pull request
 - [ ] Introduce unit tests for the frontend
 - [ ] Add database credentials to CI/CD for automated testing
@@ -17,9 +18,9 @@
 - [ ] Add seperate dev and prod leaderboards
 - [ ] Don't send redundant information (old platforms) to reduce ping size (current avg 90 B)
 - [ ] Detect player passing through platforms between two frames
-- [ ] Add persistent storage for user scores
 - [ ] Re-add support for game over
 - [*] Include more intelligent platform generation, based on location of nearby platforms
+- [x] Add persistent storage for user scores
 - [x] Create leaderboard ~~Data Access Object~~ service
 - [x] Create SQL database and connect to service
 - [x] Add REST endpoints for leaderboard
@@ -72,7 +73,7 @@
 - [x] Setup `lib` folder for shared models
 
 # CLI
-- Build docker image: `docker build -t websocket-game .`
+- Build docker image: `docker build -t keep-jumping .`
 - Test Maven app: `./mvnw test`
 - Lint Maven app: `./mvnw checkstyle:check`
 - Build Maven app: `./mvnw package` (output jar in `target/`)
