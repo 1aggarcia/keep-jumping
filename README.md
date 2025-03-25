@@ -1,4 +1,4 @@
-# Websocket Game 
+# Keep Jumping 
 
 Multiplayer platformer game where players compete to stay airborne as long as possible by jumping between falling platforms. [Play here](https://1aggarcia.github.io/websocket-game/).
 

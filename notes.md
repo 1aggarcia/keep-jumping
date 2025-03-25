@@ -1,6 +1,7 @@
 # TODO
 
 ## Devops
+- [ ] Switch from fly.io to Google Cloud Run to host server
 - [ ] Reduce redundant checks on pull request
 - [ ] Introduce unit tests for the frontend
 - [ ] Add database credentials to CI/CD for automated testing
@@ -72,7 +73,7 @@
 - [x] Setup `lib` folder for shared models
 
 # CLI
-- Build docker image: `docker build -t websocket-game .`
+- Build docker image: `docker build -t keep-jumping .`
 - Test Maven app: `./mvnw test`
 - Lint Maven app: `./mvnw checkstyle:check`
 - Build Maven app: `./mvnw package` (output jar in `target/`)
