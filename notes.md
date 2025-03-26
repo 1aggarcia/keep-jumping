@@ -1,10 +1,10 @@
 # TODO
 
 ## Devops
-- [ ] Switch from fly.io to Google Cloud Run to host server
 - [ ] Reduce redundant checks on pull request
 - [ ] Introduce unit tests for the frontend
-- [ ] Add database credentials to CI/CD for automated testing
+- [ ] Add database credentials to CI/CD for automated deployment
+- [*] Switch from fly.io to Google Cloud Run to host server
 - [x] Type Check on build
 - [x] CI linting
 - [x] CI testing
@@ -17,9 +17,9 @@
 ## Server
 - [ ] Add seperate dev and prod leaderboards
 - [ ] Don't send redundant information (old platforms) to reduce ping size (current avg 90 B)
-- [ ] Detect player passing through platforms between two frames
 - [ ] Re-add support for game over
 - [*] Include more intelligent platform generation, based on location of nearby platforms
+- [x] Detect player passing through platforms between two frames
 - [x] Add persistent storage for user scores
 - [x] Create leaderboard ~~Data Access Object~~ service
 - [x] Create SQL database and connect to service

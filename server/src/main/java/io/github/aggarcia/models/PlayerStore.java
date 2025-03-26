@@ -150,16 +150,7 @@ public final class PlayerStore {
         Collection<GamePlatform> platforms,
         int platformGravity
     ) {
-        /*
-         * newX = oldX + xVelocity
-         * newY = oldY + yVelocity
-         *
-         * if (isColliding(platform)) {
-         *      newX = boundary exceeded - player size
-         *      newY = boundary exceeded - player size
-         * }
-         */
-        // bounds checking with the floor
+        // bounds checking with sides
         int newX = this.xPosition + this.xVelocity;
         if (newX > MAX_PLAYER_X) {
             newX = MAX_PLAYER_X;
@@ -175,6 +166,7 @@ public final class PlayerStore {
         }
 
         this.yVelocity += GRAVITY;
+        int oldY = this.yPosition;
         int newY = this.yPosition + this.yVelocity;
         if (newY > MAX_PLAYER_Y) {
             newY = MAX_PLAYER_Y;
@@ -191,12 +183,34 @@ public final class PlayerStore {
 
         // collision correction with platforms
         for (var platform : platforms) {
-            if (isTouchingPlatform(platform) && this.yVelocity > 0) {
+            boolean hasCollided =
+                isTouchingPlatform(platform)
+                || crossesPlatform(oldY, platform);
+
+            if (this.yVelocity > 0 && hasCollided) {
                 this.yPosition = platform.y() - PLAYER_HEIGHT;
                 this.yVelocity = platformGravity;
             }
         }
         return this;
+    }
+
+    /**
+     * @param lastY - Y position in the previous tick
+     * @param platform - platform to check collision against
+     * @return true if the player has passed through the platform between the
+     * previous tick and this one, false otherwise.
+     */
+    private boolean crossesPlatform(int lastY, GamePlatform platform) {
+        if (this.xPosition + PLAYER_WIDTH < platform.x()) {
+            return false;
+        }
+        if (platform.x() + platform.width() < this.xPosition) {
+            return false;
+        }
+        int oldSign = Integer.signum(platform.y() - lastY);
+        int newSign = Integer.signum(platform.y() - this.yPosition);
+        return oldSign != newSign;
     }
 
     /**
