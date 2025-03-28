@@ -21,17 +21,17 @@ const DEFAULT_SERVER = "localhost:8081";
 type SocketMessageObject = Parameters<typeof SocketMessage.fromObject>[0];
 
 /**
- * Try to connect to the server, show an error message if connection fails.
+ * Try to connect to the server. Resolve the promise if the conection succeeds,
+ * reject otherwise.
  */
-export async function verifyServerHealth() {
+export const checkServerHealth = () => new Promise<void>((resolve, reject) => {
     const server = new WebSocket(getWebsocketEndpoint());
-    server.onopen = () => server.close();
-    server.onerror = () => {
-        gameElements.joinForm.hide();
-        gameElements.leaderboard.hide();
-        gameElements.serverUnavaliableBox.show();
+    server.onopen = () => {
+        server.close();
+        resolve();
     };
-}
+    server.onerror = () => reject();
+});
 
 export async function updateLeaderboard() {
     gameElements.leaderboardStatus.text("Updating leaderboard...");
