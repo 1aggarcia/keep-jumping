@@ -14,17 +14,17 @@ Developed with [pnpm](https://pnpm.io/) but should work fine with npm, which com
 
 ### Server:
 
-It is easiest to run the project from your IDE, but it can be run from the command line:
+You can run the project from the IDE or the command line
 
 `cd server`
 
 *(For windows, use a backslash `\` instead of a forward slash `/` for the below commands)*
-- Run: `./mvnw clean install && java -jar target/game-0.0.1-SNAPSHOT.jar`
+- Run: `./mvnw spring-boot:run`
 - Build: `./mvnw package`
 - Test: `./mvnw test`
 - Lint `./mvnw checkstyle:check`
 
-The server does not need a database connection to run the game, but it does look for one using the `DB_USERNAME` and `DB_PASSWORD` env variables. If you happen to have a Supabase database set up (and a leaderboard table), you could provide your credentials in an `env.properties` file in the root directory (not the server directory) to use your own leaderboard.
+The server does not need a database connection to run the game, but it does look for one using the `DB_USERNAME` and `DB_PASSWORD` env variables. If you happen to have a Supabase database set up (and a leaderboard table), you could provide your credentials in an `env.properties` file in the directory from which the server is run to use your own leaderboard.
 
 ### Frontend
 `cd client`
