@@ -16,23 +16,22 @@ from google.auth import default
 @functions_framework.cloud_event
 def on_message(cloud_event: CloudEvent):
     print(f"Received a message. Raw payload:\n{cloud_event.data}")
+    if not is_anomaly(cloud_event):
+        return
 
-    should_shutdown = is_anomaly(cloud_event)
+    print("BUDGED EXCEEDED: turing off billing...")
 
-    if should_shutdown:
-        print("BUDGED EXCEEDED: turing off billing...")
+    project_id = default()[1]
+    shutdown_request = create_billing_shutdown_request(project_id)
+    print(f"using request '{shutdown_request}'")
 
-        project_id = default()[1]
-        shutdown_request = create_billing_shutdown_request(project_id)
-        print(f"using request '{shutdown_request}'")
+    print("Creating billing client...")
+    billing_client = billing_v1.CloudBillingClient()
 
-        print("Creating billing client...")
-        billing_client = billing_v1.CloudBillingClient()
+    print("Updating billing info...")
+    billing_client.update_project_billing_info(request=shutdown_request)
 
-        print("Updating billing info...")
-        billing_client.update_project_billing_info(request=shutdown_request)
-
-        print("Done!")
+    print("Done!")
 
 
 def is_anomaly(cloud_event: CloudEvent):
