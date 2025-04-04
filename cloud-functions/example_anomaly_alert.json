@@ -1,0 +1,16 @@
+{
+    "anomalyName": "billingAccounts/01D4EE-079462-DFD6EC/anomalies/aaa",
+    "billingAccountName": "billingAccounts/01D4EE-079462-DFD6EC",
+    "resourceName": "projects/12345",
+    "resourceDisplayName": "My project",
+    "detectionDate": "2024-02-01T08:00:00Z",
+    "Scope": "SCOPE_PROJECT",
+    "expectedSpendAmount": {
+        "currencyCode": "USD",
+        "units": "100",
+        "nanos": 988106832
+    },
+    "actualSpendAmount": 150,
+    "deviationAmount": 50,
+    "deviationPercentage": 50
+}
