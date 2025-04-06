@@ -1,5 +1,6 @@
 package io.github.aggarcia.models;
 
+import static io.github.aggarcia.models.PlayerStore.GRAVITY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,22 +18,22 @@ import io.github.aggarcia.leaderboard.LeaderboardEntry;
 @SpringBootTest
 public class PlayerStoreTest {
     // for testing platform collisions, reused across a few tests
-    static final PlayerStore testCollisionPlayer = PlayerStore.builder()
+    static final PlayerStore TEST_COLLISION_PLAYER = PlayerStore.builder()
         .xPosition(200)
         .yPosition(200)
         .xVelocity(0)
         .yVelocity(0)
         .build();
 
-    static final GamePlatform testCollisionPlatform =
+    static final GamePlatform TEST_COLLISION_PlATFORM =
         new GamePlatform(100, 150, 200 + PlayerStore.PLAYER_HEIGHT);
 
     // collides only on the X axis
-    static final GamePlatform testCollisionPlatformX =
+    static final GamePlatform TEST_COLLISION_X_PLATFORM =
         new GamePlatform(100, 150, 0);
 
     // collides only on the Y axis
-    static final GamePlatform testCollisionPlatformY =
+    static final GamePlatform TEST_COLLISION_Y_PLATFORM =
         new GamePlatform(100, 0, 200 + PlayerStore.PLAYER_HEIGHT);
 
     @Test
@@ -55,7 +56,8 @@ public class PlayerStoreTest {
 
             assertTrue(player.xPosition() >= 0);
             assertTrue(player.yPosition() >= 0);
-            assertTrue(player.xPosition() <= GameConstants.WIDTH - PlayerStore.PLAYER_WIDTH);
+            assertTrue(
+                player.xPosition() <= GameConstants.WIDTH - PlayerStore.PLAYER_WIDTH);
             assertTrue(player.yPosition() <= PlayerStore.MAX_SPAWN_HEIGHT);
         }
     }
@@ -241,9 +243,9 @@ public class PlayerStoreTest {
     @Test
     void test_moveToNextTick_onTopOfPlatform_setsYToPlatformGravity() {
         int platformGravity = RandomUtil.getPositiveInt();
-        PlayerStore testPlayer = testCollisionPlayer.clone();
+        PlayerStore testPlayer = TEST_COLLISION_PLAYER.clone();
         testPlayer.moveToNextTick(
-            List.of(testCollisionPlatform), platformGravity
+            List.of(TEST_COLLISION_PlATFORM), platformGravity
         );
         assertEquals(200, testPlayer.xPosition());
         assertEquals(200, testPlayer.yPosition());
@@ -254,11 +256,11 @@ public class PlayerStoreTest {
 
     @Test
     void test_moveToNextTick_platformCollidesOnlyX_appliesGravity() {
-        PlayerStore testPlayer = testCollisionPlayer.clone(); 
+        PlayerStore testPlayer = TEST_COLLISION_PLAYER.clone(); 
 
         // crosses the player on the X axis but not the Y axis
         testPlayer.moveToNextTick(
-            List.of(testCollisionPlatformX), RandomUtil.getPositiveInt()
+            List.of(TEST_COLLISION_X_PLATFORM), RandomUtil.getPositiveInt()
         );
         assertEquals(200, testPlayer.xPosition());
         assertEquals(200 + PlayerStore.GRAVITY, testPlayer.yPosition());
@@ -268,11 +270,11 @@ public class PlayerStoreTest {
 
     @Test
     void test_moveToNextTick_platformCollidesOnlyY_appliesGravity() {
-        PlayerStore testPlayer = testCollisionPlayer.clone();
+        PlayerStore testPlayer = TEST_COLLISION_PLAYER.clone();
 
         // crosses the player on the Y axis but not the X axis
         testPlayer.moveToNextTick(
-            List.of(testCollisionPlatformY), RandomUtil.getPositiveInt()
+            List.of(TEST_COLLISION_Y_PLATFORM), RandomUtil.getPositiveInt()
         );
         assertEquals(200, testPlayer.xPosition());
         assertEquals(200 + PlayerStore.GRAVITY, testPlayer.yPosition());
@@ -282,12 +284,12 @@ public class PlayerStoreTest {
 
     @Test
     void test_moveToNextTick_multipleNonCollidingPlatforms_appliesGravity() {
-        PlayerStore testPlayer = testCollisionPlayer.clone();
+        PlayerStore testPlayer = TEST_COLLISION_PLAYER.clone();
         // none of these collide with the player
         var platforms = List.of(
-            testCollisionPlatformX,
-            testCollisionPlatformY,
-            testCollisionPlatformX
+            TEST_COLLISION_X_PLATFORM,
+            TEST_COLLISION_Y_PLATFORM,
+            TEST_COLLISION_X_PLATFORM
         );
         testPlayer.moveToNextTick(platforms, RandomUtil.getPositiveInt());
 
@@ -299,12 +301,12 @@ public class PlayerStoreTest {
 
     @Test
     void test_moveToNextTick_oneCollidingPlatform_doesNothing() {
-        PlayerStore testPlayer = testCollisionPlayer.clone();
-        // last platform collides wiht player
+        PlayerStore testPlayer = TEST_COLLISION_PLAYER.clone();
+        // last platform collides with player
         var platforms = List.of(
-            testCollisionPlatformX,
-            testCollisionPlatformY,
-            testCollisionPlatform
+            TEST_COLLISION_X_PLATFORM,
+            TEST_COLLISION_Y_PLATFORM,
+            TEST_COLLISION_PlATFORM
         );
         int gravity = RandomUtil.getPositiveInt();
         testPlayer.moveToNextTick(platforms, gravity);
@@ -313,6 +315,55 @@ public class PlayerStoreTest {
         assertEquals(200, testPlayer.yPosition());
         assertEquals(0, testPlayer.xVelocity());
         assertEquals(gravity, testPlayer.yVelocity());
+    }
+    
+    @Test
+    void test_moveToNextTick_playerJumpingThroughPlatform_passesPlatform() {
+        final int JUMP_STRENGTH = 100;
+
+        PlayerStore testPlayer = TEST_COLLISION_PLAYER
+            .clone()
+            .yVelocity(-JUMP_STRENGTH);
+
+        var platforms = List.of(TEST_COLLISION_PlATFORM);
+        testPlayer.moveToNextTick(platforms, 0);
+
+        assertEquals(200 - JUMP_STRENGTH + GRAVITY, testPlayer.yPosition());
+        assertEquals(GRAVITY - JUMP_STRENGTH, testPlayer.yVelocity());
+    }
+
+    @Test
+    void test_moveToNextTick_playerFallingFasterThanPlatform_playerStops() {
+        PlayerStore testPlayer = TEST_COLLISION_PLAYER.clone()
+            .yPosition(TEST_COLLISION_PLAYER.yPosition() - 1)
+            .yVelocity(200);  // too fast to collide with platform
+
+        var platforms = List.of(TEST_COLLISION_PlATFORM);
+        int gravity = RandomUtil.getPositiveInt() % 100;
+        testPlayer.moveToNextTick(platforms, gravity);
+
+        assertEquals(
+            TEST_COLLISION_PlATFORM.y() - PlayerStore.PLAYER_HEIGHT,
+            testPlayer.yPosition()
+        );
+        assertEquals(gravity, testPlayer.yVelocity());
+    }
+
+    @Test
+    void test_moveToNextTick_playerFallingNextToPlatform_continuesFalling() {
+        int startPosition = TEST_COLLISION_PLAYER.yPosition() - 1;
+
+        PlayerStore testPlayer = TEST_COLLISION_PLAYER.clone()
+            .yPosition(startPosition)
+            .yVelocity(200)
+            .xPosition(0);  // nowhere near the platform
+        
+        var platforms = List.of(TEST_COLLISION_PlATFORM);
+        int gravity = RandomUtil.getPositiveInt() % 100;
+        testPlayer.moveToNextTick(platforms, gravity);
+
+        assertEquals(startPosition + 200 + GRAVITY, testPlayer.yPosition());
+        assertEquals(200 + GRAVITY, testPlayer.yVelocity());
     }
 
     @Test

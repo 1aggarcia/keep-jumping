@@ -92,7 +92,6 @@ public final class EventProcessor {
             oldYVelocity = player.yVelocity();
         }
 
-
         int newXVelocity = 0;
         int newYVelocity = oldYVelocity;
         var pressedControls = new HashSet<>(event.getPressedControlsList());

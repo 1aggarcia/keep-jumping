@@ -10,7 +10,7 @@ import { handleJoinSubmit, handleKeyDown, handleKeyUp } from "./domHandler";
 import { drawMetadata } from "./ui/graphics";
 import { enableDevTools } from "./devTools";
 import { AppState } from "./types";
-import { updateLeaderboard, verifyServerHealth } from "./server";
+import { updateLeaderboard, checkServerHealth } from "./server";
 
 const JUMP_KEYCODE = "ArrowUp";
 
@@ -39,9 +39,10 @@ jQuery(function main() {
     gameElements.viteMode
         .text(`Mode: ${import.meta.env.MODE} | v${VERSION}`);
 
+    buildLeaderboardRows();
     fitCanvasToWindow(gameElements.canvas);
     drawMetadata(appState);
-    buildLeaderboardRows();
+
 
     // Event listeners
     addEventListener("resize", () => fitCanvasToWindow(gameElements.canvas));
@@ -53,6 +54,17 @@ jQuery(function main() {
         .on("mousedown",() => handleKeyDown(JUMP_KEYCODE, appState))
         .on("mouseup", () => handleKeyUp(JUMP_KEYCODE, appState));
 
-    verifyServerHealth().then(updateLeaderboard);
     enableDevTools(appState);
+    checkServerHealth()
+        .then(updateLeaderboard)
+        .catch(displayServerUnavailable);
 });
+
+function displayServerUnavailable(connectionError: unknown) {
+    console.error(connectionError);
+
+    gameElements.joinForm.hide();
+    gameElements.leaderboard.hide();
+    gameElements.leaderboardStatus.hide();
+    gameElements.serverUnavailableBox.show();
+}
