@@ -15,7 +15,7 @@ export const gameElements = {
     viteMode: $("#vite-mode"),
     joinForm: $<HTMLFormElement>("#join-form"),
     inactiveOverlay: $(".inactive-overlay"),
-    serverUnavaliableBox: $("#server-unavaliable-box"),
+    serverUnavailableBox: $("#server-unavailable-box"),
     leaderboard: $("#leaderboard"),
     leaderboardBody: $("#leaderboard tbody"),
     leaderboardStatus: $("#leaderboard-status"),

@@ -82,7 +82,7 @@ public class LeaderboardService {
 
     /**
      * Throws an exception if the env variables for database connection
-     * are not defiend.
+     * are not defined.
      */
     private void verifyDatabaseCredentialsDefined() throws DataAccessException {
         System.out.println("Table name set to " + tableName);

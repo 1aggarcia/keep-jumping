@@ -57,14 +57,14 @@ jQuery(function main() {
     enableDevTools(appState);
     checkServerHealth()
         .then(updateLeaderboard)
-        .catch(displayServerUnavaliable);
+        .catch(displayServerUnavailable);
 });
 
-function displayServerUnavaliable(connectionError: unknown) {
+function displayServerUnavailable(connectionError: unknown) {
     console.error(connectionError);
 
     gameElements.joinForm.hide();
     gameElements.leaderboard.hide();
     gameElements.leaderboardStatus.hide();
-    gameElements.serverUnavaliableBox.show();
+    gameElements.serverUnavailableBox.show();
 }

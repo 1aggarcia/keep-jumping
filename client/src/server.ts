@@ -21,7 +21,7 @@ const DEFAULT_SERVER = "localhost:8081";
 type SocketMessageObject = Parameters<typeof SocketMessage.fromObject>[0];
 
 /**
- * Try to connect to the server. Resolve the promise if the conection succeeds,
+ * Try to connect to the server. Resolve the promise if the connection succeeds,
  * reject otherwise.
  */
 export const checkServerHealth = () => new Promise<void>((resolve, reject) => {
