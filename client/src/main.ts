@@ -60,7 +60,9 @@ jQuery(function main() {
         .catch(displayServerUnavaliable);
 });
 
-function displayServerUnavaliable() {
+function displayServerUnavaliable(connectionError: unknown) {
+    console.error(connectionError);
+
     gameElements.joinForm.hide();
     gameElements.leaderboard.hide();
     gameElements.leaderboardStatus.hide();

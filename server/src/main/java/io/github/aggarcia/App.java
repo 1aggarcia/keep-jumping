@@ -107,4 +107,9 @@ public class App implements WebSocketConfigurer {
                 e.toString(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/api/health")
+    String getRoot() {
+        return "Keep Jumping server is alive";
+    }
 }

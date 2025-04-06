@@ -25,12 +25,9 @@ type SocketMessageObject = Parameters<typeof SocketMessage.fromObject>[0];
  * reject otherwise.
  */
 export const checkServerHealth = () => new Promise<void>((resolve, reject) => {
-    const server = new WebSocket(getWebsocketEndpoint());
-    server.onopen = () => {
-        server.close();
-        resolve();
-    };
-    server.onerror = () => reject();
+    fetch(getHttpEndpoint() + "/api/health")
+        .then(() => resolve())
+        .catch(err => reject(err));
 });
 
 export async function updateLeaderboard() {
