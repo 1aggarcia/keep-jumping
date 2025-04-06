@@ -24,7 +24,7 @@ You can run the project from the IDE or the command line
 - Test: `./mvnw test`
 - Lint `./mvnw checkstyle:check`
 
-The server does not need a database connection to run the game, but it does look for one using the `DB_USERNAME` and `DB_PASSWORD` env variables. If you happen to have a Supabase database set up (and a leaderboard table), you could provide your credentials in an `env.properties` file in the directory from which the server is run to use your own leaderboard.
+The server does not need a database connection to run the game, but it does look for one using the `SPRING_DATASOURCE_USERNAME` and `SPRING_DATASOURCE_PASSWORD` env variables. If you happen to have a Supabase database set up (and a leaderboard table), you could provide your credentials in an `env.properties` file in the directory from which the server is run to use your own leaderboard. You should set the `DATABASE_LEADERBOARD` variable to the name of your table.
 
 ### Frontend
 `cd client`
