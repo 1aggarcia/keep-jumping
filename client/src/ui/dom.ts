@@ -21,7 +21,7 @@ export const gameElements = {
     leaderboardStatus: $("#leaderboard-status"),
 };
 
-const gameContext = gameElements.canvas[0].getContext("2d");
+const gameContext = gameElements.canvas[0]?.getContext("2d") ?? null;
 
 export function getGameContext() {
     if (gameContext === null) {

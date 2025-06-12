@@ -53,23 +53,22 @@ const SECONDS_PER_YEAR = SECONDS_PER_WEEK * 52;
 /**
  * Returns a string such as "5 months ago" or "3 minutes ago" depending on
  * how much time has passed since the passed in date
- * @param timestamp 
+ * @param timestamp
  */
 export function getRelativeAgeString(timestamp: Date) {
     const timestampSeconds = timestamp.getTime() / MS_PER_SECOND;
     const nowSeconds = Date.now() / MS_PER_SECOND;
     if (timestampSeconds > nowSeconds) {
-        console.error(` Tried to get age of future timestamp: ${timestamp}`);
+        console.error(`Tried to get age of future timestamp: ${timestamp}`);
         return timestamp.toLocaleDateString();
     }
-
     const secondsPassed = nowSeconds - timestampSeconds;
 
     let divisor: number;
     let unit: string;
     if (secondsPassed < SECONDS_PER_MINUTE) {
         divisor = 1;
-        unit = "second"
+        unit = "second";
     } else if (secondsPassed < SECONDS_PER_HOUR) {
         divisor = SECONDS_PER_MINUTE;
         unit = "minute";
@@ -86,7 +85,6 @@ export function getRelativeAgeString(timestamp: Date) {
         divisor = SECONDS_PER_YEAR;
         unit = "year";
     }
-
     const timeInterval = Math.floor(secondsPassed / divisor);
     const pluralIndicator = timeInterval === 1 ? "" : "s";
 
