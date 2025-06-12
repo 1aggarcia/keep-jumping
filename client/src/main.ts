@@ -43,7 +43,6 @@ jQuery(function main() {
     fitCanvasToWindow(gameElements.canvas);
     drawMetadata(appState);
 
-
     // Event listeners
     addEventListener("resize", () => fitCanvasToWindow(gameElements.canvas));
     addEventListener("keyup", (e) => handleKeyUp(e.code, appState));

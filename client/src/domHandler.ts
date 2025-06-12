@@ -5,12 +5,11 @@ import { connectToServer, sendToServer } from "./server";
 export function handleKeyDown(keyCode: string, state: AppState) {
     const control = keyCodeToPlayerControl(keyCode);
     if (control === null) return;
-    if (state.server === null) return;
 
-    // if no changes made, data should not be sent to the server
-    if (state.pressedControls.has(control)) return;
-
+    const didStateChange = !state.pressedControls.has(control);
     state.pressedControls.add(control);
+    if (!didStateChange || state.server === null) return;
+
     sendToServer(state, {
         controlChangeEvent: {
             pressedControls: Array.from(state.pressedControls),
@@ -21,13 +20,15 @@ export function handleKeyDown(keyCode: string, state: AppState) {
 export function handleKeyUp(keyCode: string, state: AppState) {
     const control = keyCodeToPlayerControl(keyCode);
     if (control === null) return;
-    if (state.server === null) return;
 
+    const didStateChange = state.pressedControls.has(control);
     state.pressedControls.delete(control);
+    if (!didStateChange || state.server === null) return;
+
     sendToServer(state, {
         controlChangeEvent: {
             pressedControls: Array.from(state.pressedControls),
-        }
+        },
     });
 }
 

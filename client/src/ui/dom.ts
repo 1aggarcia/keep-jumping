@@ -1,7 +1,7 @@
 import $ from "jquery";
 import { GAME_HEIGHT, GAME_WIDTH } from "./gameConstants";
 import { AppState, LeaderboardEntry } from "../types";
-import { formatBytesString } from "./formatters";
+import { formatBytesString, getRelativeAgeString } from "./formatters";
 
 const GAME_ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
 const LEADERBOARD_ROWS = 10;
@@ -21,7 +21,7 @@ export const gameElements = {
     leaderboardStatus: $("#leaderboard-status"),
 };
 
-const gameContext = gameElements.canvas[0].getContext("2d");
+const gameContext = gameElements.canvas[0]?.getContext("2d") ?? null;
 
 export function getGameContext() {
     if (gameContext === null) {
@@ -91,7 +91,7 @@ export function fillLeaderboard(entries: LeaderboardEntry[]) {
             playerCell.textContent = nextEntry.player;
             scoreCell.textContent = String(nextEntry.score);
             timestampCell.textContent =
-                new Date(nextEntry.timestamp).toLocaleDateString();
+                getRelativeAgeString(new Date(nextEntry.timestamp));
         } else {
             playerCell.textContent = "";
             scoreCell.textContent = "";
