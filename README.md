@@ -41,7 +41,7 @@ The frontend looks for a server running on `localhost` by default. To specify a 
 The client is a simple I/O device. It is only responsible for sending controls to the server when the player presses a control, and drawing the game on an HTML canvas when the server sends a ping. It performs no game logic.
 
 ### Server
-The server holds the game state in memory and manages multiple client sessions. The server receives client events and updates the game state accordingly. On a fixed interval, the server advances the game by one tick and broadcasts the game state to all clients. When a player leaves the game, a request is queued to a seperate thread to update their score in the leaderboard, if needed.
+The server holds the game state in memory and manages multiple client sessions. The server receives client events and updates the game state accordingly. On a fixed interval, the server advances the game by one tick and broadcasts the game state to all clients. When a player leaves the game, a request is queued to a separate thread to update their score in the leaderboard, if needed.
 
 #### Events
 Events are messages sent between clients and servers. They are encoded as binary using [Protocol Buffers](https://protobuf.dev/), which although introduce more boilerplate than JSON (the first encoding I used), are between 60-90% smaller than the JSON equivalent for this use case.

@@ -89,13 +89,17 @@ public final class TickProcessor {
                     .setGameOverEvent(gameOverEvent)
                     .build();
 
-                outgoingEvents.add(new OutgoingEvent(playerSession, wrappedMessage));
+                outgoingEvents
+                    .add(new OutgoingEvent(playerSession, wrappedMessage));
             } else if (nextTickCount == 0) {
                 player.addToScore(SCORE_PER_SECOND);
             }
         }
-
-        return new TickResponse(nextPlatformsState, playersToRemove, outgoingEvents);
+        return new TickResponse(
+            nextPlatformsState,
+            playersToRemove,
+            outgoingEvents
+        );
     }
 
     /**

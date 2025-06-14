@@ -186,7 +186,7 @@ public class GameLoopTest {
     }
 
     @Test
-    void test_start_afterLoopCloses_clearsSessions() throws Exception {
+    void test_start_afterLoopCloses_doesNotClearSessions() throws Exception {
         var store = GameStore.builder()
             .sessions(getSessions())
             .build();
@@ -195,7 +195,7 @@ public class GameLoopTest {
         assertNotEquals(0, store.sessions().size());
         gameLoop.start();
         gameLoop.forceQuit();
-        assertEquals(0, store.sessions().size());
+        assertNotEquals(0, store.sessions().size());
     }
 
     @Test

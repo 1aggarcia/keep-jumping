@@ -42,7 +42,7 @@ public class GameStore {
         new LinkedBlockingQueue<>();
 
     /**
-     * Events to be sent out to clients
+     * Events to be sent out to clients.
      */
     private final BlockingQueue<OutgoingEvent> outgoingEvents =
         new LinkedBlockingQueue<>();
@@ -52,7 +52,7 @@ public class GameStore {
         Collections.synchronizedSet(new HashSet<>());
 
     /**
-     * sessionId -> playerState
+     * Map sessionId -> playerState.
      */
     @Builder.Default
     private final Map<String, PlayerStore> players =
