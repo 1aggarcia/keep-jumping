@@ -1,6 +1,10 @@
 package io.github.aggarcia;
 
 
+import static io.github.aggarcia.messages.Serializer.serialize;
+
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,6 +17,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
@@ -21,6 +26,7 @@ import io.github.aggarcia.clients.ClientHandler;
 import io.github.aggarcia.engine.GameLoop;
 import io.github.aggarcia.leaderboard.LeaderboardService;
 import io.github.aggarcia.models.GameStore;
+import io.github.aggarcia.models.OutgoingEvent;
 import io.github.aggarcia.models.PlayerStore;
 import jakarta.annotation.PostConstruct;
 
@@ -44,6 +50,7 @@ public class App implements WebSocketConfigurer {
     void init() {
         // I hate java sometimes
         new Thread(this::processLosers).start();
+        new Thread(this::processOutgoingEvents).start();
     }
 
     @Override
@@ -78,7 +85,7 @@ public class App implements WebSocketConfigurer {
     }
 
     /**
-     * Should be run on a seperate thread. Consumes players from the loser
+     * Should be run on a separate thread. Consumes players from the loser
      * queue and saves their stats.
      */
     void processLosers() {
@@ -91,6 +98,25 @@ public class App implements WebSocketConfigurer {
                 System.err.println(e);
             } catch (InterruptedException e) {
                 System.err.println("Loser worker thread interrupted");
+                break;
+            }
+        }
+    }
+
+    /**
+     * Should be run on a separate thread. Consumes events from the event
+     * queue to send out to clients.
+     */
+    void processOutgoingEvents() {
+        while (true) {
+            try {
+                OutgoingEvent nextEvent = store.outgoingEvents().take();
+                var message = new BinaryMessage(serialize(nextEvent.event()));
+                nextEvent.client().sendMessage(message);
+            } catch (IOException e) {
+                System.err.println(e);
+            } catch (InterruptedException e) {
+                System.err.println("Outgoing event thread interrupted");
                 break;
             }
         }

@@ -4,6 +4,7 @@
 - [ ] Reduce redundant checks on pull request
 - [ ] Introduce unit tests for the frontend
 - [ ] Add database credentials to CI/CD for automated deployment
+- [ ] Add Github action to auto-deploy server to GCP
 - [*] Switch from fly.io to Google Cloud Run to host server
 - [x] Type Check on build
 - [x] CI linting
@@ -16,9 +17,9 @@
 
 ## Server
 - [ ] Don't send redundant information (old platforms) to reduce ping size (current avg 90 B)
-- [ ] Re-add support for game over
+- [x] Re-add support for game over
 - [x] Include more intelligent platform generation, based on location of nearby platforms
-- [x] Add seperate dev and prod leaderboards
+- [x] Add separate dev and prod leaderboards
 - [x] Detect player passing through platforms between two frames
 - [x] Add persistent storage for user scores
 - [x] Create leaderboard ~~Data Access Object~~ service
@@ -47,9 +48,10 @@
 - [x] Add gravity
 
 ## Client
+- [ ] Don't send ControlChangeEvent if the player is not in the game
 - [ ] Keep websocket connection open across games, create "LeaveEvent" to leave a game
 - [ ] Add dark mode
-- [*] Process disconnect requests / other errors
+- [x] Process disconnect requests / other errors
 - [x] Use HTTP for health check
 - [x] Fetch and show leaderboard when not connected
 - [*] Move all graphics inside the canvas
@@ -79,4 +81,3 @@
 - Lint Maven app: `./mvnw checkstyle:check`
 - Build Maven app: `./mvnw package` (output jar in `target/`)
 - Deploy to GCP: `gcloud run deploy ${SERVICE} --source .`
-

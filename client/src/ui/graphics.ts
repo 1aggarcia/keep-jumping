@@ -55,15 +55,6 @@ export function redrawGame(state: AppState) {
     drawMetadata(state);
 }
 
-// TODO: change server to send game over update, then change this to use the
-// `renderLabel` helper
-export function drawGameOver(context: Context2D, reason: string) {
-    context.fillStyle = RED_HEX;
-    context.font = "bold 30px Arial";
-    context.textAlign = "center";
-    context.fillText(`GAME OVER: ${reason}`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
-}
-
 export function clearCanvas(context: Context2D) {
     context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 }

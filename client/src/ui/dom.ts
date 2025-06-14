@@ -19,6 +19,7 @@ export const gameElements = {
     leaderboard: $("#leaderboard"),
     leaderboardBody: $("#leaderboard tbody"),
     leaderboardStatus: $("#leaderboard-status"),
+    gameOverMessage: $("#game-over-message"),
 };
 
 const gameContext = gameElements.canvas[0]?.getContext("2d") ?? null;

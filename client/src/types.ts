@@ -14,6 +14,7 @@ export type AppState = {
     context: Context2D;
     buttons: Button[];
     serverId: string | null;
+    gameOverMessage: string | null; 
 
     // non-essential stats
     bytesIn: number;

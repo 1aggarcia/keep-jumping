@@ -17,6 +17,7 @@ function mockState(overrides?: Partial<AppState>): AppState {
         context: null as unknown as Context2D,
         buttons: [],
         serverId: null,
+        gameOverMessage: null,
         bytesIn: 0,
         messagesIn: 0,
         messagesOut: 0,

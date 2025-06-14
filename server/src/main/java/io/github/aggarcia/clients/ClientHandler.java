@@ -77,7 +77,7 @@ public class ClientHandler extends AbstractWebSocketHandler {
 
 
     /**
-     * Handle sample ping message, sepereate from the rest of the app.
+     * Handle sample ping message, separate from the rest of the app.
      */
     @Override
     public void handleBinaryMessage(

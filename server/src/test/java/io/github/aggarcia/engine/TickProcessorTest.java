@@ -31,22 +31,12 @@ import static io.github.aggarcia.engine.TickProcessor.advanceToNextTick;
 public class TickProcessorTest {
     static final int RANDOM_TRIALS = 1000;
 
-    // commenting out all the tests on `isUpdateNeeded` since it serves
-    // no purpose (for now)
-
     @Test
     void test_advanceToNextTick_tickCountZero_setTickCountToOne() {
         var store = new GameStore().tickCount(0);
         advanceToNextTick(store);
         assertEquals(1, store.tickCount());
     }
-
-    // @Test
-    // void test_advanceToNextTick_tickCountZero_doesNotRequireUpdate() {
-    //     var response = advanceTickWithTickCount(0);
-    //     assertFalse(response.isUpdateNeeded());
-    // }
-
     @Test
     void test_advanceToNextTick_maxTickCount_setsTickCountToZero() {
         var store = new GameStore()
@@ -80,7 +70,7 @@ public class TickProcessorTest {
     }
 
     @Test
-    void test_advanceToNextTick_ticksNotAtNextLevel_doesNotChangeGraivty() {
+    void test_advanceToNextTick_ticksNotAtNextLevel_doesNotChangeGravity() {
         int initGravity = RandomUtil.getPositiveInt();
         var store = new GameStore()
             .tickCount(TICKS_PER_SECOND - 2)
@@ -90,45 +80,6 @@ public class TickProcessorTest {
         advanceToNextTick(store);
         assertEquals(store.platformGravity(), initGravity);
     }
-
-    // @Test
-    // void test_advanceToNextTick_maxTickCount_requiresUpdate() {
-    //     var response = advanceTickWithTickCount(TICKS_PER_SECOND - 1);
-    //     assertTrue(response.isUpdateNeeded());
-    // }
-
-    // @Test
-    // void test_advanceToNextTick_newPlayer_requiresUpdate() {
-    //     var players = Map.of("", Player.createRandomPlayer());
-    //     var response = advanceTickWithPlayers(players);
-    //     assertTrue(response.isUpdateNeeded());
-    // }
-
-    // @Test
-    // void test_advanceToNextTick_newPlayerOnSecondTick_doesNotRequireUpdate() {
-    //     var players = Map.of(
-    //         "", Player.createRandomPlayer().yPosition(GameConstants.HEIGHT)
-    //     );
-    //     advanceTickWithPlayers(players);
-    //     var secondResponse = advanceTickWithPlayers(players);
-    //     assertFalse(secondResponse.isUpdateNeeded()); 
-    // }
-
-    // @Test
-    // void test_advanceToNextTick_motionlessPlayers_doesNotRequireUpdate() {
-    //     var players = createTestPlayers();
-    //     var response = advanceTickWithPlayers(players);
-    //     assertFalse(response.isUpdateNeeded());
-    // }
-
-    // @Test
-    // void test_advanceToNextTick_oneMovingPlayer_requiresUpdate() {
-    //     var players = createTestPlayers();
-    //     players.put("2", new Player("", 0, 0, 0, 1, 0, false));
-    
-    //     var response = advanceTickWithPlayers(players);
-    //     assertTrue(response.isUpdateNeeded());
-    // }
 
     @Test
     void test_advanceToNextTick_onePlayer_advancesPlayer() {
@@ -165,8 +116,7 @@ public class TickProcessorTest {
             .moveToNextTick()
             .hasChanged(false);
 
-        var response = advanceTickWithPlayers(players);
-        assertTrue(response.isUpdateNeeded());
+        advanceTickWithPlayers(players);
         assertEquals(expected1, players.get("1"));
         assertEquals(expected2, players.get("2"));
     }
@@ -180,6 +130,24 @@ public class TickProcessorTest {
         var response = advanceTickWithPlayers(players);
     
         assertEquals(List.of("player1"), response.playersToRemove());
+    }
+
+    @Test
+    void test_advanceToNextTick_playerTouchingGround_returnsGameOverEvent() {
+        var score = RandomUtil.getPositiveInt();
+        var player1 = PlayerStore
+            .createRandomPlayer("")
+            .yPosition(PlayerStore.MAX_PLAYER_Y)
+            .score(score);
+        var players = Map.of("player1", player1);
+        var response = advanceTickWithPlayers(players);
+
+        assertEquals(1, response.outgoingEvents().size());
+        var responseEvent = response.outgoingEvents().get(0);
+        assertEquals(null, responseEvent.client());
+        assertTrue(responseEvent.event().hasGameOverEvent());
+        var gameOverEvent = responseEvent.event().getGameOverEvent();
+        assertEquals("You died. Final Score: " + score, gameOverEvent.getReason());
     }
 
     @Test

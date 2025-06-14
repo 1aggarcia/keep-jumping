@@ -4,13 +4,19 @@ import static io.github.aggarcia.engine.GameConstants.LEVELUP_PLATFORM_GRAVITY;
 import static io.github.aggarcia.engine.GameConstants.PLATFORM_SPEEDUP_INTERVAL;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.springframework.web.socket.WebSocketSession;
 
 import ch.qos.logback.core.testUtil.RandomUtil;
+import io.github.aggarcia.messages.Generated.GameOverEvent;
 import io.github.aggarcia.messages.Generated.GamePing;
 import io.github.aggarcia.messages.Generated.Platform;
 import io.github.aggarcia.messages.Generated.Player;
 import io.github.aggarcia.messages.Generated.SocketMessage;
+import io.github.aggarcia.models.OutgoingEvent;
 import io.github.aggarcia.models.GamePlatform;
 import io.github.aggarcia.models.GameStore;
 import io.github.aggarcia.models.PlayerStore;
@@ -25,9 +31,9 @@ public final class TickProcessor {
 
     /** Response produced by advancing the game tick. */
     public record TickResponse(
-        boolean isUpdateNeeded,
         List<GamePlatform> nextPlatformsState,
-        List<String> playersToRemove
+        List<String> playersToRemove,
+        List<OutgoingEvent> outgoingEvents
     ) {}
 
     private TickProcessor() {}
@@ -57,25 +63,39 @@ public final class TickProcessor {
         }
 
         // handle players
+        Map<String, WebSocketSession> clientIdToSession = new HashMap<>();
+        for (var session : store.sessions()) {
+            clientIdToSession.put(session.getId(), session);
+        }
         List<String> playersToRemove = new ArrayList<>();
+        List<OutgoingEvent> outgoingEvents = new ArrayList<>();
         for (var playerEntry : store.players().entrySet()) {
+            String playerId = playerEntry.getKey();
             PlayerStore player = playerEntry.getValue();
             player.moveToNextTick(nextPlatformsState, store.platformGravity());
             if (player.hasChanged()) {
                 player.hasChanged(false);
             }
-            if (
+            boolean playerHasDied = (
                 player.yPosition()
                 >= GameConstants.HEIGHT - PlayerStore.PLAYER_HEIGHT
-            ) {
-                playersToRemove.add(playerEntry.getKey());
+            );
+            if (playerHasDied) {
+                playersToRemove.add(playerId);
+                var playerSession = clientIdToSession.get(playerId);
+                var gameOverEvent = GameOverEvent.newBuilder()
+                    .setReason("You died. Final Score: " + player.score());
+                var wrappedMessage = SocketMessage.newBuilder()
+                    .setGameOverEvent(gameOverEvent)
+                    .build();
+
+                outgoingEvents.add(new OutgoingEvent(playerSession, wrappedMessage));
             } else if (nextTickCount == 0) {
                 player.addToScore(SCORE_PER_SECOND);
             }
         }
 
-        // TODO: remove boolean arg
-        return new TickResponse(true, nextPlatformsState, playersToRemove);
+        return new TickResponse(nextPlatformsState, playersToRemove, outgoingEvents);
     }
 
     /**

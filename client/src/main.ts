@@ -24,6 +24,7 @@ jQuery(function main() {
         context: getGameContext(),
         buttons: [],
         serverId: null,
+        gameOverMessage: null,
 
         bytesIn: 0,
         messagesIn: 0,
