@@ -7,7 +7,6 @@ import { fillLeaderboard, gameElements, renderMessageStats } from "./ui/dom";
 import {
     clearCanvas,
     drawGame,
-    drawGameOver,
     drawMetadata,
     redrawGame,
 } from "./ui/graphics";
@@ -144,6 +143,10 @@ function onServerClose(state: AppState) {
     gameElements.messagesBox.empty();
     gameElements.connectedBox.hide();
     gameElements.inactiveOverlay.show();
+    if (state.gameOverMessage) {
+        gameElements.gameOverMessage.show();
+        gameElements.gameOverMessage.text(state.gameOverMessage);
+    }
 
     subscribeButtonsToCursor(state, []);
     redrawGame(state);
@@ -156,7 +159,8 @@ function handleServerMessage(message: SocketMessage, state: AppState) {
         drawGame(state, message.gamePing);
     }
     else if (message.payload === "gameOverEvent") {
-        drawGameOver(state.context, message.gameOverEvent.reason);
+        state.gameOverMessage = message.gameOverEvent.reason;
+        state.server?.close();
     }
     else if (message.payload === "errorReply") {
         addErrorNotification(state, message.errorReply.message);

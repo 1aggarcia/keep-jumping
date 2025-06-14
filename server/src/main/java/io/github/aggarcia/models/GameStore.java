@@ -41,10 +41,19 @@ public class GameStore {
     private final BlockingQueue<PlayerStore> unprocessedLosers =
         new LinkedBlockingQueue<>();
 
+    /**
+     * Events to be sent out to clients.
+     */
+    private final BlockingQueue<OutgoingEvent> outgoingEvents =
+        new LinkedBlockingQueue<>();
+
     @Builder.Default
     private final Set<WebSocketSession> sessions =
         Collections.synchronizedSet(new HashSet<>());
 
+    /**
+     * Map sessionId -> playerState.
+     */
     @Builder.Default
     private final Map<String, PlayerStore> players =
         Collections.synchronizedMap(new HashMap<>());

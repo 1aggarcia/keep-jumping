@@ -2,7 +2,6 @@ package io.github.aggarcia.engine;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.concurrent.BlockingQueue;
 
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -10,7 +9,6 @@ import org.springframework.web.socket.WebSocketSession;
 import io.github.aggarcia.messages.Generated.SocketMessage;
 import io.github.aggarcia.models.GamePlatform;
 import io.github.aggarcia.models.GameStore;
-import io.github.aggarcia.models.PlayerStore;
 
 import static io.github.aggarcia.engine.GameConstants.INIT_PLATFORM_GRAVITY;
 import static io.github.aggarcia.engine.TickProcessor.advanceToNextTick;
@@ -187,10 +185,9 @@ public class GameLoop {
                 gameStore.unprocessedLosers().add(player);
                 players.remove(playerId);
             }
-            if (response.isUpdateNeeded()) {
-                var update = createGamePing(gameStore);
-                broadcast(sessions, update);
-            }
+            gameStore.outgoingEvents().addAll(response.outgoingEvents());
+            var update = createGamePing(gameStore);
+            broadcast(sessions, update);
             try {
                 Thread.sleep(tickDelayMs);
             } catch (InterruptedException e) {
@@ -202,37 +199,8 @@ public class GameLoop {
         System.out.println("Closing game loop");
         gameStore.unprocessedLosers().addAll(players.values());
         players.clear();
-        for (var session : sessions) {
-            try {
-                session.close();
-            } catch (IOException e) {
-                System.err.println(e);
-            }
-        }
-        sessions.clear();
         idleThread = new Thread(idleTimeoutAction);
         idleThread.start();
-    }
-
-    /**
-     * Procedure to run on a seperate thread, waiting for players to leave
-     * and updating the leaderboard in the database.
-     *
-     * Runs forever until the thread is interrupted.
-     * @param loserQueue
-     */
-    private void processLosers(BlockingQueue<PlayerStore> loserQueue) {
-        while (true) {
-            try {
-                PlayerStore next = loserQueue.take();
-                System.out.println("processing " + next);
-                // TODO: update leaderboard with player
-                // disconnect player session
-            } catch (InterruptedException e) {
-                System.out.println("Database worker thread closing");
-                break;
-            }
-        }
     }
 
     /**
