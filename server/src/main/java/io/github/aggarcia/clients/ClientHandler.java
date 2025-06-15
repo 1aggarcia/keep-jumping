@@ -101,7 +101,7 @@ public class ClientHandler extends AbstractWebSocketHandler {
             try {
                 client.sendMessage(reply);
             } catch (IOException e) {
-                System.err.println(e);
+                System.err.println("Error replying to message: " + e);
             }
         }
     }

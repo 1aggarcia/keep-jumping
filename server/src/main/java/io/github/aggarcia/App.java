@@ -3,8 +3,6 @@ package io.github.aggarcia;
 
 import static io.github.aggarcia.messages.Serializer.serialize;
 
-import java.io.IOException;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -18,6 +16,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.socket.BinaryMessage;
+import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
@@ -29,6 +28,14 @@ import io.github.aggarcia.models.GameStore;
 import io.github.aggarcia.models.OutgoingEvent;
 import io.github.aggarcia.models.PlayerStore;
 import jakarta.annotation.PostConstruct;
+
+/**
+ * To deploy to GCP
+ * https://cloud.google.com/run/docs/deploying-source-code#deploying
+ * ./mvnw clean package
+ * gcloud run deploy server --source .
+ * region 39
+ */
 
 @SpringBootApplication
 @CrossOrigin
@@ -112,12 +119,16 @@ public class App implements WebSocketConfigurer {
             try {
                 OutgoingEvent nextEvent = store.outgoingEvents().take();
                 var message = new BinaryMessage(serialize(nextEvent.event()));
-                nextEvent.client().sendMessage(message);
-            } catch (IOException e) {
-                System.err.println(e);
+                System.out.println("Sending outgoing event: " + message);
+                WebSocketSession session = nextEvent.client();
+                synchronized (session) {
+                    session.sendMessage(message);
+                }
             } catch (InterruptedException e) {
                 System.err.println("Outgoing event thread interrupted");
                 break;
+            } catch (Exception e) {
+                System.err.println("Error sending event: " + e);
             }
         }
     }

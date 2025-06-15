@@ -219,7 +219,7 @@ public class GameLoop {
                 session.sendMessage(binary);
             }
         } catch (IOException e) {
-            System.err.println(e);
+            System.err.println("Error broadcasting message: " + e);
         }
     }
 }
