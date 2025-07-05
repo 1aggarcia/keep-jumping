@@ -1,5 +1,7 @@
+// TODO: refactor graphics into effects to that its testable
+
 import { BUTTON_HEIGHT, renderButtons } from "./button";
-import { AppState, Context2D } from "../types";
+import { AppState, Context2D, StateSnapshot } from "../types";
 import {
     GAME_HEIGHT,
     GAME_WIDTH,
@@ -7,6 +9,7 @@ import {
     PLAYER_WIDTH
 } from "./gameConstants";
 import { GamePing, Platform, Player } from "../generated/socketMessage";
+import { Effect } from "../effects";
 
 const BLACK_HEX = "#000000";
 const RED_HEX = "#ff0000";
@@ -31,7 +34,7 @@ const offScreenWidth =
 export function drawGame(state: AppState, ping: GamePing) {
     const { context, buttons } = state;
 
-    clearCanvas(context);
+    clearCanvasImpure(context);
     ping.platforms.forEach(platform => drawPlatform(context, platform));
     ping.players.forEach(player => drawPlayer(context, player));
     renderLabel(context, {
@@ -42,7 +45,7 @@ export function drawGame(state: AppState, ping: GamePing) {
     });
     drawLeaderboard(context, ping.players);
     renderButtons(context, buttons);
-    drawMetadata(state);
+    drawMetadataImpure(state);
 }
 
 export function redrawGame(state: AppState) {
@@ -50,16 +53,32 @@ export function redrawGame(state: AppState) {
         drawGame(state, state.lastPing);
         return;
     }
-    clearCanvas(state.context);
+    clearCanvasImpure(state.context);
     renderButtons(state.context, state.buttons);
-    drawMetadata(state);
+    drawMetadataImpure(state);
 }
 
-export function clearCanvas(context: Context2D) {
+export function clearCanvas(): Effect {
+    return {
+        action: "clearRect",
+        data: {
+            x: 0,
+            y: 0,
+            width: GAME_WIDTH,
+            height: GAME_HEIGHT
+        }
+    };
+}
+
+function clearCanvasImpure(context: Context2D) {
     context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 }
 
-export function drawMetadata(state: AppState) {
+export function drawMetadata(state: StateSnapshot): Effect {
+    return { action: "generic", data: () => drawMetadataImpure(state) };
+}
+
+export function drawMetadataImpure(state: AppState) {
     // this wacky syntax is to mimic a switch expression in JS
     const connectionLabel = (() => {
         switch (state.connectedStatus) {

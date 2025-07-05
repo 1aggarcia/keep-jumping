@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { SocketMessage } from "./generated/socketMessage";
-import { AppState, LeaderboardEntryParser } from "./types";
+import { AppState, LeaderboardEntryParser, StateSnapshot } from "./types";
 import { Button, subscribeButtonsToCursor } from "./ui/button";
 import { fillLeaderboard, gameElements, renderMessageStats } from "./ui/dom";
 import {
@@ -10,14 +10,20 @@ import {
     drawMetadata,
     redrawGame,
 } from "./ui/graphics";
+import {
+    applyEffects,
+    Effect,
+    throwError,
+    updateState,
+} from "./effects";
 
-const MAX_NAME_LENGTH = 25;
 const MAX_HISTORY_LEN = 25;
 const ERROR_DISPLAY_TIME = 5000;
 const DEFAULT_SERVER = "localhost:8081";
 
 // type to represent SocketMessages with object literals
-type SocketMessageObject = Parameters<typeof SocketMessage.fromObject>[0];
+export type SocketMessageObject =
+    Parameters<typeof SocketMessage.fromObject>[0];
 
 /**
  * Try to connect to the server. Resolve the promise if the connection succeeds,
@@ -60,126 +66,205 @@ export async function updateLeaderboard() {
  * Serializes and sends `message` to the server in state, assuming a connection
  * is open. Counts the message in state for analytics.
  */
-export function sendToServer(state: AppState, message: SocketMessageObject) {
+function sendToServer(
+    message: SocketMessageObject, state: StateSnapshot
+): Effect[] {
     if (state.server === null) {
-        throw new ReferenceError(`Message sent to null server: ${message}`);
+        return [throwError(`Message sent to null server: ${message}`)];
     }
     const wrappedMessage = SocketMessage.fromObject(message);
-    state.server.send(serialize(wrappedMessage));
-    state.messagesOut++;
-    renderMessageStats(state);
+    return [
+        updateState({ messagesOut: state.messagesOut + 1 }),
+        {
+            action: "sendMessage",
+            data: serialize(wrappedMessage)
+        },
+        {
+            action: "generic",
+            data: () => renderMessageStats(state),
+        }
+    ];
 }
 
-export function connectToServer(state: AppState, username: string) {
-    if (username.length > MAX_NAME_LENGTH) {
-        addErrorNotification(state, "Username is too long");
-        return;
-    }
+export function sendToServerImpure(
+    state: AppState, message: SocketMessageObject
+) {
+    applyEffects(sendToServer(message, state), state);
+}
 
-    clearCanvas(state.context);
-    state.bytesIn = 0;
-    state.messagesIn = 0;
-    state.messagesOut = 0;
-    state.connectedStatus = "CONNECTING";
-    drawMetadata(state);
-    subscribeButtonsToCursor(state, []);  // to remove any buttons on the screen
+export function connectToServer(name: string, state: StateSnapshot) {
+    const effects: Effect[] = [];
+    effects.push(clearCanvas());
+    effects.push(updateState({
+        bytesIn: 0,
+        messagesIn: 0,
+        messagesOut: 0,
+        connectedStatus: "CONNECTING",
+    }));
+    effects.push(drawMetadata(state));
+    effects.push({
+        action: "generic",
+        data: () => subscribeButtonsToCursor(state, [])
+    });
+    effects.push({
+        action: "openServer",
+        data: {
+            endpoint: getWebsocketEndpoint(),
+            username: name,
+        }
+    });
+    return effects;
+}
 
-    const server = new WebSocket(getWebsocketEndpoint());
-    state.server = server;
-
-    server.onopen = () => {
-        sendToServer(state, {
-            joinEvent: {
-                name: username
+export function
+onServerOpen(state: StateSnapshot, username: string): Effect[] {
+    return [
+        ...sendToServer({
+            joinEvent: { name: username }
+        }, state),
+        clearCanvas(),
+        updateState({ connectedStatus: "OPEN" }),
+        drawMetadata(state),
+        {
+            action: "generic",
+            data: () => {
+                gameElements.errorBox.empty();
+                gameElements.connectedBox.show();
+                gameElements.inactiveOverlay.hide();
+                const disconnectButton = new Button("Disconnect")
+                    .positionRight()
+                    .onClick(() => disconnectFromServer(state));
+                subscribeButtonsToCursor(state, [disconnectButton]);
             }
-        });
-        clearCanvas(state.context);
-        state.connectedStatus = "OPEN";
-        drawMetadata(state);
-        gameElements.errorBox.empty();
-        gameElements.connectedBox.show();
-        gameElements.inactiveOverlay.hide();
-
-        const disconnectButton = new Button("Disconnect")
-            .positionRight()
-            .onClick(() => disconnectFromServer(state));
-        subscribeButtonsToCursor(state, [disconnectButton]);
-    };
-    server.onclose = () => onServerClose(state);
-    server.onerror = () => {
-        onServerClose(state);
-        addErrorNotification(state, "Connection error");
-        state.connectedStatus = "ERROR";
-        gameElements.errorBox.append("<p>Connection error</p>");
-    };
-    server.onmessage = async ({ data }) => {
-        state.messagesIn++;
-
-        if (!(data instanceof Blob)) {
-            throw new TypeError(`unexpected message type: ${data}`);
         }
-        state.bytesIn += data.size;
-        const buffer = await data.arrayBuffer();
-        const message = deserialize(new Uint8Array(buffer));
-        if (message === null) {
-            throw new SyntaxError(`unable to deserialize: ${data}`);
-        }
-
-        // garbage collect old messages
-        if (state.messagesIn > MAX_HISTORY_LEN) {
-            gameElements.messagesBox.find("pre:last").remove();
-        }
-        const prettyMessage = JSON.stringify(message.toObject(), undefined, 2);
-        gameElements.messagesBox.prepend(`<pre>${prettyMessage}</pre>`);
-        renderMessageStats(state);
-        handleServerMessage(message, state);
-    };
+    ];
 }
 
-function onServerClose(state: AppState) {
-    state.serverId = null;
-    state.server = null;
-    state.connectedStatus = "CLOSED";
-    gameElements.messagesBox.empty();
-    gameElements.connectedBox.hide();
-    gameElements.inactiveOverlay.show();
-    if (state.gameOverMessage) {
-        gameElements.gameOverMessage.show();
-        gameElements.gameOverMessage.text(state.gameOverMessage);
+export async function onServerMessage(
+    data: unknown,
+    state: StateSnapshot
+) {
+    const effects: Effect[] = [];
+    effects.push(updateState({
+        messagesIn: state.messagesIn + 1,
+    }));
+    if (!(data instanceof Blob)) {
+        return [...effects, throwError(`unexpected message type: ${data}`)];
+    }
+    effects.push(updateState({
+            bytesIn: state.bytesIn + data.size,
+    }));
+    const buffer = await data.arrayBuffer();
+    const message = deserialize(new Uint8Array(buffer));
+    if (message === null) {
+        return [...effects, throwError(`unable to deserialize: ${data}`)];
     }
 
-    subscribeButtonsToCursor(state, []);
-    redrawGame(state);
-    updateLeaderboard();
+    effects.push({
+        action: "generic",
+        data: () => {
+            // garbage collect old messages
+            if (state.messagesIn > MAX_HISTORY_LEN) {
+                gameElements.messagesBox.find("pre:last").remove();
+            }
+            const prettyMessage = JSON.stringify(message.toObject(), null, 2);
+            gameElements.messagesBox.prepend(`<pre>${prettyMessage}</pre>`);
+            renderMessageStats(state);
+        }
+    });
+    effects.push(...handleServerMessage(message, state));
+    return effects;
 }
 
-function handleServerMessage(message: SocketMessage, state: AppState) {
+export function onServerClose(state: AppState): Effect[] {
+    return [
+        updateState({
+            serverId: null,
+            server: null,
+            connectedStatus: "CLOSED"
+        }),
+        {
+            action: "generic",
+            data: () => {
+                gameElements.messagesBox.empty();
+                gameElements.connectedBox.hide();
+                gameElements.inactiveOverlay.show();
+                if (state.gameOverMessage) {
+                    gameElements.gameOverMessage.show();
+                    gameElements.gameOverMessage.text(state.gameOverMessage);
+                }
+                subscribeButtonsToCursor(state, []);
+                redrawGame(state);
+                updateLeaderboard();
+            }
+        }
+    ];
+}
+
+export function onServerError(state: StateSnapshot): Effect[] {
+    return [
+        ...onServerClose(state),
+        ...addErrorNotification(state, "Connection error"),
+        updateState({ connectedStatus: "ERROR" }),
+        {
+            action: "generic",
+            data: () =>
+                gameElements.errorBox.append("<p>Connection error</p>"),
+        }
+    ];
+}
+
+function handleServerMessage(
+    message: SocketMessage, state: StateSnapshot
+): Effect[] {
+    const effects: Effect[] = [];
     if (message.payload === "gamePing") {
-        state.lastPing = message.gamePing;
-        drawGame(state, message.gamePing);
+        effects.push(updateState({ lastPing: message.gamePing }));
+        effects.push({
+            action: "generic",
+            data: () => drawGame(state, message.gamePing),
+        });
     }
     else if (message.payload === "gameOverEvent") {
-        state.gameOverMessage = message.gameOverEvent.reason;
-        state.server?.close();
+        effects.push(updateState({
+            gameOverMessage: message.gameOverEvent.reason
+        }));
+        effects.push({
+            action: "generic",
+            data: () => state.server?.close(),
+        });
     }
     else if (message.payload === "errorReply") {
-        addErrorNotification(state, message.errorReply.message);
+        const error = message.errorReply.message;
+        effects.push(...addErrorNotification(state, error));
     }
     else if (message.payload === "joinReply") {
-        state.serverId = message.joinReply.serverId;
+        effects.push(updateState({
+            serverId: message.joinReply.serverId,
+        }));
     }
     else {
-        throw new Error(`Unsupported message type: ${message.payload}`);
+        const error = `Unsupported message type: ${message.payload}`;
+        effects.push(throwError(error));
     }
+    return effects;
 }
 
-function addErrorNotification(state: AppState, error: string) {
-    state.errors.unshift(error);  // enqueue at start
-    redrawGame(state);
-    setTimeout(() => {
-        state.errors.pop();  // dequeue from end
-        redrawGame(state);
-    }, ERROR_DISPLAY_TIME);
+export function addErrorNotification(state: AppState, error: string): Effect[] {
+    return [
+        {
+            action: "addError",
+            data: error
+        },
+        {
+            action: "generic",
+            data: () => redrawGame(state)
+        },
+        {
+            action: "removeError",
+            data: { delayMs: ERROR_DISPLAY_TIME }
+        }
+    ];
 }
 
 function disconnectFromServer(state: AppState) {

@@ -6,11 +6,12 @@ import {
     gameElements,
     getGameContext,
 } from "./ui/dom";
-import { handleJoinSubmit, handleKeyDown, handleKeyUp } from "./domHandler";
-import { drawMetadata } from "./ui/graphics";
+import { handleKeyDown, handleKeyUp, onJoinSubmit } from "./domHandler";
+import { drawMetadataImpure } from "./ui/graphics";
 import { enableDevTools } from "./devTools";
 import { AppState } from "./types";
 import { updateLeaderboard, checkServerHealth } from "./server";
+import { applyEffects } from "./effects";
 
 const JUMP_KEYCODE = "ArrowUp";
 
@@ -40,16 +41,20 @@ jQuery(function main() {
     gameElements.viteMode
         .text(`Mode: ${import.meta.env.MODE} | v${VERSION}`);
 
-    buildLeaderboardRows();
+    const leaderboardRows = buildLeaderboardRows();
+    gameElements.leaderboardBody.append(leaderboardRows);
     fitCanvasToWindow(gameElements.canvas);
-    drawMetadata(appState);
+    drawMetadataImpure(appState);
 
     // Event listeners
     addEventListener("resize", () => fitCanvasToWindow(gameElements.canvas));
     addEventListener("keyup", (e) => handleKeyUp(e.code, appState));
     addEventListener("keydown", (e) => handleKeyDown(e.code, appState));
 
-    gameElements.joinForm.on("submit", (e) => handleJoinSubmit(e, appState));
+    gameElements.joinForm.on("submit", (e) => {
+        const effects = onJoinSubmit(e, appState);
+        applyEffects(effects, appState);
+    });
     gameElements.canvas
         .on("mousedown",() => handleKeyDown(JUMP_KEYCODE, appState))
         .on("mouseup", () => handleKeyUp(JUMP_KEYCODE, appState));

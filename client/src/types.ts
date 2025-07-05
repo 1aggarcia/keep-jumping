@@ -22,6 +22,8 @@ export type AppState = {
     messagesOut: number;
 };
 
+export type StateSnapshot = Readonly<AppState>;
+
 export const LeaderboardEntryParser = z.object({
     player: z.string(),
     score: z.number(),

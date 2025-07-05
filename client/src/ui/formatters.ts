@@ -1,5 +1,7 @@
 /** Utility functions to help format strings and numbers */
 
+// TODO write tests 
+
 const KB_SIZE = 1 << 10;
 const MB_SIZE = 1 << 20;
 const GB_SIZE = 1 << 30;
@@ -26,21 +28,6 @@ export function formatBytesString(bytes: number) {
         return `${truncateSigFigs(bytes / KB_SIZE)} KB`;
     }
     return `${bytes} B`;
-}
-
-// currently unused
-/**
- * Format a JSON string message with pretty indentation
- */
-export function getPrettyMessage(message: unknown) {
-    if (typeof message !== "string") {
-        return `${message}`;
-    }
-    try {
-        return JSON.stringify(JSON.parse(message), undefined, 2);
-    } catch {
-        return message;
-    }
 }
 
 const MS_PER_SECOND = 1000;

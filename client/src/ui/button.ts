@@ -1,3 +1,5 @@
+// TODO: test coverage
+
 import { gameElements } from "./dom";
 import { AppState, Context2D } from "../types";
 import { GAME_HEIGHT, GAME_WIDTH } from "./gameConstants";
@@ -92,7 +94,9 @@ export function subscribeButtonsToCursor(state: AppState, buttons: Button[]) {
     renderButtons(state.context, buttons);
 
     // the cursor might be hovering over a button and be a pointer
-    gameElements.canvas[0].style.cursor = "default";
+    if (gameElements.canvas[0]) {
+        gameElements.canvas[0].style.cursor = "default";
+    }
 
     // remove previous event handler, if there was any
     gameElements.canvas.off("mousemove");
