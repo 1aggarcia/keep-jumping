@@ -7,7 +7,9 @@ const GAME_ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
 const LEADERBOARD_ROWS = 10;
 
 export const gameElements = {
-    canvas: $<HTMLCanvasElement>("#game-box"),
+    get canvas() {
+        return $<HTMLCanvasElement>("#game-box");
+    },
     connectedBox: $("#connected-box"),
     errorBox: $("#error-box"),
     messagesStats: $("#messages-stats"),
@@ -18,13 +20,14 @@ export const gameElements = {
     serverUnavailableBox: $("#server-unavailable-box"),
     leaderboard: $("#leaderboard"),
     leaderboardBody: $("#leaderboard tbody"),
-    leaderboardStatus: $("#leaderboard-status"),
+    get leaderboardStatus() {
+        return $("#leaderboard-status");
+    },
     gameOverMessage: $("#game-over-message"),
 };
 
-const gameContext = gameElements.canvas[0]?.getContext("2d") ?? null;
-
 export function getGameContext() {
+    const gameContext = gameElements.canvas[0]?.getContext("2d") ?? null;
     if (gameContext === null) {
         throw new ReferenceError("Canvas context is null");
     }

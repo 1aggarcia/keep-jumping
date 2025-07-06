@@ -1,29 +1,11 @@
 import WS from "vitest-websocket-mock";
 
-import { handleKeyDown, handleKeyUp } from "./domHandler";
+import { handleKeyDown, handleKeyUp, onJoinSubmit } from "./domHandler";
 import { PlayerControl, SocketMessage } from "./generated/socketMessage";
-import { AppState, Context2D } from "./types";
 import { it, afterEach, expect, describe, beforeEach } from "vitest";
+import { mockState } from "./testUtils";
 
 // https://github.com/akiomik/vitest-websocket-mock
-
-function mockState(overrides?: Partial<AppState>): AppState {
-    return {
-        server: null,
-        connectedStatus: "CLOSED",
-        pressedControls: new Set(),
-        lastPing: null,
-        errors: [],
-        context: null as unknown as Context2D,
-        buttons: [],
-        serverId: null,
-        gameOverMessage: null,
-        bytesIn: 0,
-        messagesIn: 0,
-        messagesOut: 0,
-        ...overrides
-    };
-}
 
 async function openTestConnection() {
     const server = new WS("ws://");
@@ -129,5 +111,42 @@ describe(handleKeyUp, () => {
         handleKeyUp("ArrowDown", state);
         expect(state.pressedControls.size).toBe(1);
         expect(state.pressedControls).toContain(PlayerControl.RIGHT);
+    });
+});
+
+describe(onJoinSubmit, () => {
+    function makeSubmitEvent(name: string) {
+        const nameInput = document.createElement("input");
+        nameInput.value = name;
+        nameInput.name = "name";
+
+        const target = document.createElement("form");
+        target.appendChild(nameInput);
+
+        return { target } as JQuery.SubmitEvent;
+    }
+
+    it("returns no effects if name is empty", () => {
+        const fakeEvent = makeSubmitEvent("");
+        const result = onJoinSubmit(fakeEvent, mockState());
+        expect(result).toHaveLength(0);
+    });
+
+    it("returns error if name is too long", () => {
+        const fakeEvent = makeSubmitEvent("x".repeat(1000));
+        const result = onJoinSubmit(fakeEvent, mockState());
+        expect(result).toContainEqual({
+            action: "addError",
+            data: "Username is too long",
+        });
+    });
+
+    it("connects to server if name is valid length", () => {
+        const fakeEvent = makeSubmitEvent("test user");
+        const result = onJoinSubmit(fakeEvent, mockState());
+        // TODO: replace with stricter check once generic action is removed
+        expect(result).toContainEqual(expect.objectContaining({
+            action: "openServer"
+        }));
     });
 });

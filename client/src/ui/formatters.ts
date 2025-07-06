@@ -1,6 +1,6 @@
 /** Utility functions to help format strings and numbers */
 
-// TODO write tests 
+// TODO write tests
 
 const KB_SIZE = 1 << 10;
 const MB_SIZE = 1 << 20;

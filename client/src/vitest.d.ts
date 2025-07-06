@@ -1,8 +1,8 @@
 import "vitest";
 
 interface CustomMatchers<R = unknown> {
-  toHaveReceivedMessages: (messages: unknown[]) => unknown;
-  toReceiveMessage: (message: unknown) => unknown;
+  toHaveReceivedMessages: (messages: unknown[]) => Promise<unknown>;
+  toReceiveMessage: (message: unknown) => Promise<unknown>;
 }
 
 declare module "vitest" {
