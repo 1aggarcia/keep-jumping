@@ -1,15 +1,14 @@
 import $ from "jquery";
 import { GAME_HEIGHT, GAME_WIDTH } from "./gameConstants";
-import { AppState, LeaderboardEntry } from "../types";
-import { formatBytesString, getRelativeAgeString } from "./formatters";
+import { LeaderboardEntry, StateSnapshot } from "../types";
+import { getMessageStatsText, getRelativeAgeString } from "./formatters";
+import { Effect, updateElement } from "../effects";
 
 const GAME_ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
 const LEADERBOARD_ROWS = 10;
 
 export const gameElements = {
-    get canvas() {
-        return $<HTMLCanvasElement>("#game-box");
-    },
+    canvas: $<HTMLCanvasElement>("#game-box"),
     connectedBox: $("#connected-box"),
     errorBox: $("#error-box"),
     messagesStats: $("#messages-stats"),
@@ -20,18 +19,29 @@ export const gameElements = {
     serverUnavailableBox: $("#server-unavailable-box"),
     leaderboard: $("#leaderboard"),
     leaderboardBody: $("#leaderboard tbody"),
-    get leaderboardStatus() {
-        return $("#leaderboard-status");
-    },
+    leaderboardStatus: $("#leaderboard-status"),
     gameOverMessage: $("#game-over-message"),
 };
 
-export function getGameContext() {
-    const gameContext = gameElements.canvas[0]?.getContext("2d") ?? null;
+export function getGameContext(): CanvasRenderingContext2D {
+    const gameContext = gameElements.canvas[0]?.getContext("2d");
     if (gameContext === null) {
         throw new ReferenceError("Canvas context is null");
     }
     return gameContext;
+}
+
+export function displayServerUnavailable(connectionError: unknown): Effect[] {
+    return [
+        {
+            action: "generic",
+            data: () => console.error(connectionError),
+        },
+        updateElement(gameElements.joinForm, e => e.hide()),
+        updateElement(gameElements.leaderboard, e => e.hide()),
+        updateElement(gameElements.leaderboardStatus, e => e.hide()),
+        updateElement(gameElements.serverUnavailableBox, e => e.show()),
+    ];
 }
 
 /**
@@ -56,16 +66,11 @@ export function fitCanvasToWindow(canvas: JQuery<HTMLCanvasElement>) {
         .css("height", GAME_HEIGHT * scaleFactor);
 }
 
-export function renderMessageStats(state: AppState) {
-    const outText = `Sent: ${state.messagesOut}`;
-    const inText = `Received: ${state.messagesIn}`;
-    const bytesText = `Data in: ${formatBytesString(state.bytesIn)}`;
-
-    const meanPingSize = Math.floor(state.bytesIn / state.messagesIn);
-    const meanText = `Mean ping size: ${formatBytesString(meanPingSize)}`;
-
-    gameElements.messagesStats
-        .text(outText + " | " + inText + " | " + bytesText + " | " + meanText);
+export function renderMessageStats(state: StateSnapshot) {
+    return updateElement(
+        gameElements.messagesStats,
+        elem => elem.text(getMessageStatsText(state))
+    );
 }
 
 export function buildLeaderboardRows() {

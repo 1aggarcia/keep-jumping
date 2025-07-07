@@ -1,33 +1,21 @@
 /** Utility functions to help format strings and numbers */
 
-// TODO write tests
+import { StateSnapshot } from "../types";
 
 const KB_SIZE = 1 << 10;
 const MB_SIZE = 1 << 20;
 const GB_SIZE = 1 << 30;
 const MAX_SIG_FIGS = 4;
 
-/**
- * Given a number of bytes, return a readable string such as
- * "25 B", "5 KB", "235 GB"
- * @param bytes integer
- */
-export function formatBytesString(bytes: number) {
-    bytes = Math.floor(bytes);
+export function getMessageStatsText(state: StateSnapshot) {
+    const outText = `Sent: ${state.messagesOut}`;
+    const inText = `Received: ${state.messagesIn}`;
+    const bytesText = `Data in: ${formatBytesString(state.bytesIn)}`;
 
-    // returns a number with an upper bound on the number of significant digits
-    const truncateSigFigs = (n: number) => +n.toPrecision(MAX_SIG_FIGS);
+    const meanPingSize = Math.round(state.bytesIn / state.messagesIn);
+    const meanText = `Mean ping size: ${formatBytesString(meanPingSize)}`;
 
-    if (bytes > GB_SIZE) {
-        return `${truncateSigFigs(bytes / GB_SIZE)} GB`;
-    }
-    if (bytes > MB_SIZE) {
-        return `${truncateSigFigs(bytes / MB_SIZE)} MB`;
-    }
-    if (bytes > KB_SIZE) {
-        return `${truncateSigFigs(bytes / KB_SIZE)} KB`;
-    }
-    return `${bytes} B`;
+    return outText + " | " + inText + " | " + bytesText + " | " + meanText;
 }
 
 const MS_PER_SECOND = 1000;
@@ -76,4 +64,27 @@ export function getRelativeAgeString(timestamp: Date) {
     const pluralIndicator = timeInterval === 1 ? "" : "s";
 
     return `${timeInterval} ${unit}${pluralIndicator} ago`;
+}
+
+/**
+ * Given a number of bytes, return a readable string such as
+ * "25 B", "5 KB", "235 GB"
+ * @param bytes integer
+ */
+function formatBytesString(bytes: number) {
+    bytes = Math.floor(bytes);
+
+    // returns a number with an upper bound on the number of significant digits
+    const truncateSigFigs = (n: number) => +n.toPrecision(MAX_SIG_FIGS);
+
+    if (bytes > GB_SIZE) {
+        return `${truncateSigFigs(bytes / GB_SIZE)} GB`;
+    }
+    if (bytes > MB_SIZE) {
+        return `${truncateSigFigs(bytes / MB_SIZE)} MB`;
+    }
+    if (bytes > KB_SIZE) {
+        return `${truncateSigFigs(bytes / KB_SIZE)} KB`;
+    }
+    return `${bytes} B`;
 }

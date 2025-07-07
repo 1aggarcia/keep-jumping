@@ -3,7 +3,12 @@ import { z } from "zod";
 import { SocketMessage } from "./generated/socketMessage";
 import { AppState, LeaderboardEntryParser, StateSnapshot } from "./types";
 import { Button, subscribeButtonsToCursor } from "./ui/button";
-import { fillLeaderboard, gameElements, renderMessageStats } from "./ui/dom";
+import {
+    displayServerUnavailable,
+    fillLeaderboard,
+    gameElements,
+    renderMessageStats,
+} from "./ui/dom";
 import {
     clearCanvas,
     drawGame,
@@ -14,6 +19,7 @@ import {
     applyEffects,
     Effect,
     throwError,
+    updateElement,
     updateState,
 } from "./effects";
 
@@ -26,40 +32,63 @@ export type SocketMessageObject =
     Parameters<typeof SocketMessage.fromObject>[0];
 
 /**
- * Try to connect to the server. Resolve the promise if the connection succeeds,
- * reject otherwise.
+ * Check that the server is alive. Fetch the leaderboard if it is,
+ * display an error message if health check fails.
  */
-export const checkServerHealth = () => new Promise<void>((resolve, reject) => {
-    fetch(getHttpEndpoint() + "/api/health")
-        .then(() => resolve())
-        .catch(err => reject(err));
-});
-
-export async function updateLeaderboard() {
-    gameElements.leaderboardStatus.text("Updating leaderboard...");
-    try {
-        const response = await fetch(getHttpEndpoint() + "/api/leaderboard");
-        if (!response.ok) {
-            throw new Error(await response.text());
-        }
-
-        const entries: unknown = await response.json();
-        const parsedEntries = z.array(
-            LeaderboardEntryParser).safeParse(entries);
-
-        if (!parsedEntries.success) {
-            console.error(parsedEntries.error);
-            gameElements.leaderboardStatus
-                .text("Bad leaderboard data received from server");
-            return;
-        }
-
-        fillLeaderboard(parsedEntries.data);
-        gameElements.leaderboardStatus.text("");
-    } catch (err) {
-        console.error(err);
-        gameElements.leaderboardStatus.text("Failed to update leaderboard");
+export const checkServerHealth = () => ({
+    action: "fetch",
+    data: {
+        endpoint: getHttpEndpoint() + "/api/health",
+        onSuccess: async () => [updateLeaderboard()],
+        onError: displayServerUnavailable,
     }
+} satisfies Effect);
+
+export const updateLeaderboard = () => ({
+    action: "fetch",
+    data: {
+        endpoint: getHttpEndpoint() + "/api/leaderboard",
+        onSuccess: handleLeaderboardResponse,
+        onError: handleLeaderboardError
+    }
+} satisfies Effect);
+
+async function
+handleLeaderboardResponse(response: Response): Promise<Effect[]> {
+    if (!response.ok) {
+        const errorText = await response.text();
+        return [throwError(errorText)];
+    }
+    const entries: unknown = await response.json();
+    const parsedEntries = z.array(
+        LeaderboardEntryParser).safeParse(entries);
+
+    if (!parsedEntries.success) {
+        return [updateElement(
+            gameElements.leaderboardStatus,
+            e => e.text("Bad leaderboard data received from server")
+        )];
+    }
+    return [
+        {
+            action: "generic",
+            data: () => fillLeaderboard(parsedEntries.data),
+        },
+        updateElement(gameElements.leaderboardStatus, e => e.text(""))
+    ];
+}
+
+function handleLeaderboardError(error: unknown): Effect[] {
+    return [
+        {
+            action: "generic",
+            data: () => console.error(error),
+        },
+        updateElement(
+            gameElements.leaderboardStatus,
+            e => e.text("Failed to update leaderboard")
+        ),
+    ];
 }
 
 /**
@@ -79,10 +108,7 @@ function sendToServer(
             action: "sendMessage",
             data: serialize(wrappedMessage)
         },
-        {
-            action: "generic",
-            data: () => renderMessageStats(state),
-        }
+        renderMessageStats(state),
     ];
 }
 
@@ -125,12 +151,12 @@ onServerOpen(state: StateSnapshot, username: string): Effect[] {
         clearCanvas(),
         updateState({ connectedStatus: "OPEN" }),
         drawMetadata(state),
+        updateElement(gameElements.errorBox, e => e.empty()),
+        updateElement(gameElements.connectedBox, e => e.show()),
+        updateElement(gameElements.inactiveOverlay, e => e.hide()),
         {
             action: "generic",
             data: () => {
-                gameElements.errorBox.empty();
-                gameElements.connectedBox.show();
-                gameElements.inactiveOverlay.hide();
                 const disconnectButton = new Button("Disconnect")
                     .positionRight()
                     .onClick(() => disconnectFromServer(state));
@@ -145,8 +171,9 @@ export async function onServerMessage(
     state: StateSnapshot
 ) {
     const effects: Effect[] = [];
+    const newMessagesIn = state.messagesIn + 1;
     effects.push(updateState({
-        messagesIn: state.messagesIn + 1,
+        messagesIn: newMessagesIn,
     }));
     if (!(data instanceof Blob)) {
         return [...effects, throwError(`unexpected message type: ${data}`)];
@@ -160,45 +187,51 @@ export async function onServerMessage(
         return [...effects, throwError(`unable to deserialize: ${data}`)];
     }
 
-    effects.push({
-        action: "generic",
-        data: () => {
-            // garbage collect old messages
-            if (state.messagesIn > MAX_HISTORY_LEN) {
-                gameElements.messagesBox.find("pre:last").remove();
-            }
-            const prettyMessage = JSON.stringify(message.toObject(), null, 2);
-            gameElements.messagesBox.prepend(`<pre>${prettyMessage}</pre>`);
-            renderMessageStats(state);
-        }
-    });
+    if (newMessagesIn > MAX_HISTORY_LEN) {
+        // garbage collect old messages
+        effects.push(updateElement(
+            gameElements.messagesBox,
+            e => e.find("pre:last").remove()
+        ));
+    }
+    const prettyMessage = JSON.stringify(message.toObject(), null, 2);
+    effects.push(updateElement(
+        gameElements.messagesBox,
+        e => e.prepend(`<pre>${prettyMessage}</pre>`)
+    ));
+
+    effects.push(renderMessageStats(state));
     effects.push(...handleServerMessage(message, state));
     return effects;
 }
 
 export function onServerClose(state: AppState): Effect[] {
-    return [
+    const effects: Effect[] = [
         updateState({
             serverId: null,
             server: null,
             connectedStatus: "CLOSED"
         }),
+        updateElement(gameElements.messagesBox, e => e.empty()),
+        updateElement(gameElements.connectedBox, e => e.hide()),
+        updateElement(gameElements.inactiveOverlay, e => e.show()),
         {
             action: "generic",
             data: () => {
-                gameElements.messagesBox.empty();
-                gameElements.connectedBox.hide();
-                gameElements.inactiveOverlay.show();
-                if (state.gameOverMessage) {
-                    gameElements.gameOverMessage.show();
-                    gameElements.gameOverMessage.text(state.gameOverMessage);
-                }
                 subscribeButtonsToCursor(state, []);
                 redrawGame(state);
-                updateLeaderboard();
             }
-        }
+        },
+        updateLeaderboard(),
     ];
+    if (state.gameOverMessage !== null) {
+        const message = state.gameOverMessage;
+        effects.push(updateElement(
+            gameElements.gameOverMessage,
+            e => e.show().text(message)
+        ));
+    }
+    return effects;
 }
 
 export function onServerError(state: StateSnapshot): Effect[] {
@@ -206,11 +239,10 @@ export function onServerError(state: StateSnapshot): Effect[] {
         ...onServerClose(state),
         ...addErrorNotification(state, "Connection error"),
         updateState({ connectedStatus: "ERROR" }),
-        {
-            action: "generic",
-            data: () =>
-                gameElements.errorBox.append("<p>Connection error</p>"),
-        }
+        updateElement(
+            gameElements.errorBox,
+            e => e.append("<p>Connection error</p>")
+        ),
     ];
 }
 
@@ -229,10 +261,7 @@ function handleServerMessage(
         effects.push(updateState({
             gameOverMessage: message.gameOverEvent.reason
         }));
-        effects.push({
-            action: "generic",
-            data: () => state.server?.close(),
-        });
+        effects.push({ action: "closeServer" });
     }
     else if (message.payload === "errorReply") {
         const error = message.errorReply.message;

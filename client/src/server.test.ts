@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
     addErrorNotification,
     checkServerHealth,
@@ -10,19 +10,39 @@ import {
     SocketMessageObject,
     updateLeaderboard
 } from "./server";
-import { mockState, openTestConnection } from "./testUtils";
+import {
+    assertElementChanged,
+    mockState,
+    openTestConnection
+} from "./testUtils";
 import { SocketMessage } from "./generated/socketMessage";
 import { gameElements } from "./ui/dom";
+import { Effect, throwError } from "./effects";
 
 describe(checkServerHealth, () => {
-    it("resolves promise if fetch call is successful", async () => {
-        window.fetch = () => Promise.resolve(new Response());
-        expect(checkServerHealth()).resolves.toBeUndefined();
+    const effect = checkServerHealth();
+
+    it("contains correct metadata", () => {
+        const expected: Effect = {
+            action: "fetch",
+            data: expect.objectContaining({
+                endpoint: "http://localhost:8081/api/health"
+            })
+        };
+        expect(effect).toStrictEqual(expected);
     });
 
-    it("rejects promise with error if fetch call fails", async () => {
-        window.fetch = () => Promise.reject("Test error");
-        expect(checkServerHealth()).rejects.toEqual("Test error");
+    it("updates leaderboard if call is successful", async () => {
+        const result = await effect.data.onSuccess();
+        expect(result).toStrictEqual([updateLeaderboard()]);
+    });
+
+    it("sets DOM to unavailable state if call fails", () => {
+        const result = effect.data.onError("test error");
+        assertElementChanged(result, gameElements.joinForm);
+        assertElementChanged(result, gameElements.leaderboard);
+        assertElementChanged(result, gameElements.leaderboardStatus);
+        assertElementChanged(result, gameElements.serverUnavailableBox);
     });
 });
 
@@ -49,40 +69,43 @@ describe(connectToServer, () => {
 });
 
 describe(updateLeaderboard, () => {
-    beforeAll(() => {
-        // TODO: render the real HTML instead
-        document.body.innerHTML = `
-            <p id='leaderboard-status'></p>
-            <tbody id='leaderboard'></tbody>
-        `;
+    const fetchEffect = updateLeaderboard();
+    const successHandler = fetchEffect.data.onSuccess;
+    const errorHandler = fetchEffect.data.onError;
+
+    it("return correct metadata", () => {
+        const expected: Effect = {
+            action: "fetch",
+            data: expect.objectContaining({
+                endpoint: "http://localhost:8081/api/leaderboard",
+            }),
+        };
+        expect(fetchEffect).toStrictEqual(expected);
     });
 
-    it("shows error to user when API call fails", async () => {
-        window.fetch = () => Promise.reject("Test error");
-        await updateLeaderboard();
-        expect(gameElements.leaderboardStatus.text())
-            .toEqual("Failed to update leaderboard");
+    it("updates leaderboard status on error", () => {
+        const result = errorHandler(new Error("Fetch error"));
+        assertElementChanged(result, gameElements.leaderboardStatus);
     });
 
-    it("shows error to user when response contains bad status", async () => {
-        window.fetch = () => Promise.resolve(new Response("Test error", {
+    it("throws error when response contains bad status", async () => {
+        const testResponse = new Response("Bad Request", {
             status: 400
-        }));
-        await updateLeaderboard();
-        expect(gameElements.leaderboardStatus.text())
-            .toEqual("Failed to update leaderboard");
+        });
+        const result = await successHandler(testResponse);
+        expect(result).toStrictEqual([throwError("Bad Request")]);
     });
 
-    it("shows error to user when server sends bad data", async () => {
+    it("updates leaderboardStatus when server sends bad data", async () => {
         const malformedResponse = JSON.stringify([{
             player: "",
             score: "should be a number",
             timestamp: "",
         }]);
-        window.fetch = () => Promise.resolve(new Response(malformedResponse));
-        await updateLeaderboard();
-        expect(gameElements.leaderboardStatus.text())
-            .toEqual("Bad leaderboard data received from server");
+        const result = await successHandler(new Response(malformedResponse));
+        // should not include effect to fill leaderboard
+        expect(result).toHaveLength(1);
+        assertElementChanged(result, gameElements.leaderboardStatus);
     });
 
     it("fills leaderboard when server sends good data", async () => {
@@ -116,6 +139,12 @@ describe(onServerOpen, async () => {
         expect(result).toContainEqual(
             expect.objectContaining({ action: "clearRect" })
         );
+    });
+
+    it("updates DOM to server open state", () => {
+        assertElementChanged(result, gameElements.errorBox);
+        assertElementChanged(result, gameElements.connectedBox);
+        assertElementChanged(result, gameElements.inactiveOverlay);
     });
 });
 
@@ -169,16 +198,22 @@ describe(onServerMessage, () => {
         );
     });
 
-    it("saves ping if message is gamePing", async () => {
+    it("returns effects to update messageBox if history is full", async () => {
         const blob = makeBlobMessage({
-            gamePing: {
-                serverAge: 3
-            }
+            gameOverEvent: { reason: "test reason" }
         });
+        const state = mockState({ messagesIn: 100 });
+        const result = await onServerMessage(blob, state);
+        assertElementChanged(result, gameElements.messagesBox, 2);
+    });
+
+    it("saves ping if message is gamePing", async () => {
+        const testPing = {
+            gamePing: { serverAge: 3, platforms: [], players: [] }
+        };
+        const blob = makeBlobMessage(testPing);
         const result = await onServerMessage(blob, mockState());
-        const expectedPing = SocketMessage.fromObject({
-            gamePing: { serverAge: 3 }
-        });
+        const expectedPing = SocketMessage.fromObject(testPing);
         expect(result).toContainEqual({
             action: "updateState",
             data: {
@@ -187,7 +222,7 @@ describe(onServerMessage, () => {
         });
     });
 
-    it("saves message if message is gameOverEvent", async () => {
+    it("closes server and saves message if gameOverEvent", async () => {
         const blob = makeBlobMessage({
             gameOverEvent: {
                 reason: "test reason"
@@ -200,6 +235,7 @@ describe(onServerMessage, () => {
                 gameOverMessage: "test reason"
             }
         });
+        expect(result).toContainEqual({ action: "closeServer" });
     });
 
     it("returns error if message is errorReply", async () => {
@@ -253,6 +289,26 @@ describe(onServerClose, () => {
             },
         });
     });
+
+    it("updates the leaderboard", () => {
+        expect(result).toContainEqual(updateLeaderboard());
+    });
+
+    it("hides and shows correct DOM elements", () => {
+        assertElementChanged(result, gameElements.messagesBox);
+        assertElementChanged(result, gameElements.connectedBox);
+        assertElementChanged(result, gameElements.inactiveOverlay);
+
+        // with count 0, this asserts that the element did not change
+        assertElementChanged(result, gameElements.gameOverMessage, 0);
+    });
+
+    it("adds game over message if present in state", () => {
+        const testResult = onServerClose(mockState({
+            gameOverMessage: "test message"
+        }));
+        assertElementChanged(testResult, gameElements.gameOverMessage);
+    });
 });
 
 describe(onServerError, () => {
@@ -273,6 +329,10 @@ describe(onServerError, () => {
             action: "updateState",
             data: { connectedStatus: "ERROR" },
         });
+    });
+
+    it("updates errorBox element", () => {
+        assertElementChanged(result,gameElements.errorBox);
     });
 });
 

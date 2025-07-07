@@ -10,7 +10,7 @@ import { handleKeyDown, handleKeyUp, onJoinSubmit } from "./domHandler";
 import { drawMetadataImpure } from "./ui/graphics";
 import { enableDevTools } from "./devTools";
 import { AppState } from "./types";
-import { updateLeaderboard, checkServerHealth } from "./server";
+import { checkServerHealth } from "./server";
 import { applyEffects } from "./effects";
 
 const JUMP_KEYCODE = "ArrowUp";
@@ -60,16 +60,5 @@ jQuery(function main() {
         .on("mouseup", () => handleKeyUp(JUMP_KEYCODE, appState));
 
     enableDevTools(appState);
-    checkServerHealth()
-        .then(updateLeaderboard)
-        .catch(displayServerUnavailable);
+    applyEffects([checkServerHealth()], appState);
 });
-
-function displayServerUnavailable(connectionError: unknown) {
-    console.error(connectionError);
-
-    gameElements.joinForm.hide();
-    gameElements.leaderboard.hide();
-    gameElements.leaderboardStatus.hide();
-    gameElements.serverUnavailableBox.show();
-}
