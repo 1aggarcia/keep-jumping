@@ -25,6 +25,7 @@ import {
 
 const MAX_HISTORY_LEN = 25;
 const ERROR_DISPLAY_TIME = 5000;
+const CLIENT_TICK_DELAY = 20;
 const DEFAULT_SERVER = "localhost:8081";
 
 // type to represent SocketMessages with object literals
@@ -95,7 +96,7 @@ function handleLeaderboardError(error: unknown): Effect[] {
  * Serializes and sends `message` to the server in state, assuming a connection
  * is open. Counts the message in state for analytics.
  */
-function sendToServer(
+export function sendToServer(
     message: SocketMessageObject, state: StateSnapshot
 ): Effect[] {
     if (state.server === null) {
@@ -110,12 +111,6 @@ function sendToServer(
         },
         renderMessageStats(state),
     ];
-}
-
-export function sendToServerImpure(
-    state: AppState, message: SocketMessageObject
-) {
-    applyEffects(sendToServer(message, state), state);
 }
 
 export function connectToServer(name: string, state: StateSnapshot) {
@@ -137,6 +132,7 @@ export function connectToServer(name: string, state: StateSnapshot) {
         data: {
             endpoint: getWebsocketEndpoint(),
             username: name,
+            clientTickDelay: CLIENT_TICK_DELAY,
         }
     });
     return effects;
@@ -159,7 +155,8 @@ onServerOpen(state: StateSnapshot, username: string): Effect[] {
             data: () => {
                 const disconnectButton = new Button("Disconnect")
                     .positionRight()
-                    .onClick(() => disconnectFromServer(state));
+                    .onClick(() =>
+                        applyEffects([{ action: "closeServer" }], state));
                 subscribeButtonsToCursor(state, [disconnectButton]);
             }
         }
@@ -294,14 +291,6 @@ export function addErrorNotification(state: AppState, error: string): Effect[] {
             data: { delayMs: ERROR_DISPLAY_TIME }
         }
     ];
-}
-
-function disconnectFromServer(state: AppState) {
-    const server = state.server;
-    if (server === null) {
-        throw new ReferenceError("tried to disconnect from null server");
-    }
-    server.close();
 }
 
 function getWebsocketEndpoint() {

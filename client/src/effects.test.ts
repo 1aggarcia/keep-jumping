@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, vitest } from "vitest";
 import jQuery from "jquery";
 import {
     applyEffects,
@@ -14,6 +14,8 @@ import {
     onServerMessage,
     onServerOpen
 } from "./server";
+import * as clientLoop from "./clientLoop";
+import { PlayerControl } from "./generated/socketMessage";
 
 describe(applyEffects, () => {
     it("throws error", () => {
@@ -47,6 +49,17 @@ describe(applyEffects, () => {
         applyEffects([testEffect], testState);
         expect(testState.messagesOut).toEqual(567);
         expect(testState.gameOverMessage).toEqual("should not change");
+    });
+
+    it("copies pressed controls to cached controls", () => {
+        const testState = mockState({
+            pressedControls: new Set([PlayerControl.DOWN]),
+            cachedControls: new Set([PlayerControl.UP, PlayerControl.RIGHT])
+        });
+        const testEffect: Effect = { action: "cachePressedControls" };
+        applyEffects([testEffect], testState);
+        expect(testState.cachedControls.size).toBe(1);
+        expect(testState.cachedControls).toContain(PlayerControl.DOWN);
     });
 
     describe("fetch effect", () => {
@@ -113,57 +126,96 @@ describe(applyEffects, () => {
         });
     });
 
-    it("opens websocket server", () => {
-        const testState = mockState({
-            server: null,
+    const TEST_TICK_DELAY = 20;
+
+    describe("openServer effect", () => {
+        let testEffect: Effect;
+
+        beforeEach(() => {
+            testEffect = {
+                action: "openServer",
+                data: {
+                    endpoint: "ws://localhost",
+                    username: "test user",
+                    clientTickDelay: TEST_TICK_DELAY,
+                }
+            };
+        })
+
+        // other websocket tests depend on the real timers
+        afterEach(vi.useRealTimers);
+
+        it("opens websocket server", () => {
+            const testState = mockState({
+                server: null,
+            });
+            applyEffects([testEffect], testState);
+            expect(testState.server).not.toBeNull();
         });
-        const testEffect: Effect = {
-            action: "openServer",
-            data: {
-                endpoint: "ws://localhost",
-                username: "test user"
-            }
-        };
-        applyEffects([testEffect], testState);
-        expect(testState.server).not.toBeNull();
+
+        it("starts client loop when server is opened", () => {
+            vi.useFakeTimers();
+
+            const onClientTickSpy = vi.spyOn(clientLoop, 'onClientTick');
+            const testState = mockState({ clientTickInterval: NaN });
+            applyEffects([testEffect], testState);
+            expect(testState.clientTickInterval).not.toBeNaN();
+            expect(onClientTickSpy).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(TEST_TICK_DELAY);
+            expect(onClientTickSpy).toHaveBeenCalledOnce();
+        });
+
+        it("attaches event listeners to websocket server", () => {
+            const testState = mockState();
+            applyEffects([testEffect], testState);
+            const testServer = testState.server!;
+
+            expect(testServer.onopen?.toString())
+                .toContain(onServerOpen.name);
+
+            expect(testServer.onclose?.toString())
+                .toContain(onServerClose.name);
+
+            expect(testServer.onerror?.toString())
+                .toContain(onServerError.name);
+
+            expect(testServer.onmessage?.toString())
+                .toContain(onServerMessage.name);
+        });
     });
 
-    it("closes websocket server", async () => {
-        const connection = await openTestConnection();
-        const testState = mockState({
-            server: connection.client
+    describe("closeServer effect", () => {
+        // other websocket tests depend on the real timers
+        afterEach(vi.useRealTimers);
+
+        it("closes websocket server", async () => {
+            const connection = await openTestConnection();
+            const testState = mockState({
+                server: connection.client
+            });
+            const testEffect: Effect = { action: "closeServer" };
+            expect(testState.server?.readyState).toBe(WebSocket.OPEN);
+
+            applyEffects([testEffect], testState);
+            expect([WebSocket.CLOSING, WebSocket.CLOSED])
+                .toContainEqual(testState.server?.readyState);
         });
-        const testEffect: Effect = { action: "closeServer" };
-        expect(testState.server?.readyState).toBe(WebSocket.OPEN);
 
-        applyEffects([testEffect], testState);
-        expect([WebSocket.CLOSING, WebSocket.CLOSED])
-            .toContainEqual(testState.server?.readyState);
-    });
+        it("stops client loop when server is closed", () => {
+            vi.useFakeTimers();
 
-    it("attaches event listeners to websocket server", () => {
-        const testState = mockState();
-        const testEffect: Effect = {
-            action: "openServer",
-            data: {
-                endpoint: "ws://localhost",
-                username: "test user"
-            }
-        };
-        applyEffects([testEffect], testState);
-        const testServer = testState.server!;
+            const testOnClientTick = vi.fn();
+            const testState = mockState({
+                clientTickInterval: setInterval(testOnClientTick, TEST_TICK_DELAY)
+            });
+            const testEffect: Effect = { action: "closeServer" };
+            applyEffects([testEffect], testState);
 
-        expect(testServer.onopen?.toString())
-            .toContain(onServerOpen.name);
-
-        expect(testServer.onclose?.toString())
-            .toContain(onServerClose.name);
-
-        expect(testServer.onerror?.toString())
-            .toContain(onServerError.name);
-
-        expect(testServer.onmessage?.toString())
-            .toContain(onServerMessage.name);
+            // give ample time for the handler to be called
+            vi.advanceTimersByTime(TEST_TICK_DELAY * 2);
+            expect(testOnClientTick).not.toHaveBeenCalled();
+        });
     });
 
     it("enqueues error in state", () => {

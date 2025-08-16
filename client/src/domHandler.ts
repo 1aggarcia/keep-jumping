@@ -3,7 +3,6 @@ import { PlayerControl } from "./generated/socketMessage";
 import {
     addErrorNotification,
     connectToServer,
-    sendToServerImpure,
 } from "./server";
 import { Effect } from "./effects";
 
@@ -12,31 +11,13 @@ const MAX_NAME_LENGTH = 25;
 export function handleKeyDown(keyCode: string, state: AppState) {
     const control = keyCodeToPlayerControl(keyCode);
     if (control === null) return;
-
-    const didStateChange = !state.pressedControls.has(control);
     state.pressedControls.add(control);
-    if (!didStateChange || state.server === null) return;
-
-    sendToServerImpure(state, {
-        controlChangeEvent: {
-            pressedControls: Array.from(state.pressedControls),
-        },
-    });
 }
 
 export function handleKeyUp(keyCode: string, state: AppState) {
     const control = keyCodeToPlayerControl(keyCode);
     if (control === null) return;
-
-    const didStateChange = state.pressedControls.has(control);
     state.pressedControls.delete(control);
-    if (!didStateChange || state.server === null) return;
-
-    sendToServerImpure(state, {
-        controlChangeEvent: {
-            pressedControls: Array.from(state.pressedControls),
-        },
-    });
 }
 
 export function

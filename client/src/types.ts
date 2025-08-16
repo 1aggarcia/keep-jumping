@@ -9,6 +9,8 @@ export type AppState = {
     server: WebSocket | null,
     connectedStatus: "CLOSED" | "CONNECTING" | "OPEN" | "ERROR";
     pressedControls: Set<PlayerControl>;
+    cachedControls: Set<PlayerControl>;
+    clientTickInterval: number;
     lastPing: GamePing | null;
     errors: string[];
     context: Context2D;

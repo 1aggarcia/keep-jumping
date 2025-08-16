@@ -20,6 +20,8 @@ jQuery(function main() {
         server: null,
         connectedStatus: "CLOSED",
         pressedControls: new Set(),
+        cachedControls: new Set(),
+        clientTickInterval: 0,
         lastPing: null,
         errors: [],
         context: getGameContext(),

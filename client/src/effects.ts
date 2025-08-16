@@ -1,3 +1,4 @@
+import { onClientTick } from "./clientLoop";
 import {
     onServerClose,
     onServerError,
@@ -10,6 +11,7 @@ export type Effect =
     | { action: "throwError"; data: string }
     | { action: "clearRect"; data: ClearRectEffect }
     | { action: "updateState"; data: Partial<AppState> }
+    | { action: "cachePressedControls"; data?: never }
     | { action: "fetch"; data: FetchEffect }
     | { action: "openServer"; data: OpenServerEffect }
     | { action: "closeServer"; data?: never }
@@ -36,6 +38,7 @@ export type FetchEffect = {
 type OpenServerEffect = {
     endpoint: string;
     username: string;
+    clientTickDelay: number;
 }
 
 type RemoveErrorEffect = {
@@ -85,6 +88,13 @@ function applyEffect({ action, data }: Effect, state: AppState): void {
             Object.assign(state, data);
             break;
         }
+        case "cachePressedControls": {
+            state.cachedControls.clear();
+            for (const control of state.pressedControls) {
+                state.cachedControls.add(control);
+            }
+            break;
+        }
         case "fetch": {
             applyFetchEffect(data, state);
             break;
@@ -95,6 +105,7 @@ function applyEffect({ action, data }: Effect, state: AppState): void {
         }
         case "closeServer": {
             state.server?.close();
+            clearInterval(state.clientTickInterval);
             break;
         }
         case "sendMessage": {
@@ -153,4 +164,9 @@ function applyOpenServerEffect(effect: OpenServerEffect, state: AppState) {
 
     server.onmessage = (message) => onServerMessage(message.data, state)
         .then(effects => applyEffects(effects, state));
+
+    state.clientTickInterval = setInterval(
+        () => applyEffects(onClientTick(state), state),
+        effect.clientTickDelay
+    );
 }
